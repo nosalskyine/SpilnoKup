@@ -4,7 +4,7 @@ import { useState } from "react";
 const THEMES = {
   warm: {
     name: "Тепла", emoji: "☀",
-    bg:"#faf8f5",card:"#fffefa",cardAlt:"#f5f2ed",border:"#e8e4de",
+    bg:"#faf8f5",card:"#fffefa",cardAlt:"#f5f2ed",border:"#eab308",
     text:"#2c2520",textSec:"#7a7068",textMuted:"#a89e94",
     accent:"#22c55e",green:"#16a34a",greenLight:"#dcfce7",greenBorder:"#bbf7d0",
     orange:"#f97316",yellow:"#eab308",purple:"#8b5cf6",blue:"#3b82f6",
@@ -13,7 +13,7 @@ const THEMES = {
   },
   ocean: {
     name: "Океан", emoji: "🌊",
-    bg:"#f0f6ff",card:"#fafcff",cardAlt:"#e8f0fa",border:"#d4e2f0",
+    bg:"#f0f6ff",card:"#fafcff",cardAlt:"#e8f0fa",border:"#eab308",
     text:"#1a2744",textSec:"#5a6d88",textMuted:"#8da0b8",
     accent:"#3b82f6",green:"#0ea5e9",greenLight:"#dbeafe",greenBorder:"#93c5fd",
     orange:"#f97316",yellow:"#eab308",purple:"#6366f1",blue:"#3b82f6",
@@ -22,7 +22,7 @@ const THEMES = {
   },
   berry: {
     name: "Ягода", emoji: "🍇",
-    bg:"#faf5fa",card:"#fffafd",cardAlt:"#f4ecf4",border:"#e8d8e8",
+    bg:"#faf5fa",card:"#fffafd",cardAlt:"#f4ecf4",border:"#eab308",
     text:"#2e1a2e",textSec:"#7a5a7a",textMuted:"#a888a8",
     accent:"#d946ef",green:"#c026d3",greenLight:"#fae8ff",greenBorder:"#e879f9",
     orange:"#f97316",yellow:"#eab308",purple:"#a855f7",blue:"#8b5cf6",
@@ -36,7 +36,7 @@ function applyTheme(id) { Object.assign(T, THEMES[id], { radius:16, radiusSm:12 
 
 function getS() {
   return {
-    card: { background:T.card,borderRadius:T.radius,padding:14,border:`1px solid ${T.border}22` },
+    card: { background:T.card,borderRadius:T.radius,padding:14,border:`1px solid ${T.border}44` },
     btn: { border:"none",cursor:"pointer",fontWeight:700,fontFamily:"inherit" },
     flex: { display:"flex",alignItems:"center" },
     page: { padding:"16px 16px 90px" },
@@ -233,43 +233,58 @@ function RegisterScreen({ onDone }) {
 // ── Картка угоди ────────────────────────────────────────────────────────────
 function DealCard({ deal, onOpen, joined, onJoin }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
-  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:18,overflow:"hidden",cursor:"pointer",borderColor:isIn?T.accent+"33":"transparent",boxShadow:deal.hot?"0 2px 16px rgba(249,115,22,0.06)":"0 1px 4px rgba(0,0,0,0.03)" }}>
-    <div style={{ ...S.flex,gap:6,padding:"8px 12px 0" }}>
-      {deal.hot&&<Badge bg={T.orange} color="#fff">HOT</Badge>}
-      <span style={{ marginLeft:"auto" }}><Badge>-{d}%</Badge></span>
+  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:14,overflow:"hidden",cursor:"pointer",padding:10 }}>
+    <div style={{ ...S.flex,gap:8 }}>
+      <Ic emoji={deal.avatar} size={38}/>
+      <div style={{ flex:1,minWidth:0 }}>
+        <div style={{ ...S.flex,gap:4,marginBottom:2 }}>
+          <span style={{ fontSize:13,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1 }}>{deal.title}</span>
+          {deal.hot&&<Badge bg={T.orange} color="#fff">HOT</Badge>}
+        </div>
+        <div style={{ ...S.flex,gap:4,fontSize:9,color:T.textSec }}>{deal.seller} · {deal.city}</div>
+      </div>
+      <div style={{ textAlign:"right",flexShrink:0 }}>
+        <div style={{ fontSize:16,fontWeight:900,color:T.green }}>₴{deal.group}</div>
+        <div style={{ fontSize:9,color:T.textMuted,textDecoration:"line-through" }}>₴{deal.retail}</div>
+      </div>
     </div>
-    <div style={{ padding:"8px 12px 12px" }}>
-      <div style={{ ...S.flex,gap:8,marginBottom:8 }}>
-        <Ic emoji={deal.avatar} size={32}/>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:11,fontWeight:700,color:T.text }}>{deal.seller}</div>
-          <div style={{ ...S.flex,gap:4,fontSize:10,color:T.textSec }}>{I.pin} {deal.city} {I.star} {deal.rating}</div>
-        </div>
-        {isIn&&<div style={{ width:24,height:24,background:T.accent,borderRadius:"50%",...S.flex,justifyContent:"center",color:"#fff" }}>{I.check}</div>}
-      </div>
-      <div style={{ fontSize:14,fontWeight:800,color:T.text,marginBottom:6,lineHeight:1.3 }}>{deal.title}</div>
-      <div style={{ ...S.flex,gap:6,marginBottom:10 }}>
-        <span style={{ fontSize:20,fontWeight:900,color:T.green }}>₴{deal.group}</span>
-        <span style={{ fontSize:11,color:T.textMuted,textDecoration:"line-through" }}>₴{deal.retail}</span>
-        <span style={{ fontSize:10,color:T.textSec }}>/ {deal.unit}</span>
-      </div>
-      <div style={{ marginBottom:6 }}>
-        <div style={{ ...S.flex,justifyContent:"space-between",marginBottom:4 }}>
-          <span style={{ fontSize:10,color:T.textSec }}>Учасників</span>
-          <span style={{ fontSize:10,fontWeight:700,color:col }}>{deal.joined}/{deal.needed}</span>
-        </div>
-        <ProgressBar value={p} color={col}/>
-      </div>
-      <div style={{ ...S.flex,justifyContent:"space-between" }}>
-        <span style={{ ...S.flex,gap:3,fontSize:10,color:T.textSec }}>{I.clock} {deal.days} дн.</span>
-        <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{ ...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:10,padding:"5px 12px",fontSize:11 }}>{isIn?"В групі":"Долучитись"}</button>
-      </div>
+    <div style={{ ...S.flex,gap:8,marginTop:6 }}>
+      <div style={{ flex:1 }}><ProgressBar value={p} color={col} h={4}/></div>
+      <span style={{ fontSize:9,color:col,fontWeight:700,flexShrink:0 }}>{deal.joined}/{deal.needed}</span>
+      <span style={{ ...S.flex,gap:2,fontSize:9,color:T.textSec,flexShrink:0 }}>{I.clock}{deal.days}д</span>
+      <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{ ...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:8,padding:"3px 10px",fontSize:10,flexShrink:0 }}>{isIn?"✓":"+"}</button>
     </div>
   </div>;
 }
 
 // ── Маркет ──────────────────────────────────────────────────────────────────
-function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme }) {
+function HotSlider({ deals, onOpen }) {
+  const hot=deals.filter(d=>d.hot).slice(0,5);
+  const [idx,setIdx]=useState(0);
+  if(!hot.length) return null;
+  const d=hot[idx];
+  return <div style={{ padding:"0 16px 12px" }}>
+    <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:8 }}>Топ дня</div>
+    <div onClick={()=>onOpen(d)} style={{ background:`linear-gradient(135deg,${T.accent}18,${T.gradB}12)`,borderRadius:14,padding:12,cursor:"pointer",border:`1px solid ${T.border}44`,position:"relative" }}>
+      <div style={{ ...getS().flex,gap:10 }}>
+        <div style={{ fontSize:32 }}>{d.avatar}</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:13,fontWeight:800,color:T.text,lineHeight:1.3 }}>{d.title}</div>
+          <div style={{ fontSize:10,color:T.textSec,marginTop:2 }}>{d.seller} · {d.city}</div>
+        </div>
+        <div style={{ textAlign:"right" }}>
+          <div style={{ fontSize:18,fontWeight:900,color:T.green }}>₴{d.group}</div>
+          <Badge bg={T.orange} color="#fff">-{disc(d)}%</Badge>
+        </div>
+      </div>
+      <div style={{ ...getS().flex,justifyContent:"center",gap:6,marginTop:8 }}>
+        {hot.map((_,i)=><div key={i} onClick={e=>{e.stopPropagation();setIdx(i);}} style={{ width:i===idx?16:6,height:6,borderRadius:3,background:i===idx?T.accent:T.textMuted+"44",transition:"all .2s",cursor:"pointer" }}/>)}
+      </div>
+    </div>
+  </div>;
+}
+
+function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
   const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   let list=cat==="all"?deals:deals.filter(d=>d.cat===cat);
@@ -299,7 +314,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
       </div>
     </div>
 
-    <div style={{ padding:"0 16px 10px" }}><ThemeSwitcher current={theme} onChange={onTheme}/></div>
+    <HotSlider deals={deals} onOpen={onOpen}/>
     <div style={{ padding:"0 16px 10px" }}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Пошук..." style={{ width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 14px",color:T.text,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"inherit" }}/></div>
 
     <div style={{ display:"flex",gap:6,padding:"0 16px 10px",overflowX:"auto",scrollbarWidth:"none" }}>
@@ -554,7 +569,7 @@ function SellerDashboard() {
 }
 
 // ── Гаманець + Профіль ──────────────────────────────────────────────────────
-function WalletPage({ user, setUser }) {
+function WalletPage({ user, setUser, theme, onTheme }) {
   const [editing,setEditing]=useState(false),[eName,setEName]=useState(user?.name||""),[eEmail,setEEmail]=useState(user?.email||""),[ePhone,setEPhone]=useState(user?.phone||""),[eCity,setECity]=useState(user?.city||"");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
@@ -578,6 +593,10 @@ function WalletPage({ user, setUser }) {
         <button onClick={()=>{const u={...user,name:eName,email:eEmail,phone:ePhone,city:eCity};localStorage.setItem("spilnokup_user",JSON.stringify(u));setUser(u);setEditing(false);}}
           style={{ ...S.btn,width:"100%",padding:12,background:T.accent,color:"#fff",borderRadius:12,fontSize:13 }}>Зберегти</button>
       </div>}
+      <div style={{ marginTop:14 }}>
+        <div style={{ fontSize:12,fontWeight:700,color:T.text,marginBottom:8 }}>Стиль додатку</div>
+        <ThemeSwitcher current={theme} onChange={onTheme}/>
+      </div>
     </div>
 
     <div style={{ ...S.card,background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,marginBottom:16,textAlign:"center",padding:20 }}>
@@ -629,11 +648,11 @@ export default function App() {
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={d=>{setDeals(prev=>[d,...prev]);setPage(null);}}/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme}/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")}/>;
       case"my":return <MyDealsPage deals={deals} joined={joined} onOpen={onOpen}/>;
       case"qr":return <QRHub/>;
       case"seller":return <SellerDashboard/>;
-      case"wallet":return <WalletPage user={user} setUser={setUser}/>;
+      case"wallet":return <WalletPage user={user} setUser={setUser} theme={theme} onTheme={changeTheme}/>;
       default:return null;
     }
   }
