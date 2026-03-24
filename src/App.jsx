@@ -3,35 +3,35 @@ import { useState, useEffect } from "react";
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
   dark: {
-    name: "Темна", emoji: "🌙",
-    bg:"#0a0a0f",card:"#151520",cardAlt:"#1c1c2a",border:"#eab308",
-    text:"#f0f0f0",textSec:"#a0a0b0",textMuted:"#666680",
-    accent:"#22c55e",green:"#4ade80",greenLight:"#052e16",greenBorder:"#14532d",
-    orange:"#f97316",yellow:"#eab308",purple:"#a78bfa",blue:"#60a5fa",
-    navBg:"rgba(10,10,15,0.40)",navText:"#e0e0e0",
-    gradA:"#22c55e",gradB:"#eab308",gradC:"#f97316",
+    name: "Графіт", emoji: "🌑",
+    bg:"#111116",card:"#1a1a22",cardAlt:"#22222c",border:"#b8960a",
+    text:"#d4d4d8",textSec:"#85858f",textMuted:"#555560",
+    accent:"#3d8c5c",green:"#5a9e74",greenLight:"#141f18",greenBorder:"#243328",
+    orange:"#c46a20",yellow:"#b8960a",purple:"#7a72a8",blue:"#5878a0",
+    navBg:"rgba(17,17,22,0.50)",navText:"#b0b0b8",
+    gradA:"#3d8c5c",gradB:"#b8960a",gradC:"#c46a20",
   },
   ocean: {
     name: "Океан", emoji: "🌊",
-    bg:"#080c18",card:"#0f1525",cardAlt:"#161d30",border:"#eab308",
-    text:"#e8ecf4",textSec:"#8899b0",textMuted:"#556680",
-    accent:"#3b82f6",green:"#38bdf8",greenLight:"#0c1a30",greenBorder:"#1e3a5f",
-    orange:"#f97316",yellow:"#eab308",purple:"#818cf8",blue:"#60a5fa",
-    navBg:"rgba(8,12,24,0.40)",navText:"#d0d8e8",
-    gradA:"#3b82f6",gradB:"#818cf8",gradC:"#06b6d4",
+    bg:"#0e1320",card:"#151c2c",cardAlt:"#1c2438",border:"#b8960a",
+    text:"#c8cdd6",textSec:"#7888a0",textMuted:"#4a5568",
+    accent:"#3068b8",green:"#3a8fb0",greenLight:"#101c2c",greenBorder:"#1a3050",
+    orange:"#c46a20",yellow:"#b8960a",purple:"#6870a8",blue:"#5078a0",
+    navBg:"rgba(14,19,32,0.50)",navText:"#a0a8b8",
+    gradA:"#3068b8",gradB:"#6870a8",gradC:"#2a7888",
   },
   berry: {
-    name: "Ягода", emoji: "🍇",
-    bg:"#0f080f",card:"#1a1020",cardAlt:"#241530",border:"#eab308",
-    text:"#f0e8f0",textSec:"#a888b0",textMuted:"#705880",
-    accent:"#d946ef",green:"#e879f9",greenLight:"#1a0a20",greenBorder:"#3b1550",
-    orange:"#f97316",yellow:"#eab308",purple:"#c084fc",blue:"#a78bfa",
-    navBg:"rgba(15,8,15,0.40)",navText:"#e0d0e0",
-    gradA:"#d946ef",gradB:"#c084fc",gradC:"#ec4899",
+    name: "Слива", emoji: "🫐",
+    bg:"#14101a",card:"#1c1624",cardAlt:"#261e30",border:"#b8960a",
+    text:"#d0c8d4",textSec:"#8878a0",textMuted:"#5a4870",
+    accent:"#9050b0",green:"#a068c0",greenLight:"#1a1224",greenBorder:"#2e1e40",
+    orange:"#c46a20",yellow:"#b8960a",purple:"#8870a8",blue:"#7060a0",
+    navBg:"rgba(20,16,26,0.50)",navText:"#b0a8b8",
+    gradA:"#9050b0",gradB:"#8870a8",gradC:"#a04878",
   },
 };
 
-let T = { ...THEMES.dark, radius:16, radiusSm:12 };
+let T = { ...THEMES.ocean, radius:16, radiusSm:12 };
 function applyTheme(id) { Object.assign(T, THEMES[id], { radius:16, radiusSm:12 }); }
 
 function getS() {
@@ -116,11 +116,11 @@ const discBorder = d => { const dd=disc(d); return dd>30?"#ef4444":dd>=20?"#22c5
 // ── Декоративний фон ────────────────────────────────────────────────────────
 function BgDecor() {
   return <div style={{ position:"absolute",top:0,left:0,right:0,bottom:0,overflow:"hidden",pointerEvents:"none",zIndex:0 }}>
-    <div style={{ position:"absolute",top:-40,right:-30,width:260,height:260,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}28,transparent 65%)` }}/>
-    <div style={{ position:"absolute",top:"35%",left:-50,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}22,transparent 65%)` }}/>
-    <div style={{ position:"absolute",bottom:80,right:-20,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}1e,transparent 65%)` }}/>
-    <div style={{ position:"absolute",top:"65%",left:"35%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}18,transparent 60%)` }}/>
-    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.25 }}>
+    <div style={{ position:"absolute",top:-40,right:-30,width:260,height:260,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}1a,transparent 65%)` }}/>
+    <div style={{ position:"absolute",top:"35%",left:-50,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}16,transparent 65%)` }}/>
+    <div style={{ position:"absolute",bottom:80,right:-20,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}14,transparent 65%)` }}/>
+    <div style={{ position:"absolute",top:"65%",left:"35%",width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}10,transparent 60%)` }}/>
+    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.15 }}>
       <defs>
         <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={T.gradA}/><stop offset="50%" stopColor={T.gradB}/><stop offset="100%" stopColor={T.gradC}/></linearGradient>
         <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.gradC}/><stop offset="50%" stopColor={T.gradA}/><stop offset="100%" stopColor={T.gradB}/></linearGradient>
@@ -901,7 +901,7 @@ export default function App() {
   const [authStep,setAuthStep]=useState(user?null:"welcome");
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
   const [deals,setDeals]=useState(INIT_DEALS);
-  const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"dark");
+  const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"ocean");
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
 
