@@ -31,7 +31,7 @@ const THEMES = {
   },
 };
 
-let T = { ...THEMES.warm, radius:16, radiusSm:12 };
+let T = { ...THEMES.ocean, radius:16, radiusSm:12 };
 function applyTheme(id) { Object.assign(T, THEMES[id], { radius:16, radiusSm:12 }); }
 
 function getS() {
@@ -116,11 +116,10 @@ const discBorder = d => { const dd=disc(d); return dd>30?"#ef4444":dd>=20?"#22c5
 // ── Декоративний фон ────────────────────────────────────────────────────────
 function BgDecor() {
   return <div style={{ position:"absolute",top:0,left:0,right:0,bottom:0,overflow:"hidden",pointerEvents:"none",zIndex:0 }}>
-    <div style={{ position:"absolute",top:-40,right:-30,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}22,transparent 65%)` }}/>
-    <div style={{ position:"absolute",top:"35%",left:-50,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}1a,transparent 65%)` }}/>
-    <div style={{ position:"absolute",bottom:80,right:-20,width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}18,transparent 65%)` }}/>
-    <div style={{ position:"absolute",top:"60%",left:"40%",width:160,height:160,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}14,transparent 60%)` }}/>
-    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.18 }}>
+    <div style={{ position:"absolute",top:-40,right:-30,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}0c,transparent 70%)` }}/>
+    <div style={{ position:"absolute",top:"35%",left:-50,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}0a,transparent 70%)` }}/>
+    <div style={{ position:"absolute",bottom:80,right:-20,width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}08,transparent 70%)` }}/>
+    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.07 }}>
       <defs>
         <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={T.gradA}/><stop offset="50%" stopColor={T.gradB}/><stop offset="100%" stopColor={T.gradC}/></linearGradient>
         <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.gradC}/><stop offset="50%" stopColor={T.gradA}/><stop offset="100%" stopColor={T.gradB}/></linearGradient>
@@ -251,7 +250,7 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
       <div style={{ flex:1,minWidth:0 }}>
         <div style={{ ...S.flex,gap:4,marginBottom:2 }}>
           <span style={{ fontSize:13,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1 }}>{deal.title}</span>
-          {deal.hot&&<Badge bg={T.orange} color="#fff">HOT</Badge>}
+          {deal.hot&&<Badge bg={T.orange} color="#fff">HOT -{d}%</Badge>}
         </div>
         <div style={{ ...S.flex,gap:4,fontSize:9,color:T.textSec }}>{deal.seller} · {deal.city}</div>
       </div>
@@ -271,26 +270,41 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
 
 // ── Маркет ──────────────────────────────────────────────────────────────────
 function HotSlider({ deals, onOpen }) {
-  const hot=deals.filter(d=>d.hot).slice(0,5);
+  const hot=deals.filter(d=>d.hot).slice(0,6);
   const [idx,setIdx]=useState(0);
+  const [touchX,setTouchX]=useState(null);
   if(!hot.length) return null;
   const d=hot[idx];
+  const go=(dir)=>setIdx(i=>(i+dir+hot.length)%hot.length);
   return <div style={{ padding:"0 16px 12px" }}>
-    <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:8 }}>Топ дня</div>
-    <div onClick={()=>onOpen(d)} style={{ background:`linear-gradient(135deg,${T.accent}18,${T.gradB}12)`,borderRadius:14,padding:12,cursor:"pointer",border:`1px solid ${T.border}44`,position:"relative" }}>
+    <div style={{ ...getS().flex,justifyContent:"space-between",marginBottom:8 }}>
+      <span style={{ fontSize:12,fontWeight:800,color:T.text }}>Топ дня</span>
+      <span style={{ fontSize:10,color:T.textMuted }}>{idx+1}/{hot.length}</span>
+    </div>
+    <div onClick={()=>onOpen(d)}
+      onTouchStart={e=>setTouchX(e.touches[0].clientX)}
+      onTouchEnd={e=>{if(touchX===null)return;const dx=e.changedTouches[0].clientX-touchX;if(Math.abs(dx)>40){dx<0?go(1):go(-1);}setTouchX(null);}}
+      onMouseDown={e=>setTouchX(e.clientX)}
+      onMouseUp={e=>{if(touchX===null)return;const dx=e.clientX-touchX;if(Math.abs(dx)>40){dx<0?go(1):go(-1);}setTouchX(null);}}
+      style={{ background:`linear-gradient(135deg,${T.accent}12,${T.gradB}0a)`,borderRadius:14,padding:12,cursor:"pointer",border:`1px solid ${T.border}33`,userSelect:"none" }}>
       <div style={{ ...getS().flex,gap:10 }}>
         <div style={{ fontSize:32 }}>{d.avatar}</div>
-        <div style={{ flex:1 }}>
+        <div style={{ flex:1,minWidth:0 }}>
           <div style={{ fontSize:13,fontWeight:800,color:T.text,lineHeight:1.3 }}>{d.title}</div>
           <div style={{ fontSize:10,color:T.textSec,marginTop:2 }}>{d.seller} · {d.city}</div>
+          <div style={{ ...getS().flex,gap:4,marginTop:4 }}>
+            <span style={{ fontSize:9,color:T.textMuted }}>{d.joined}/{d.needed} учасників</span>
+            <span style={{ fontSize:9,color:T.textMuted }}>· {d.days} дн.</span>
+          </div>
         </div>
-        <div style={{ textAlign:"right" }}>
+        <div style={{ textAlign:"right",flexShrink:0 }}>
           <div style={{ fontSize:18,fontWeight:900,color:T.green }}>₴{d.group}</div>
+          <div style={{ fontSize:10,color:T.textMuted,textDecoration:"line-through" }}>₴{d.retail}</div>
           <Badge bg={T.orange} color="#fff">-{disc(d)}%</Badge>
         </div>
       </div>
       <div style={{ ...getS().flex,justifyContent:"center",gap:6,marginTop:8 }}>
-        {hot.map((_,i)=><div key={i} onClick={e=>{e.stopPropagation();setIdx(i);}} style={{ width:i===idx?16:6,height:6,borderRadius:3,background:i===idx?T.accent:T.textMuted+"44",transition:"all .2s",cursor:"pointer" }}/>)}
+        {hot.map((_,i)=><div key={i} onClick={e=>{e.stopPropagation();setIdx(i);}} style={{ width:i===idx?18:6,height:5,borderRadius:3,background:i===idx?T.accent:T.textMuted+"33",transition:"all .2s",cursor:"pointer" }}/>)}
       </div>
     </div>
   </div>;
@@ -319,9 +333,14 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
           <div style={{ fontSize:8,color:T.green }}>зекономлено</div>
         </div>
       </div>
-      <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6 }}>
-        {[["847","продавців"],["12 430","угод"],["23","міст"]].map(([v,l],i)=>
-          <div key={i} style={{ textAlign:"center" }}><div style={{ fontSize:18,fontWeight:900,color:T.green }}>{v}</div><div style={{ fontSize:9,color:T.textSec }}>{l}</div></div>
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:8 }}>
+        {[["847","продавців"],["12.4K","угод"],["23","міст"],["~35%","сер. знижка"]].map(([v,l],i)=>
+          <div key={i} style={{ textAlign:"center" }}><div style={{ fontSize:16,fontWeight:900,color:T.green }}>{v}</div><div style={{ fontSize:8,color:T.textSec }}>{l}</div></div>
+        )}
+      </div>
+      <div style={{ display:"flex",gap:6,overflowX:"auto",scrollbarWidth:"none",paddingBottom:2 }}>
+        {["Сьогодні +18 угод","Топ: Мед з пасіки","Новий продавець: Львів","Середній чек: ₴240"].map((t,i)=>
+          <span key={i} style={{ whiteSpace:"nowrap",fontSize:9,padding:"4px 10px",borderRadius:8,background:T.card+"88",color:T.textSec,flexShrink:0 }}>{t}</span>
         )}
       </div>
     </div>
@@ -583,8 +602,69 @@ function SellerDashboard() {
 // ── Гаманець + Профіль ──────────────────────────────────────────────────────
 function WalletPage({ user, setUser, theme, onTheme }) {
   const [editing,setEditing]=useState(false),[eName,setEName]=useState(user?.name||""),[eEmail,setEEmail]=useState(user?.email||""),[ePhone,setEPhone]=useState(user?.phone||""),[eCity,setECity]=useState(user?.city||"");
+  const [balance,setBalance]=useState(12840);
+  const [showPay,setShowPay]=useState(null); // "topup" | "withdraw"
+  const [payMethod,setPayMethod]=useState(null);
+  const [payAmount,setPayAmount]=useState("");
+  const [payDone,setPayDone]=useState(false);
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+
+  const payMethods=[
+    {id:"card",name:"Картка",icon:"💳",desc:"Visa / Mastercard"},
+    {id:"apple",name:"Apple Pay",icon:"",desc:"Миттєво"},
+    {id:"crypto",name:"Крипто",icon:"₿",desc:"BTC, ETH, USDT"},
+  ];
+
+  const doPay=()=>{
+    const amt=parseInt(payAmount);
+    if(!amt||amt<=0) return;
+    if(showPay==="topup") setBalance(b=>b+amt);
+    else setBalance(b=>Math.max(0,b-amt));
+    setPayDone(true);
+    setTimeout(()=>{setShowPay(null);setPayMethod(null);setPayAmount("");setPayDone(false);},2000);
+  };
+
+  if(showPay) return <div style={S.page}>
+    <BackBtn onClick={()=>{setShowPay(null);setPayMethod(null);setPayAmount("");setPayDone(false);}}/>
+    {payDone?<div style={{ ...S.card,textAlign:"center",padding:30 }}>
+      <div style={{ fontSize:48,marginBottom:10 }}>✅</div>
+      <div style={{ fontSize:18,fontWeight:900,color:T.green }}>{showPay==="topup"?"Поповнено":"Виведено"}!</div>
+      <div style={{ fontSize:24,fontWeight:900,color:T.text,marginTop:8 }}>₴{payAmount}</div>
+    </div>:!payMethod?<>
+      <h2 style={{ fontSize:18,fontWeight:900,color:T.text,marginBottom:4 }}>{showPay==="topup"?"Поповнення":"Виведення"}</h2>
+      <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Оберіть спосіб</p>
+      {payMethods.map(m=><div key={m.id} onClick={()=>setPayMethod(m.id)} style={{ ...S.card,...S.flex,gap:12,marginBottom:8,cursor:"pointer",padding:16 }}>
+        <div style={{ fontSize:24,width:44,height:44,borderRadius:12,background:T.cardAlt,...S.flex,justifyContent:"center" }}>{m.icon}</div>
+        <div style={{ flex:1 }}><div style={{ fontSize:14,fontWeight:800,color:T.text }}>{m.name}</div><div style={{ fontSize:11,color:T.textSec }}>{m.desc}</div></div>
+      </div>)}
+    </>:<>
+      <h2 style={{ fontSize:18,fontWeight:900,color:T.text,marginBottom:4 }}>{showPay==="topup"?"Поповнити":"Вивести"} через {payMethods.find(m=>m.id===payMethod)?.name}</h2>
+      <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Баланс: ₴{balance.toLocaleString()}</p>
+      <Input value={payAmount} onChange={e=>setPayAmount(e.target.value.replace(/\D/g,""))} placeholder="Сума, ₴" type="text"/>
+      <div style={{ display:"flex",gap:6,marginTop:10 }}>
+        {[100,500,1000,5000].map(a=><button key={a} onClick={()=>setPayAmount(String(a))} style={{ ...S.btn,flex:1,padding:"8px 0",borderRadius:10,fontSize:11,background:payAmount===String(a)?T.accent:T.cardAlt,color:payAmount===String(a)?"#fff":T.textSec }}>₴{a}</button>)}
+      </div>
+      {payMethod==="card"&&<div style={{ ...S.card,marginTop:14 }}>
+        <Input value="" onChange={()=>{}} placeholder="0000 0000 0000 0000"/>
+        <div style={{ display:"flex",gap:8,marginTop:8 }}><div style={{ flex:1 }}><Input value="" onChange={()=>{}} placeholder="MM/YY"/></div><div style={{ flex:1 }}><Input value="" onChange={()=>{}} placeholder="CVV" type="password"/></div></div>
+      </div>}
+      {payMethod==="crypto"&&<div style={{ ...S.card,marginTop:14,textAlign:"center" }}>
+        <div style={{ fontSize:11,color:T.textSec,marginBottom:6 }}>Адреса гаманця</div>
+        <div style={{ fontSize:10,fontWeight:700,color:T.text,wordBreak:"break-all",background:T.cardAlt,padding:10,borderRadius:8 }}>0x7a3b...f91e2d4c8</div>
+        <div style={{ ...S.flex,justifyContent:"center",gap:12,marginTop:10 }}>
+          {["BTC","ETH","USDT"].map(c=><span key={c} style={{ fontSize:10,fontWeight:700,padding:"4px 10px",borderRadius:6,background:T.cardAlt,color:T.textSec }}>{c}</span>)}
+        </div>
+      </div>}
+      {payMethod==="apple"&&<div style={{ ...S.card,marginTop:14,textAlign:"center",padding:20 }}>
+        <div style={{ fontSize:36,marginBottom:8 }}></div>
+        <div style={{ fontSize:12,color:T.textSec }}>Натисніть для підтвердження через Apple Pay</div>
+      </div>}
+      <button onClick={doPay} disabled={!payAmount} style={{ ...S.btn,width:"100%",padding:14,background:payAmount?T.accent:T.cardAlt,color:payAmount?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:16 }}>
+        {showPay==="topup"?"Поповнити":"Вивести"} {payAmount?`₴${parseInt(payAmount).toLocaleString()}`:""}
+      </button>
+    </>}
+  </div>;
 
   return <div style={S.page}>
     <div style={{ ...S.card,marginBottom:16,textAlign:"center",position:"relative",overflow:"hidden" }}>
@@ -613,9 +693,12 @@ function WalletPage({ user, setUser, theme, onTheme }) {
 
     <div style={{ ...S.card,background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,marginBottom:16,textAlign:"center",padding:20 }}>
       <div style={{ fontSize:11,color:T.green }}>Баланс</div>
-      <div style={{ fontSize:32,fontWeight:900,color:T.text }}>₴12 840</div>
-      <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>Доступно: ₴9 640</div>
-      <button style={{ ...S.btn,background:T.accent,color:"#fff",borderRadius:12,padding:"10px 20px",fontSize:13,marginTop:12 }}>Вивести</button>
+      <div style={{ fontSize:32,fontWeight:900,color:T.text }}>₴{balance.toLocaleString()}</div>
+      <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>Доступно: ₴{Math.round(balance*0.75).toLocaleString()}</div>
+      <div style={{ display:"flex",gap:8,marginTop:12,justifyContent:"center" }}>
+        <button onClick={()=>setShowPay("topup")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.accent,color:"#fff" }}>+ Поповнити</button>
+        <button onClick={()=>setShowPay("withdraw")} style={{ ...S.btn,padding:"10px 20px",borderRadius:12,fontSize:12,background:T.cardAlt,color:T.text,border:`1px solid ${T.border}44` }}>Вивести</button>
+      </div>
     </div>
 
     <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>Транзакції</h3>
@@ -640,7 +723,7 @@ export default function App() {
   const [authStep,setAuthStep]=useState(user?null:"welcome");
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
   const [deals,setDeals]=useState(INIT_DEALS);
-  const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"warm");
+  const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"ocean");
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
 
