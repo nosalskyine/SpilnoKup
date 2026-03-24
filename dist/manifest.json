@@ -4,10 +4,16 @@
   "description": "Спільні покупки від малого бізнесу",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#22c55e",
+  "background_color": "#faf8f5",
+  "theme_color": "#eab308",
   "orientation": "portrait",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
