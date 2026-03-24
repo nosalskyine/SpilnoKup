@@ -1,0 +1,7 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'>
+  <rect width='192' height='192' rx='36' fill='#0f0f0f'/>
+  <rect width='192' height='192' rx='36' fill='url(#g)'/>
+  <defs><radialGradient id='g' cx='50%' cy='50%' r='70%'><stop offset='0%' stop-color='#14532d'/><stop offset='100%' stop-color='#052e16'/></radialGradient></defs>
+  <text x='96' y='110' text-anchor='middle' font-size='96' font-family='serif'>🤝</text>
+  <text x='96' y='155' text-anchor='middle' font-size='18' font-family='sans-serif' fill='#22c55e' font-weight='bold'>СК</text>
+</svg>
