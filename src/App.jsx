@@ -261,34 +261,42 @@ function RegisterScreen({ onDone }) {
 }
 
 // ── Картка угоди ────────────────────────────────────────────────────────────
+function DealPhoto({ deal, h=90 }) {
+  const ph=dealPhoto(deal);
+  if(ph && PHOTOS[ph]) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}>{PHOTOS[ph](999,h)}</div>;
+  if(ph && typeof ph==="string" && ph.startsWith("data:")) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}><img src={ph} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>;
+  // Default placeholder with category gradient
+  const cats={farm:["#1a2010","#2a3518"],honey:["#2a200a","#3a3015"],veggies:["#102010","#1a3018"],dairy:["#1a1a20","#2a2a30"],food:["#201510","#302518"],handmade:["#1a1020","#2a1a30"],cafe:["#1a1510","#2a2018"]};
+  const c=cats[deal.cat]||["#1a1a20","#2a2a30"];
+  return <div style={{width:"100%",height:h,borderRadius:8,background:`linear-gradient(135deg,${c[0]},${c[1]})`,...getS().flex,justifyContent:"center",flexDirection:"column",gap:4}}>
+    <span style={{fontSize:28}}>{deal.avatar}</span>
+    <span style={{fontSize:8,color:T.textMuted,fontWeight:600}}>{deal.title.length>20?deal.title.slice(0,20)+"...":deal.title}</span>
+  </div>;
+}
+
 function DealCard({ deal, onOpen, joined, onJoin }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   const bc=discBorder(deal);
-  const ph=dealPhoto(deal);
   return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:12,overflow:"hidden",cursor:"pointer",padding:0,border:`1.5px solid ${bc}` }}>
-    {ph&&<div style={{padding:"8px 8px 0"}}>{PHOTOS[ph]?PHOTOS[ph](999,80):
-      <div style={{width:"100%",height:80,borderRadius:8,overflow:"hidden"}}><img src={ph} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>
-    }</div>}
-    <div style={{padding:ph?"6px 10px 10px":"10px"}}>
-      <div style={{ ...S.flex,gap:8 }}>
-        <div style={{width:32,height:32,borderRadius:8,background:T.cardAlt,...S.flex,justifyContent:"center",fontSize:16,flexShrink:0}}>{deal.avatar}</div>
-        <div style={{ flex:1,minWidth:0 }}>
-          <div style={{ ...S.flex,gap:4,marginBottom:1 }}>
-            <span style={{ fontSize:12,fontWeight:700,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1 }}>{deal.title}</span>
-            {deal.hot&&<span style={{fontSize:8,fontWeight:800,color:T.orange,background:T.orange+"18",padding:"1px 5px",borderRadius:4}}>-{d}%</span>}
-          </div>
-          <div style={{ fontSize:9,color:T.textMuted,letterSpacing:0.3 }}>{deal.seller} · {deal.city}</div>
-        </div>
-        <div style={{ textAlign:"right",flexShrink:0 }}>
-          <div style={{ fontSize:15,fontWeight:800,color:T.green,letterSpacing:-0.5 }}>₴{deal.group}</div>
-          <div style={{ fontSize:8,color:T.textMuted,textDecoration:"line-through" }}>₴{deal.retail}</div>
-        </div>
+    <div style={{padding:"8px 8px 0",position:"relative"}}>
+      <DealPhoto deal={deal} h={90}/>
+      <div style={{position:"absolute",top:12,right:12,...S.flex,gap:4}}>
+        {deal.hot&&<span style={{fontSize:9,fontWeight:800,color:"#fff",background:"rgba(0,0,0,0.5)",padding:"2px 7px",borderRadius:4,backdropFilter:"blur(4px)"}}>-{d}%</span>}
+        {isIn&&<span style={{fontSize:9,fontWeight:800,color:"#fff",background:T.green+"cc",padding:"2px 7px",borderRadius:4}}>В групі</span>}
       </div>
-      <div style={{ ...S.flex,gap:6,marginTop:6 }}>
+      <div style={{position:"absolute",bottom:4,left:12,background:"rgba(0,0,0,0.45)",backdropFilter:"blur(4px)",borderRadius:4,padding:"2px 6px"}}>
+        <span style={{fontSize:14,fontWeight:800,color:"#fff"}}>₴{deal.group}</span>
+        <span style={{fontSize:9,color:"#ffffff88",textDecoration:"line-through",marginLeft:4}}>₴{deal.retail}</span>
+      </div>
+    </div>
+    <div style={{padding:"8px 10px 10px"}}>
+      <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:2,lineHeight:1.3}}>{deal.title}</div>
+      <div style={{fontSize:9,color:T.textMuted,marginBottom:6}}>{deal.seller} · {deal.city} · {I.star} {deal.rating}</div>
+      <div style={{ ...S.flex,gap:6 }}>
         <div style={{ flex:1 }}><ProgressBar value={p} color={col} h={3}/></div>
-        <span style={{ fontSize:8,color:col,fontWeight:700,flexShrink:0 }}>{deal.joined}/{deal.needed}</span>
-        <span style={{ fontSize:8,color:T.textMuted,flexShrink:0 }}>{deal.days}д</span>
-        <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{ ...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:9,flexShrink:0 }}>{isIn?"✓":"+"}</button>
+        <span style={{ fontSize:8,color:col,fontWeight:700 }}>{deal.joined}/{deal.needed}</span>
+        <span style={{ fontSize:8,color:T.textMuted }}>{deal.days}д</span>
+        <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{ ...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:9 }}>{isIn?"✓":"+"}</button>
       </div>
     </div>
   </div>;
@@ -398,15 +406,24 @@ function HotSlider({ deals, onOpen }) {
 }
 
 function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
-  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all");
+  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all"),[discF,setDiscF]=useState("all"),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
+  const activeFilters=[cityF!=="all",priceF!=="all",discF!=="all",ratingF!=="all",daysF!=="all"].filter(Boolean).length;
   let list=cat==="all"?deals:deals.filter(d=>d.cat===cat);
   if(search) list=list.filter(d=>(d.title+d.seller).toLowerCase().includes(search.toLowerCase()));
   if(cityF!=="all") list=list.filter(d=>d.city.includes(cityF));
   if(priceF==="low") list=list.filter(d=>d.group<200);
   else if(priceF==="mid") list=list.filter(d=>d.group>=200&&d.group<500);
   else if(priceF==="high") list=list.filter(d=>d.group>=500);
-  list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:(a,b)=>pct(b)-pct(a));
+  if(discF==="big") list=list.filter(d=>disc(d)>=30);
+  else if(discF==="med") list=list.filter(d=>disc(d)>=20&&disc(d)<30);
+  else if(discF==="small") list=list.filter(d=>disc(d)<20);
+  if(ratingF==="top") list=list.filter(d=>d.rating>=4.8);
+  else if(ratingF==="good") list=list.filter(d=>d.rating>=4.5);
+  if(daysF==="today") list=list.filter(d=>d.days<=1);
+  else if(daysF==="week") list=list.filter(d=>d.days<=3);
+  else if(daysF==="later") list=list.filter(d=>d.days>3);
+  list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:sort==="rating"?(a,b)=>b.rating-a.rating:(a,b)=>pct(b)-pct(a));
 
   return <div style={{ position:"relative" }}>
     <div style={{ padding:"16px 16px 12px" }}>
@@ -427,25 +444,50 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
     </div>
 
     <div style={{ ...S.flex,gap:4,padding:"0 16px 10px",flexWrap:"wrap" }}>
-      {[["hot","Гарячі"],["new","Нові"],["disc","Знижка"],["price","Ціна"]].map(([s,l])=>
-        <button key={s} onClick={()=>setSort(s)} style={{ ...S.btn,padding:"5px 10px",borderRadius:8,fontSize:10,background:sort===s?T.greenLight:"transparent",color:sort===s?T.green:T.textSec }}>{l}</button>
+      {[["hot","Популярні"],["new","Нові"],["disc","Знижка"],["price","Ціна ↑"],["rating","Рейтинг"]].map(([s,l])=>
+        <button key={s} onClick={()=>setSort(s)} style={{ ...S.btn,padding:"5px 10px",borderRadius:8,fontSize:10,background:sort===s?T.accent+"22":"transparent",color:sort===s?T.accent:T.textSec }}>{l}</button>
       )}
-      <button onClick={()=>setShowF(!showF)} style={{ ...S.btn,...S.flex,gap:3,marginLeft:"auto",padding:"5px 10px",borderRadius:8,fontSize:10,background:showF?T.greenLight:"transparent",color:showF?T.green:T.textSec }}>{I.filter} Фільтри</button>
+      <button onClick={()=>setShowF(!showF)} style={{ ...S.btn,...S.flex,gap:3,marginLeft:"auto",padding:"5px 10px",borderRadius:8,fontSize:10,background:showF?T.accent+"22":"transparent",color:showF?T.accent:T.textSec }}>
+        {I.filter} {activeFilters>0?`(${activeFilters})`:""}
+      </button>
     </div>
 
     {showF&&<div style={{ ...S.card,margin:"0 16px 12px",padding:12 }}>
-      <div style={{ fontSize:11,fontWeight:700,color:T.text,marginBottom:6 }}>Місто</div>
-      <div style={{ display:"flex",gap:4,flexWrap:"wrap",marginBottom:10 }}>
-        {cities.map(c=><button key={c} onClick={()=>setCityF(c)} style={{ ...S.btn,padding:"4px 8px",borderRadius:6,fontSize:10,background:cityF===c?T.accent:T.cardAlt,color:cityF===c?"#fff":T.textSec }}>{c==="all"?"Всі":c}</button>)}
+      <div style={{...S.flex,justifyContent:"space-between",marginBottom:10}}>
+        <span style={{fontSize:12,fontWeight:800,color:T.text}}>Фільтри</span>
+        {activeFilters>0&&<button onClick={()=>{setCityF("all");setPriceF("all");setDiscF("all");setRatingF("all");setDaysF("all");}} style={{...S.btn,fontSize:9,color:T.accent,background:"transparent",padding:0}}>Скинути все</button>}
       </div>
-      <div style={{ fontSize:11,fontWeight:700,color:T.text,marginBottom:6 }}>Ціна</div>
-      <div style={{ display:"flex",gap:4 }}>
-        {[["all","Будь-яка"],["low","до 200"],["mid","200-500"],["high","500+"]].map(([v,l])=>
-          <button key={v} onClick={()=>setPriceF(v)} style={{ ...S.btn,padding:"4px 8px",borderRadius:6,fontSize:10,background:priceF===v?T.accent:T.cardAlt,color:priceF===v?"#fff":T.textSec }}>{l}</button>
+      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Місто</div>
+      <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:10}}>
+        {cities.map(c=><button key={c} onClick={()=>setCityF(c)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:cityF===c?T.accent:T.cardAlt,color:cityF===c?"#fff":T.textSec}}>{c==="all"?"Всі міста":c}</button>)}
+      </div>
+      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Ціна</div>
+      <div style={{display:"flex",gap:3,marginBottom:10}}>
+        {[["all","Будь-яка"],["low","до ₴200"],["mid","₴200–500"],["high","₴500+"]].map(([v,l])=>
+          <button key={v} onClick={()=>setPriceF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:priceF===v?T.accent:T.cardAlt,color:priceF===v?"#fff":T.textSec}}>{l}</button>
+        )}
+      </div>
+      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Знижка</div>
+      <div style={{display:"flex",gap:3,marginBottom:10}}>
+        {[["all","Будь-яка"],["big","30%+"],["med","20–30%"],["small","до 20%"]].map(([v,l])=>
+          <button key={v} onClick={()=>setDiscF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:discF===v?T.accent:T.cardAlt,color:discF===v?"#fff":T.textSec}}>{l}</button>
+        )}
+      </div>
+      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Рейтинг</div>
+      <div style={{display:"flex",gap:3,marginBottom:10}}>
+        {[["all","Всі"],["top","4.8+"],["good","4.5+"]].map(([v,l])=>
+          <button key={v} onClick={()=>setRatingF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:ratingF===v?T.accent:T.cardAlt,color:ratingF===v?"#fff":T.textSec}}>{l}</button>
+        )}
+      </div>
+      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Термін</div>
+      <div style={{display:"flex",gap:3}}>
+        {[["all","Всі"],["today","Сьогодні"],["week","До 3 днів"],["later","Пізніше"]].map(([v,l])=>
+          <button key={v} onClick={()=>setDaysF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:daysF===v?T.accent:T.cardAlt,color:daysF===v?"#fff":T.textSec}}>{l}</button>
         )}
       </div>
     </div>}
 
+    <div style={{padding:"0 16px 4px",fontSize:9,color:T.textMuted}}>{list.length} оголошень</div>
     <div style={{ padding:"0 16px 90px",display:"flex",flexDirection:"column",gap:10 }}>
       {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin}/>)}
       {list.length===0&&<div style={{ textAlign:"center",padding:60,color:T.textMuted }}>Нічого не знайдено</div>}
