@@ -273,43 +273,44 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
 // ── Анімована інструкція ─────────────────────────────────────────────────────
 function HowItWorks() {
   const [frame,setFrame]=useState(0);
+  const bg0=`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`;
   const scenes=[
-    {bg:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,title:"Обирай товар",desc:"Переглядай пропозиції від фермерів та малого бізнесу",icon:"🛒",elements:<>
+    {title:"Обирай товар",desc:"Переглядай пропозиції від фермерів та малого бізнесу",icon:"🛒",elements:<>
       <div style={{...getS().flex,gap:6,marginTop:8}}>{["🌾","🍯","🥬","🧀"].map((e,i)=><div key={i} style={{width:32,height:32,borderRadius:8,background:T.card,...getS().flex,justifyContent:"center",fontSize:16,animation:`float ${1+i*0.3}s ease-in-out infinite alternate`}}>{e}</div>)}</div>
     </>},
-    {bg:`linear-gradient(135deg,#dbeafe,#bfdbfe)`,title:"Долучайся до групи",desc:"Чим більше людей — тим нижча ціна для кожного",icon:"👥",elements:<>
+    {title:"Долучайся до групи",desc:"Чим більше людей — тим нижча ціна для кожного",icon:"👥",elements:<>
       <div style={{position:"relative",height:32,marginTop:8}}>
-        <div style={{height:8,background:"#93c5fd",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:"72%",background:"#3b82f6",borderRadius:4,animation:"grow 3s ease-in-out infinite"}}/></div>
+        <div style={{height:8,background:T.cardAlt,borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:"72%",background:T.accent,borderRadius:4,animation:"grow 3s ease-in-out infinite"}}/></div>
         <div style={{...getS().flex,justifyContent:"space-around",marginTop:4}}>{["👩","👨","👩‍🦰","👴","👧"].map((e,i)=><span key={i} style={{fontSize:14,animation:`pop ${0.5+i*0.2}s ease-out`}}>{e}</span>)}</div>
       </div>
     </>},
-    {bg:`linear-gradient(135deg,#fef9c3,#fde68a)`,title:"Оплачуй вигідно",desc:"Економія до 40% порівняно з роздрібною ціною",icon:"💰",elements:<>
+    {title:"Оплачуй вигідно",desc:"Економія до 40% порівняно з роздрібною ціною",icon:"💰",elements:<>
       <div style={{...getS().flex,justifyContent:"center",gap:8,marginTop:8}}>
-        <div style={{textAlign:"center"}}><div style={{fontSize:14,color:"#dc2626",textDecoration:"line-through"}}>₴380</div><div style={{fontSize:8,color:T.textSec}}>роздріб</div></div>
-        <div style={{fontSize:18}}>→</div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:14,color:"#c46a20",textDecoration:"line-through"}}>₴380</div><div style={{fontSize:8,color:T.textSec}}>роздріб</div></div>
+        <div style={{fontSize:18,color:T.textMuted}}>→</div>
         <div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:900,color:T.green}}>₴260</div><div style={{fontSize:8,color:T.green}}>в групі</div></div>
-        <div style={{background:"#dcfce7",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:800,color:T.green}}>-32%</div>
+        <div style={{background:T.greenLight,border:`1px solid ${T.greenBorder}`,borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:800,color:T.green}}>-32%</div>
       </div>
     </>},
-    {bg:`linear-gradient(135deg,#dcfce7,#bbf7d0)`,title:"Забирай з QR",desc:"Покажи QR-код продавцю та забери свій товар",icon:"📱",elements:<>
+    {title:"Забирай з QR",desc:"Покажи QR-код продавцю та забери свій товар",icon:"📱",elements:<>
       <div style={{...getS().flex,justifyContent:"center",gap:12,marginTop:8}}>
         <div style={{width:40,height:40,background:T.card,borderRadius:8,...getS().flex,justifyContent:"center"}}>
-          <svg width="28" height="28" viewBox="0 0 28 28"><rect width="28" height="28" fill="#fff" rx="2"/><rect x="2" y="2" width="8" height="8" fill={T.text}/><rect x="18" y="2" width="8" height="8" fill={T.text}/><rect x="2" y="18" width="8" height="8" fill={T.text}/><rect x="12" y="12" width="4" height="4" fill={T.text}/></svg>
+          <svg width="28" height="28" viewBox="0 0 28 28"><rect width="28" height="28" fill={T.cardAlt} rx="2"/><rect x="2" y="2" width="8" height="8" fill={T.text}/><rect x="18" y="2" width="8" height="8" fill={T.text}/><rect x="2" y="18" width="8" height="8" fill={T.text}/><rect x="12" y="12" width="4" height="4" fill={T.text}/></svg>
         </div>
-        <div style={{fontSize:20}}>→</div>
+        <div style={{fontSize:20,color:T.textMuted}}>→</div>
         <div style={{fontSize:28}}>📦</div>
-        <div style={{fontSize:20}}>→</div>
+        <div style={{fontSize:20,color:T.textMuted}}>→</div>
         <div style={{fontSize:28}}>😊</div>
       </div>
     </>},
-    {bg:`linear-gradient(135deg,#e0e7ff,#c7d2fe)`,title:"Підтримуй малий бізнес",desc:"Купуй напряму у фермерів та майстрів України",icon:"🇺🇦",elements:<>
+    {title:"Підтримуй малий бізнес",desc:"Купуй напряму у фермерів та майстрів України",icon:"🇺🇦",elements:<>
       <div style={{...getS().flex,justifyContent:"center",gap:4,marginTop:8}}>{["🌾","🐝","👩‍🍳","🧶","☕","🐄","🕯"].map((e,i)=><span key={i} style={{fontSize:16,animation:`float ${1.5+i*0.2}s ease-in-out infinite alternate`}}>{e}</span>)}</div>
     </>},
   ];
   useEffect(()=>{const iv=setInterval(()=>setFrame(f=>(f+1)%scenes.length),3500);return ()=>clearInterval(iv);},[]);
   const sc=scenes[frame];
   return <>
-    <div style={{background:sc.bg,borderRadius:14,padding:14,position:"relative",overflow:"hidden",transition:"background .5s",minHeight:110}}>
+    <div style={{background:bg0,borderRadius:14,padding:14,position:"relative",overflow:"hidden",minHeight:110}}>
       <div style={{...getS().flex,gap:10,marginBottom:4}}>
         <span style={{fontSize:28}}>{sc.icon}</span>
         <div>
