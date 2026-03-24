@@ -4,7 +4,16 @@
       "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup.xcodeproj\")",
       "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup/Views\")",
       "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup/Assets.xcassets/AccentColor.colorset\")",
-      "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup/Assets.xcassets/AppIcon.appiconset\")"
+      "Bash(mkdir -p \"E:/Users/Roma/Desktop/СпільноКуп/SpilnoKup/Assets.xcassets/AppIcon.appiconset\")",
+      "Bash(mkdir -p ios/SpilnoKup.xcodeproj)",
+      "Bash(mkdir -p ios/SpilnoKup/Views)",
+      "Bash(mkdir -p ios/SpilnoKup/Assets.xcassets/AccentColor.colorset)",
+      "Bash(mkdir -p ios/SpilnoKup/Assets.xcassets/AppIcon.appiconset)",
+      "Bash(cp SpilnoKup.xcodeproj/project.pbxproj ios/SpilnoKup.xcodeproj/project.pbxproj)",
+      "Bash(cp SpilnoKup/SpilnoKupApp.swift ios/SpilnoKup/)",
+      "Bash(cp SpilnoKup/ContentView.swift ios/SpilnoKup/)",
+      "Bash(cp SpilnoKup/Views/*.swift ios/SpilnoKup/Views/)",
+      "Bash(cp SpilnoKup/Assets.xcassets/Contents.json ios/SpilnoKup/Assets.xcassets/)"
     ]
   }
 }

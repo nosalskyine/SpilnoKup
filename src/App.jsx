@@ -720,7 +720,7 @@ function BuyerQRPage({ deal, qty, onBack }) {
 // ── QR Хаб ──────────────────────────────────────────────────────────────────
 function QRHub() {
   const [scanning,setScanning]=useState(false),[scanned,setScanned]=useState(null);
-  if(scanned) return <div style={S.page}><BackBtn onClick={()=>setScanned(null)}/>
+  if(scanned) return <div style={{...S.page,background:"#0a2e1a",minHeight:"100vh"}}><BackBtn onClick={()=>setScanned(null)}/>
     <div style={{ ...S.card,textAlign:"center",padding:20 }}>
       <div style={{ fontSize:44,marginBottom:10 }}>✅</div>
       <h3 style={{ color:T.text,fontSize:16,fontWeight:900,marginBottom:10 }}>Знайдено!</h3>
@@ -731,7 +731,7 @@ function QRHub() {
     </div>
   </div>;
 
-  if(scanning) return <div style={S.page}><BackBtn onClick={()=>setScanning(false)}/>
+  if(scanning) return <div style={{...S.page,background:"#0a2e1a",minHeight:"100vh"}}><BackBtn onClick={()=>setScanning(false)}/>
     <div style={{ ...S.card,textAlign:"center",padding:20 }}>
       <div style={{ width:"100%",height:220,background:T.text,borderRadius:T.radius,marginBottom:14,...S.flex,justifyContent:"center",position:"relative",overflow:"hidden" }}>
         <div style={{ width:160,height:160,border:`3px solid ${T.accent}`,borderRadius:14 }}/>
@@ -749,7 +749,7 @@ function QRHub() {
     {id:"SC-9004",buyer:"Тест: Часткова видача",avatar:"½",item:"Набір овочів",qty:5,unit:"кг",amount:290,status:"partial",scenario:"partial"},
   ];
 
-  return <div style={S.page}>
+  return <div style={{...S.page,background:"#0a2e1a",minHeight:"100vh"}}>
     <h2 style={{ color:T.text,fontSize:22,fontWeight:900,marginBottom:16 }}>QR-центр</h2>
     <div onClick={()=>setScanning(true)} style={{ ...S.card,...S.flex,gap:14,padding:16,cursor:"pointer",marginBottom:12 }}><Ic emoji="📷" size={44}/><div><div style={{ fontSize:14,fontWeight:800,color:T.text }}>Сканувати QR</div><div style={{ fontSize:11,color:T.textSec }}>Підтвердити видачу товару</div></div></div>
 
