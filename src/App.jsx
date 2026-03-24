@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -269,6 +269,66 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
 }
 
 // ── Маркет ──────────────────────────────────────────────────────────────────
+// ── Анімована інструкція ─────────────────────────────────────────────────────
+function HowItWorks() {
+  const [frame,setFrame]=useState(0);
+  const scenes=[
+    {bg:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,title:"Обирай товар",desc:"Переглядай пропозиції від фермерів та малого бізнесу",icon:"🛒",elements:<>
+      <div style={{...getS().flex,gap:6,marginTop:8}}>{["🌾","🍯","🥬","🧀"].map((e,i)=><div key={i} style={{width:32,height:32,borderRadius:8,background:T.card,...getS().flex,justifyContent:"center",fontSize:16,animation:`float ${1+i*0.3}s ease-in-out infinite alternate`}}>{e}</div>)}</div>
+    </>},
+    {bg:`linear-gradient(135deg,#dbeafe,#bfdbfe)`,title:"Долучайся до групи",desc:"Чим більше людей — тим нижча ціна для кожного",icon:"👥",elements:<>
+      <div style={{position:"relative",height:32,marginTop:8}}>
+        <div style={{height:8,background:"#93c5fd",borderRadius:4,overflow:"hidden"}}><div style={{height:"100%",width:"72%",background:"#3b82f6",borderRadius:4,animation:"grow 3s ease-in-out infinite"}}/></div>
+        <div style={{...getS().flex,justifyContent:"space-around",marginTop:4}}>{["👩","👨","👩‍🦰","👴","👧"].map((e,i)=><span key={i} style={{fontSize:14,animation:`pop ${0.5+i*0.2}s ease-out`}}>{e}</span>)}</div>
+      </div>
+    </>},
+    {bg:`linear-gradient(135deg,#fef9c3,#fde68a)`,title:"Оплачуй вигідно",desc:"Економія до 40% порівняно з роздрібною ціною",icon:"💰",elements:<>
+      <div style={{...getS().flex,justifyContent:"center",gap:8,marginTop:8}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:14,color:"#dc2626",textDecoration:"line-through"}}>₴380</div><div style={{fontSize:8,color:T.textSec}}>роздріб</div></div>
+        <div style={{fontSize:18}}>→</div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:900,color:T.green}}>₴260</div><div style={{fontSize:8,color:T.green}}>в групі</div></div>
+        <div style={{background:"#dcfce7",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:800,color:T.green}}>-32%</div>
+      </div>
+    </>},
+    {bg:`linear-gradient(135deg,#dcfce7,#bbf7d0)`,title:"Забирай з QR",desc:"Покажи QR-код продавцю та забери свій товар",icon:"📱",elements:<>
+      <div style={{...getS().flex,justifyContent:"center",gap:12,marginTop:8}}>
+        <div style={{width:40,height:40,background:T.card,borderRadius:8,...getS().flex,justifyContent:"center"}}>
+          <svg width="28" height="28" viewBox="0 0 28 28"><rect width="28" height="28" fill="#fff" rx="2"/><rect x="2" y="2" width="8" height="8" fill={T.text}/><rect x="18" y="2" width="8" height="8" fill={T.text}/><rect x="2" y="18" width="8" height="8" fill={T.text}/><rect x="12" y="12" width="4" height="4" fill={T.text}/></svg>
+        </div>
+        <div style={{fontSize:20}}>→</div>
+        <div style={{fontSize:28}}>📦</div>
+        <div style={{fontSize:20}}>→</div>
+        <div style={{fontSize:28}}>😊</div>
+      </div>
+    </>},
+    {bg:`linear-gradient(135deg,#e0e7ff,#c7d2fe)`,title:"Підтримуй малий бізнес",desc:"Купуй напряму у фермерів та майстрів України",icon:"🇺🇦",elements:<>
+      <div style={{...getS().flex,justifyContent:"center",gap:4,marginTop:8}}>{["🌾","🐝","👩‍🍳","🧶","☕","🐄","🕯"].map((e,i)=><span key={i} style={{fontSize:16,animation:`float ${1.5+i*0.2}s ease-in-out infinite alternate`}}>{e}</span>)}</div>
+    </>},
+  ];
+  useEffect(()=>{const iv=setInterval(()=>setFrame(f=>(f+1)%scenes.length),3500);return ()=>clearInterval(iv);},[]);
+  const sc=scenes[frame];
+  return <>
+    <div style={{background:sc.bg,borderRadius:14,padding:14,position:"relative",overflow:"hidden",transition:"background .5s",minHeight:110}}>
+      <div style={{...getS().flex,gap:10,marginBottom:4}}>
+        <span style={{fontSize:28}}>{sc.icon}</span>
+        <div>
+          <div style={{fontSize:15,fontWeight:900,color:T.text}}>{sc.title}</div>
+          <div style={{fontSize:10,color:T.textSec,lineHeight:1.4}}>{sc.desc}</div>
+        </div>
+      </div>
+      {sc.elements}
+      <div style={{...getS().flex,justifyContent:"center",gap:5,marginTop:8}}>
+        {scenes.map((_,i)=><div key={i} onClick={()=>setFrame(i)} style={{width:i===frame?16:6,height:4,borderRadius:2,background:i===frame?T.text+"88":T.text+"22",transition:"all .3s",cursor:"pointer"}}/>)}
+      </div>
+    </div>
+    <style>{`
+      @keyframes float{0%{transform:translateY(0)}100%{transform:translateY(-4px)}}
+      @keyframes grow{0%,100%{width:40%}50%{width:85%}}
+      @keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+    `}</style>
+  </>;
+}
+
 function HotSlider({ deals, onOpen }) {
   const hot=deals.filter(d=>d.hot).slice(0,6);
   const [idx,setIdx]=useState(0);
@@ -322,27 +382,14 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
   list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:(a,b)=>pct(b)-pct(a));
 
   return <div style={{ position:"relative" }}>
-    <div style={{ background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,padding:"20px 16px 16px",marginBottom:12 }}>
-      <div style={{ ...S.flex,justifyContent:"space-between",marginBottom:14 }}>
+    <div style={{ padding:"16px 16px 12px" }}>
+      <div style={{ ...S.flex,justifyContent:"space-between",marginBottom:12 }}>
         <div>
           <div style={{ fontSize:22,fontWeight:900,color:T.text }}>СпільноКуп</div>
           <div style={{ fontSize:11,color:T.green }}>{user?`${user.name}, вітаємо!`:"Купуй разом — плати менше"}</div>
         </div>
-        <div style={{ background:"rgba(22,163,74,0.1)",borderRadius:T.radiusSm,padding:"6px 10px",textAlign:"center" }}>
-          <div style={{ fontSize:14,fontWeight:900,color:T.green }}>₴4.28M</div>
-          <div style={{ fontSize:8,color:T.green }}>зекономлено</div>
-        </div>
       </div>
-      <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:8 }}>
-        {[["847","продавців"],["12.4K","угод"],["23","міст"],["~35%","сер. знижка"]].map(([v,l],i)=>
-          <div key={i} style={{ textAlign:"center" }}><div style={{ fontSize:16,fontWeight:900,color:T.green }}>{v}</div><div style={{ fontSize:8,color:T.textSec }}>{l}</div></div>
-        )}
-      </div>
-      <div style={{ display:"flex",gap:6,overflowX:"auto",scrollbarWidth:"none",paddingBottom:2 }}>
-        {["Сьогодні +18 угод","Топ: Мед з пасіки","Новий продавець: Львів","Середній чек: ₴240"].map((t,i)=>
-          <span key={i} style={{ whiteSpace:"nowrap",fontSize:9,padding:"4px 10px",borderRadius:8,background:T.card+"88",color:T.textSec,flexShrink:0 }}>{t}</span>
-        )}
-      </div>
+      <HowItWorks/>
     </div>
 
     <HotSlider deals={deals} onOpen={onOpen}/>
