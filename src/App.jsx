@@ -63,11 +63,28 @@ const I = {
   plus: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
   edit: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
   cam: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>,
-  star: <svg width="14" height="14" fill="#eab308" stroke="#eab308" strokeWidth="1" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  star: <svg width="12" height="12" fill="currentColor" stroke="none" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   pin: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>,
   clock: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   down: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
   msg: <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+  img: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+};
+
+// ── Фото-заглушки (кольорові SVG плашки) ────────────────────────────────────
+const PHOTOS = {
+  chicken: (w=80,h=60)=><svg width={w} height={h} viewBox="0 0 80 60"><rect width="80" height="60" rx="8" fill="#2a1f0a"/><text x="40" y="28" textAnchor="middle" fontSize="20">🐔</text><text x="40" y="46" textAnchor="middle" fontSize="7" fill="#a89060">Курчата бройлер</text></svg>,
+  honey: (w=80,h=60)=><svg width={w} height={h} viewBox="0 0 80 60"><rect width="80" height="60" rx="8" fill="#2a200a"/><text x="40" y="28" textAnchor="middle" fontSize="20">🍯</text><text x="40" y="46" textAnchor="middle" fontSize="7" fill="#b89830">Акацієвий мед</text></svg>,
+  bread: (w=80,h=60)=><svg width={w} height={h} viewBox="0 0 80 60"><rect width="80" height="60" rx="8" fill="#1a1510"/><text x="40" y="28" textAnchor="middle" fontSize="20">🥐</text><text x="40" y="46" textAnchor="middle" fontSize="7" fill="#a08860">Домашня випічка</text></svg>,
+  potato: (w=80,h=60)=><svg width={w} height={h} viewBox="0 0 80 60"><rect width="80" height="60" rx="8" fill="#1a1a0a"/><text x="40" y="28" textAnchor="middle" fontSize="20">🥔</text><text x="40" y="46" textAnchor="middle" fontSize="7" fill="#8a9050">Молода картопля</text></svg>,
+  cheese: (w=80,h=60)=><svg width={w} height={h} viewBox="0 0 80 60"><rect width="80" height="60" rx="8" fill="#1a180a"/><text x="40" y="28" textAnchor="middle" fontSize="20">🧀</text><text x="40" y="46" textAnchor="middle" fontSize="7" fill="#b89830">Крафтові сири</text></svg>,
+  fish: (w=80,h=60)=><svg width={w} height={h} viewBox="0 0 80 60"><rect width="80" height="60" rx="8" fill="#0a1520"/><text x="40" y="28" textAnchor="middle" fontSize="20">🐟</text><text x="40" y="46" textAnchor="middle" fontSize="7" fill="#5088a0">Свіжа форель</text></svg>,
+  generic: (w=80,h=60)=><svg width={w} height={h} viewBox="0 0 80 60"><rect width="80" height="60" rx="8" fill={T.cardAlt}/><text x="40" y="34" textAnchor="middle" fontSize="9" fill={T.textMuted}>Фото</text></svg>,
+};
+const dealPhoto=(d)=>{
+  if(d.photo) return d.photo;
+  const map={1:"chicken",2:"honey",3:"bread",4:"potato",8:"chicken",10:"cheese",12:"fish"};
+  return map[d.id]||null;
 };
 
 // ── Дані ────────────────────────────────────────────────────────────────────
@@ -159,7 +176,7 @@ function BackBtn({ onClick }) {
   return <button onClick={onClick} style={{ ...S.btn,...S.flex,gap:4,background:"none",color:T.green,fontSize:14,padding:0,marginBottom:16 }}>{I.back} Назад</button>;
 }
 function Ic({ emoji, size = 36 }) {
-  return <div style={{ fontSize:size*0.55,width:size,height:size,background:T.cardAlt,borderRadius:T.radiusSm,...S.flex,justifyContent:"center" }}>{emoji}</div>;
+  return <div style={{ fontSize:size*0.5,width:size,height:size,background:T.cardAlt,borderRadius:size>40?T.radius:8,...S.flex,justifyContent:"center",border:`1px solid ${T.border}22` }}>{emoji}</div>;
 }
 function Input({ value, onChange, placeholder, icon, type="text", area }) {
   const common = { width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:icon?"12px 16px 12px 42px":"12px 16px",color:T.text,fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"inherit" };
@@ -247,26 +264,32 @@ function RegisterScreen({ onDone }) {
 function DealCard({ deal, onOpen, joined, onJoin }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   const bc=discBorder(deal);
-  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:14,overflow:"hidden",cursor:"pointer",padding:10,border:`1.5px solid ${bc}` }}>
-    <div style={{ ...S.flex,gap:8 }}>
-      <Ic emoji={deal.avatar} size={38}/>
-      <div style={{ flex:1,minWidth:0 }}>
-        <div style={{ ...S.flex,gap:4,marginBottom:2 }}>
-          <span style={{ fontSize:13,fontWeight:800,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1 }}>{deal.title}</span>
-          {deal.hot&&<Badge bg={T.orange} color="#fff">HOT -{d}%</Badge>}
+  const ph=dealPhoto(deal);
+  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:12,overflow:"hidden",cursor:"pointer",padding:0,border:`1.5px solid ${bc}` }}>
+    {ph&&<div style={{padding:"8px 8px 0"}}>{PHOTOS[ph]?PHOTOS[ph](999,80):
+      <div style={{width:"100%",height:80,borderRadius:8,overflow:"hidden"}}><img src={ph} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>
+    }</div>}
+    <div style={{padding:ph?"6px 10px 10px":"10px"}}>
+      <div style={{ ...S.flex,gap:8 }}>
+        <div style={{width:32,height:32,borderRadius:8,background:T.cardAlt,...S.flex,justifyContent:"center",fontSize:16,flexShrink:0}}>{deal.avatar}</div>
+        <div style={{ flex:1,minWidth:0 }}>
+          <div style={{ ...S.flex,gap:4,marginBottom:1 }}>
+            <span style={{ fontSize:12,fontWeight:700,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1 }}>{deal.title}</span>
+            {deal.hot&&<span style={{fontSize:8,fontWeight:800,color:T.orange,background:T.orange+"18",padding:"1px 5px",borderRadius:4}}>-{d}%</span>}
+          </div>
+          <div style={{ fontSize:9,color:T.textMuted,letterSpacing:0.3 }}>{deal.seller} · {deal.city}</div>
         </div>
-        <div style={{ ...S.flex,gap:4,fontSize:9,color:T.textSec }}>{deal.seller} · {deal.city}</div>
+        <div style={{ textAlign:"right",flexShrink:0 }}>
+          <div style={{ fontSize:15,fontWeight:800,color:T.green,letterSpacing:-0.5 }}>₴{deal.group}</div>
+          <div style={{ fontSize:8,color:T.textMuted,textDecoration:"line-through" }}>₴{deal.retail}</div>
+        </div>
       </div>
-      <div style={{ textAlign:"right",flexShrink:0 }}>
-        <div style={{ fontSize:16,fontWeight:900,color:T.green }}>₴{deal.group}</div>
-        <div style={{ fontSize:9,color:T.textMuted,textDecoration:"line-through" }}>₴{deal.retail}</div>
+      <div style={{ ...S.flex,gap:6,marginTop:6 }}>
+        <div style={{ flex:1 }}><ProgressBar value={p} color={col} h={3}/></div>
+        <span style={{ fontSize:8,color:col,fontWeight:700,flexShrink:0 }}>{deal.joined}/{deal.needed}</span>
+        <span style={{ fontSize:8,color:T.textMuted,flexShrink:0 }}>{deal.days}д</span>
+        <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{ ...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:6,padding:"2px 8px",fontSize:9,flexShrink:0 }}>{isIn?"✓":"+"}</button>
       </div>
-    </div>
-    <div style={{ ...S.flex,gap:8,marginTop:6 }}>
-      <div style={{ flex:1 }}><ProgressBar value={p} color={col} h={4}/></div>
-      <span style={{ fontSize:9,color:col,fontWeight:700,flexShrink:0 }}>{deal.joined}/{deal.needed}</span>
-      <span style={{ ...S.flex,gap:2,fontSize:9,color:T.textSec,flexShrink:0 }}>{I.clock}{deal.days}д</span>
-      <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{ ...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:8,padding:"3px 10px",fontSize:10,flexShrink:0 }}>{isIn?"✓":"+"}</button>
     </div>
   </div>;
 }
@@ -487,7 +510,7 @@ function RouteMap({ from, to, status }) {
 }
 
 function CreateDealPage({ onBack, onSave }) {
-  const [title,setTitle]=useState(""),[cat,setCat]=useState("farm"),[price,setPrice]=useState(""),[retail,setRetail]=useState(""),[unit,setUnit]=useState("кг"),[min,setMin]=useState("1"),[max,setMax]=useState("10"),[needed,setNeeded]=useState("20"),[days,setDays]=useState("7"),[desc,setDesc]=useState(""),[city,setCity]=useState(""),[tags,setTags]=useState(""),[pin,setPin]=useState({x:50,y:45});
+  const [title,setTitle]=useState(""),[cat,setCat]=useState("farm"),[price,setPrice]=useState(""),[retail,setRetail]=useState(""),[unit,setUnit]=useState("кг"),[min,setMin]=useState("1"),[max,setMax]=useState("10"),[needed,setNeeded]=useState("20"),[days,setDays]=useState("7"),[desc,setDesc]=useState(""),[city,setCity]=useState(""),[tags,setTags]=useState(""),[pin,setPin]=useState({x:50,y:45}),[photo,setPhoto]=useState(null);
 
   const canSave = title && price && retail && city && desc;
   return <div style={S.page}>
@@ -495,6 +518,14 @@ function CreateDealPage({ onBack, onSave }) {
     <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Нове оголошення</h2>
     <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Створіть групову покупку</p>
     <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+      <div>
+        <div style={{ fontSize:11,fontWeight:700,color:T.text,marginBottom:6 }}>Фото товару</div>
+        <label style={{ ...S.card,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:16,cursor:"pointer",borderStyle:"dashed" }}>
+          {photo?<img src={photo} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8}}/>:
+          <>{I.cam}<div style={{fontSize:11,color:T.textMuted}}>Натисніть щоб додати фото</div></>}
+          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>setPhoto(ev.target.result);r.readAsDataURL(f);}}}/>
+        </label>
+      </div>
       <Input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва товару"/>
       <div style={{ display:"flex",gap:8 }}>
         <div style={{ flex:1 }}><Input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Групова ціна" type="number"/></div>
@@ -518,7 +549,7 @@ function CreateDealPage({ onBack, onSave }) {
       <MapView pin={pin} onPin={setPin} label={city||"Оберіть місце"}/>
       <Input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Опис товару..." area/>
       <Input value={tags} onChange={e=>setTags(e.target.value)} placeholder="Теги через кому"/>
-      <button onClick={()=>{if(canSave){onSave({id:Date.now(),cat,seller:"Моє оголошення",avatar:CATEGORIES.find(c=>c.id===cat)?.icon||"📦",city,rating:5.0,deals:0,title,unit,retail:+retail,group:+price,min:+min,max:+max,joined:0,needed:+needed,days:+days,desc,tags:tags?tags.split(",").map(t=>t.trim()):[],hot:false});}}}
+      <button onClick={()=>{if(canSave){onSave({id:Date.now(),cat,seller:"Моє оголошення",avatar:CATEGORIES.find(c=>c.id===cat)?.icon||"📦",city,rating:5.0,deals:0,title,unit,retail:+retail,group:+price,min:+min,max:+max,joined:0,needed:+needed,days:+days,desc,tags:tags?tags.split(",").map(t=>t.trim()):[],hot:false,photo:photo||null});}}}
         style={{ ...S.btn,width:"100%",padding:15,background:canSave?`linear-gradient(135deg,${T.accent},${T.green})`:T.cardAlt,color:canSave?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>Опублікувати</button>
     </div>
   </div>;
