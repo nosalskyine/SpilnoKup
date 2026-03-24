@@ -6,12 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "npx serve -s dist -l ${PORT:-3000}",
+    "start": "node server.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "express": "^4.22.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
