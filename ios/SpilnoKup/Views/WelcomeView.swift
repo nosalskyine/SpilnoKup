@@ -11,10 +11,10 @@ struct WelcomeView: View {
             VStack(spacing: 24) {
                 Spacer()
 
-                Text("🤝")
+                Text("🛒")
                     .font(.system(size: 80))
 
-                Text("СпільноКуп")
+                Text("Spil")
                     .font(.system(size: 34, weight: .bold))
                     .foregroundColor(state.theme.text)
 
@@ -78,9 +78,7 @@ struct RegisterView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var step = 0
     @State private var name = ""
-    @State private var email = ""
     @State private var phone = ""
-    @State private var password = ""
     @State private var city = ""
     @State private var code = ""
 
@@ -150,14 +148,12 @@ struct RegisterView: View {
 
     var stepOneView: some View {
         VStack(spacing: 14) {
-            Text("Особисті дані")
+            Text("Реєстрація")
                 .font(.title2.bold())
                 .foregroundColor(state.theme.text)
 
-            ThemedTextField(placeholder: "Ім'я та прізвище", text: $name, icon: "👤")
-            ThemedTextField(placeholder: "Email", text: $email, icon: "📧")
+            ThemedTextField(placeholder: "Ваше ім'я", text: $name, icon: "👤")
             ThemedTextField(placeholder: "+380...", text: $phone, icon: "📱")
-            ThemedTextField(placeholder: "Пароль", text: $password, icon: "🔒", isSecure: true)
         }
     }
 
@@ -195,39 +191,39 @@ struct RegisterView: View {
                 .font(.subheadline)
                 .foregroundColor(state.theme.textSec)
 
-            HStack(spacing: 12) {
-                ForEach(0..<4, id: \.self) { i in
+            HStack(spacing: 10) {
+                ForEach(0..<6, id: \.self) { i in
                     let char = i < code.count ? String(code[code.index(code.startIndex, offsetBy: i)]) : ""
                     Text(char)
-                        .font(.title.bold())
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(state.theme.text)
-                        .frame(width: 50, height: 60)
+                        .frame(width: 42, height: 50)
                         .background(state.theme.cardAlt)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(state.theme.border, lineWidth: 1)
+                                .stroke(char.isEmpty ? state.theme.border : state.theme.accent, lineWidth: 2)
                         )
                 }
             }
 
-            TextField("Введіть 4-значний код", text: $code)
+            TextField("Введіть 6-значний код", text: $code)
                 .keyboardType(.numberPad)
                 .foregroundColor(state.theme.text)
                 .padding(12)
                 .background(state.theme.cardAlt)
                 .cornerRadius(12)
                 .onChange(of: code) { newValue in
-                    code = String(newValue.prefix(4).filter { $0.isNumber })
+                    code = String(newValue.prefix(6).filter { $0.isNumber })
                 }
         }
     }
 
     var canProceed: Bool {
         switch step {
-        case 0: return !name.isEmpty && !email.isEmpty && !phone.isEmpty && !password.isEmpty
+        case 0: return !name.isEmpty && !phone.isEmpty
         case 1: return !city.isEmpty
-        case 2: return code.count == 4
+        case 2: return code.count == 6
         default: return false
         }
     }
@@ -236,7 +232,7 @@ struct RegisterView: View {
         if step < 2 {
             step += 1
         } else {
-            state.user = AppUser(name: name, email: email, phone: phone, city: city)
+            state.user = AppUser(name: name, email: "", phone: phone, city: city)
             state.saveUser()
             presentationMode.wrappedValue.dismiss()
         }

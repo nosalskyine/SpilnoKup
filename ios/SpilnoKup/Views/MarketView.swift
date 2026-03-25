@@ -96,13 +96,17 @@ struct MarketView: View {
     var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("СпільноКуп")
+                Text("Spil")
                     .font(.title.bold())
                     .foregroundColor(state.theme.text)
                 if let user = state.user {
-                    Text("Привіт, \(user.name.components(separatedBy: " ").first ?? "")! 👋")
+                    Text("\(user.name), вітаємо!")
                         .font(.subheadline)
-                        .foregroundColor(state.theme.textSec)
+                        .foregroundColor(state.theme.green)
+                } else {
+                    Text("Купуй разом — плати менше")
+                        .font(.subheadline)
+                        .foregroundColor(state.theme.green)
                 }
             }
             Spacer()

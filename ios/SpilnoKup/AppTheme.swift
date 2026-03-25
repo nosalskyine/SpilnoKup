@@ -3,12 +3,16 @@ import SwiftUI
 // MARK: - Theme
 
 enum ThemeType: String, CaseIterable {
+    case light = "light"
+    case cream = "cream"
     case ocean = "ocean"
     case dark = "dark"
     case berry = "berry"
 
     var name: String {
         switch self {
+        case .light: return "Світла"
+        case .cream: return "Кремова"
         case .ocean: return "Океан"
         case .dark: return "Графіт"
         case .berry: return "Слива"
@@ -17,6 +21,8 @@ enum ThemeType: String, CaseIterable {
 
     var emoji: String {
         switch self {
+        case .light: return "☀️"
+        case .cream: return "🍦"
         case .ocean: return "🌊"
         case .dark: return "🌑"
         case .berry: return "🫐"
@@ -103,8 +109,50 @@ struct AppTheme {
         navText: Color(hex: "b0a8b8")
     )
 
+    static let light = AppTheme(
+        bg: Color(hex: "f5f5f5"),
+        card: Color(hex: "ffffff"),
+        cardAlt: Color(hex: "eef0f4"),
+        border: Color(hex: "d0d5dd").opacity(0.5),
+        text: Color(hex: "1a1a2e"),
+        textSec: Color(hex: "6b7280"),
+        textMuted: Color(hex: "9ca3af"),
+        accent: Color(hex: "3d8c5c"),
+        green: Color(hex: "2e7d4f"),
+        greenLight: Color(hex: "e6f4ec"),
+        greenBorder: Color(hex: "b8dcc8"),
+        orange: Color(hex: "c46a20"),
+        yellow: Color(hex: "b8960a"),
+        purple: Color(hex: "6b5fa8"),
+        blue: Color(hex: "4a78b0"),
+        navBg: Color(hex: "ffffff").opacity(0.85),
+        navText: Color(hex: "6b7280")
+    )
+
+    static let cream = AppTheme(
+        bg: Color(hex: "faf8f2"),
+        card: Color(hex: "ffffff"),
+        cardAlt: Color(hex: "f0ece2"),
+        border: Color(hex: "d6ceb8").opacity(0.5),
+        text: Color(hex: "2c2416"),
+        textSec: Color(hex: "8a7e6a"),
+        textMuted: Color(hex: "b0a690"),
+        accent: Color(hex: "8b6e3e"),
+        green: Color(hex: "5a7a4a"),
+        greenLight: Color(hex: "f0f4e8"),
+        greenBorder: Color(hex: "c8d4b0"),
+        orange: Color(hex: "c46a20"),
+        yellow: Color(hex: "b8960a"),
+        purple: Color(hex: "7a6890"),
+        blue: Color(hex: "5a7090"),
+        navBg: Color(hex: "faf8f2").opacity(0.85),
+        navText: Color(hex: "8a7e6a")
+    )
+
     static func theme(for type: ThemeType) -> AppTheme {
         switch type {
+        case .light: return .light
+        case .cream: return .cream
         case .ocean: return .ocean
         case .dark: return .dark
         case .berry: return .berry
