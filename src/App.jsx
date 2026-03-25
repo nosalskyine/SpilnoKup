@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout } from "./api";
+import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -696,7 +696,10 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
       {isIn?<div style={{ ...S.flex,gap:8 }}>
         <div style={{ flex:1,background:T.greenLight,borderRadius:12,padding:12,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>В групі!</div></div>
         <button onClick={()=>onBuy(deal,qty)} style={{ ...S.btn,background:"#6366f1",color:"#fff",borderRadius:12,padding:"12px 18px",fontSize:12 }}>QR</button>
-      </div>:<button onClick={()=>{onJoin(deal.id);onBuy(deal,qty);}} style={{ ...S.btn,width:"100%",padding:14,background:`linear-gradient(135deg,${T.accent},${T.green})`,borderRadius:14,color:"#fff",fontSize:15 }}>Долучитись · ₴{deal.group*qty}</button>}
+      </div>:<button onClick={async()=>{
+        if(!isLoggedIn()){alert("Спочатку створіть акаунт у вкладці Гаманець");return;}
+        try{const order=await createOrder(deal.dbId||deal.id,qty);onJoin(deal.id);onBuy(deal,qty,order.id);}catch(e){alert(e.message);}
+      }} style={{ ...S.btn,width:"100%",padding:14,background:`linear-gradient(135deg,${T.accent},${T.green})`,borderRadius:14,color:"#fff",fontSize:15 }}>Долучитись · ₴{deal.group*qty}</button>}
     </div>
   </div>;
 }
@@ -729,9 +732,18 @@ function QRCode({ value, size=180 }) {
   </svg>;
 }
 
-function BuyerQRPage({ deal, qty, onBack }) {
+function BuyerQRPage({ deal, qty, onBack, orderId }) {
   const [status,setStatus]=useState("active"),[copied,setCopied]=useState(false);
-  const code=`SC-${(deal.id*1000+qty).toString(36).toUpperCase().padStart(6,"0")}`,total=deal.group*qty;
+  const [qrToken,setQrToken]=useState(null),[qrLoading,setQrLoading]=useState(true);
+  const total=deal.group*qty;
+
+  useEffect(()=>{
+    if(!orderId){setQrLoading(false);return;}
+    generateQR(orderId).then(data=>{setQrToken(data.token);}).catch(()=>{}).finally(()=>setQrLoading(false));
+  },[orderId]);
+
+  const code=qrToken?qrToken.slice(0,12).toUpperCase():`SC-${String(Date.now()).slice(-6)}`;
+
   return <div style={S.page}>
     <BackBtn onClick={onBack}/>
     <div style={{ ...S.card,textAlign:"center",padding:20 }}>
@@ -739,10 +751,11 @@ function BuyerQRPage({ deal, qty, onBack }) {
         <div style={{ width:8,height:8,borderRadius:"50%",background:status==="active"?T.accent:status==="scanned"?T.yellow:T.green,animation:status==="active"?"pulse 2s infinite":"none" }}/>
         <span style={{ fontSize:11,fontWeight:700,color:status==="active"?T.green:status==="scanned"?"#a16207":T.green }}>{status==="active"?"Активний":status==="scanned"?"Зіскановано":"Отримано"}</span>
       </div>
-      <div style={{ background:T.cardAlt,borderRadius:T.radius,padding:14,display:"inline-block",marginBottom:14 }}><QRCode value={code+"|"+deal.title} size={180}/></div>
+      {qrLoading?<div style={{padding:40,color:T.textSec}}>Генерація QR...</div>
+      :<div style={{ background:T.cardAlt,borderRadius:T.radius,padding:14,display:"inline-block",marginBottom:14 }}><QRCode value={qrToken||code} size={180}/></div>}
       <div style={{ ...S.flex,justifyContent:"center",gap:6,marginBottom:4 }}>
-        <span style={{ fontSize:18,fontWeight:900,color:T.text,letterSpacing:2 }}>{code}</span>
-        <button onClick={()=>{navigator.clipboard.writeText(code);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{ ...S.btn,background:"transparent",color:copied?T.green:T.textMuted,padding:2 }}>{copied?I.check:I.copy}</button>
+        <span style={{ fontSize:14,fontWeight:900,color:T.text,letterSpacing:1,wordBreak:"break-all" }}>{code}</span>
+        <button onClick={()=>{navigator.clipboard.writeText(qrToken||code);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{ ...S.btn,background:"transparent",color:copied?T.green:T.textMuted,padding:2 }}>{copied?I.check:I.copy}</button>
       </div>
       <div style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>{deal.title} × {qty} {deal.unit}</div>
       <div style={{ ...S.card,background:T.greenLight,marginBottom:14 }}><div style={{ fontSize:11,color:T.green }}>Сума</div><div style={{ fontSize:28,fontWeight:900,color:T.green }}>₴{total}</div></div>
@@ -827,49 +840,64 @@ function QRHub() {
 // ── Дашборд продавця ────────────────────────────────────────────────────────
 // ── Месенджер ──────────────────────────────────────────────────────────────
 function ChatPage() {
-  const chats=[
-    {id:1,name:"Ферма Петренків",avatar:"🌾",last:"Курчата будуть у четвер, чекайте!",time:"14:22",unread:2,online:true},
-    {id:2,name:"Пасіка Коваля",avatar:"🐝",last:"Дякую за замовлення! Мед вже пакуємо",time:"12:05",unread:0,online:true},
-    {id:3,name:"Пекарня Оленки",avatar:"👩‍🍳",last:"Самовивіз з 10:00 до 18:00",time:"вчора",unread:1,online:false},
-    {id:4,name:"Молочна від Галини",avatar:"🐄",last:"Нова партія сиру буде в п'ятницю",time:"вчора",unread:0,online:false},
-    {id:5,name:"Кав'ярня Зерно",avatar:"☕",last:"Купони активовані, приходьте!",time:"Пн",unread:0,online:true},
-  ];
+  const [chats,setChats]=useState([]);
   const [activeChat,setActiveChat]=useState(null);
   const [msg,setMsg]=useState("");
-  const [messages,setMessages]=useState({
-    1:[{from:"them",text:"Привіт! Ваше замовлення на курчата прийнято",time:"10:00"},{from:"me",text:"Дякую! Коли можна забрати?",time:"10:15"},{from:"them",text:"Курчата будуть у четвер, чекайте!",time:"14:22"}],
-    2:[{from:"them",text:"Мед вже готовий до відправки",time:"11:00"},{from:"me",text:"Відправляйте Новою Поштою, будь ласка",time:"11:30"},{from:"them",text:"Дякую за замовлення! Мед вже пакуємо",time:"12:05"}],
-    3:[{from:"them",text:"Ваша випічка готова!",time:"09:00"},{from:"me",text:"О котрій можна забрати?",time:"09:20"},{from:"them",text:"Самовивіз з 10:00 до 18:00",time:"09:25"}],
-  });
+  const [messages,setMessages]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
 
-  const sendMsg=()=>{
-    if(!msg.trim()||!activeChat) return;
-    const now=new Date();const t=`${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
-    setMessages(m=>({...m,[activeChat]:[...(m[activeChat]||[]),{from:"me",text:msg,time:t}]}));
-    setMsg("");
-    setTimeout(()=>{
-      const replies=["Зрозумів, дякую!","Добре, чекайте повідомлення","Так, все вірно","Скоро буде готово!","Без проблем!"];
-      const t2=`${now.getHours()}:${String(now.getMinutes()+1).padStart(2,"0")}`;
-      setMessages(m=>({...m,[activeChat]:[...(m[activeChat]||[]),{from:"them",text:replies[Math.floor(Math.random()*replies.length)],time:t2}]}));
-    },1500);
+  useEffect(()=>{
+    if(!isLoggedIn()) { setLoading(false); return; }
+    fetchConversations().then(setChats).catch(()=>{}).finally(()=>setLoading(false));
+    const interval=setInterval(()=>fetchConversations().then(setChats).catch(()=>{}),5000);
+    return ()=>clearInterval(interval);
+  },[]);
+
+  const openChat=async(chatId)=>{
+    setActiveChat(chatId);
+    try{const msgs=await fetchMessages(chatId);setMessages(msgs);}catch{}
   };
+
+  const sendMsg=async()=>{
+    if(!msg.trim()||!activeChat) return;
+    try{
+      const m=await sendMessageApi(activeChat,msg.trim());
+      setMessages(prev=>[...prev,m]);setMsg("");
+    }catch(e){alert(e.message);}
+  };
+
+  // Poll for new messages
+  useEffect(()=>{
+    if(!activeChat) return;
+    const interval=setInterval(async()=>{
+      try{const msgs=await fetchMessages(activeChat);setMessages(msgs);}catch{}
+    },3000);
+    return ()=>clearInterval(interval);
+  },[activeChat]);
+
+  const fmtTime=(d)=>{const dt=new Date(d);return `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
+
+  if(!isLoggedIn()) return <div style={S.page}>
+    <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
+    <div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Створіть акаунт щоб спілкуватись з продавцями</div></div>
+  </div>;
 
   if(activeChat){
     const ch=chats.find(c=>c.id===activeChat);
-    const msgs=messages[activeChat]||[];
     return <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{...S.flex,gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}22`}}>
         <button onClick={()=>setActiveChat(null)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
-        <Ic emoji={ch.avatar} size={36}/>
-        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>{ch.name}</div><div style={{fontSize:9,color:ch.online?T.green:T.textMuted}}>{ch.online?"Онлайн":"Був(ла) нещодавно"}</div></div>
+        <Ic emoji={ch?.other?.avatarUrl||"💬"} size={36}/>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>{ch?.other?.name||"Чат"}</div>{ch?.deal&&<div style={{fontSize:9,color:T.green}}>{ch.deal.title}</div>}</div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
-        {msgs.map((m,i)=><div key={i} style={{alignSelf:m.from==="me"?"flex-end":"flex-start",maxWidth:"78%"}}>
-          <div style={{background:m.from==="me"?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:m.from==="me"?4:12,borderBottomLeftRadius:m.from==="me"?12:4}}>
+        {messages.map((m,i)=>{const mine=m.senderId===userId||m.sender?.id===userId;return <div key={m.id||i} style={{alignSelf:mine?"flex-end":"flex-start",maxWidth:"78%"}}>
+          <div style={{background:mine?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:mine?4:12,borderBottomLeftRadius:mine?12:4}}>
             <div style={{fontSize:12,color:T.text,lineHeight:1.4}}>{m.text}</div>
           </div>
-          <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:m.from==="me"?"right":"left"}}>{m.time}</div>
-        </div>)}
+          <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:mine?"right":"left"}}>{fmtTime(m.createdAt)}</div>
+        </div>;})}
       </div>
       <div style={{...S.flex,gap:8,padding:"10px 16px",borderTop:`1px solid ${T.border}22`}}>
         <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()} placeholder="Повідомлення..."
@@ -883,16 +911,16 @@ function ChatPage() {
 
   return <div style={S.page}>
     <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
-    {chats.map(ch=><div key={ch.id} onClick={()=>setActiveChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
-      <div style={{position:"relative"}}><Ic emoji={ch.avatar} size={42}/>
-        {ch.online&&<div style={{position:"absolute",bottom:0,right:0,width:10,height:10,borderRadius:"50%",background:T.green,border:`2px solid ${T.card}`}}/>}
-      </div>
+    {loading?<div style={{textAlign:"center",color:T.textSec,padding:20}}>Завантаження...</div>
+    :chats.length===0?<div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Поки немає повідомлень</div><div style={{fontSize:11,color:T.textMuted,marginTop:4}}>Долучіться до покупки щоб почати чат</div></div>
+    :chats.map(ch=><div key={ch.id} onClick={()=>openChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
+      <Ic emoji={ch.other?.avatarUrl||"💬"} size={42}/>
       <div style={{flex:1,minWidth:0}}>
         <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
-          <span style={{fontSize:13,fontWeight:700,color:T.text}}>{ch.name}</span>
-          <span style={{fontSize:10,color:T.textMuted}}>{ch.time}</span>
+          <span style={{fontSize:13,fontWeight:700,color:T.text}}>{ch.other?.name||"Чат"}</span>
+          <span style={{fontSize:10,color:T.textMuted}}>{ch.lastMessage?fmtTime(ch.lastMessage.createdAt):""}</span>
         </div>
-        <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ch.last}</div>
+        <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ch.lastMessage?.text||ch.deal?.title||"..."}</div>
       </div>
       {ch.unread>0&&<div style={{width:20,height:20,borderRadius:"50%",background:T.accent,...S.flex,justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff",flexShrink:0}}>{ch.unread}</div>}
     </div>)}
@@ -1197,7 +1225,7 @@ export default function App() {
 
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
   const onOpen=deal=>{setPage("detail");setBuyData({deal,qty:deal.min});};
-  const onBuy=(deal,qty)=>{setBuyData({deal,qty});setPage("qr");};
+  const onBuy=(deal,qty,orderId)=>{setBuyData({deal,qty,orderId});setPage("qr");};
   const onRegDone=data=>{localStorage.setItem("spilnokup_user",JSON.stringify(data));setUser(data);setAuthStep(null);loadDeals();};
   const onGuest=()=>{const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setAuthStep(null);};
 
@@ -1208,7 +1236,7 @@ export default function App() {
     if(authStep==="welcome") return <WelcomeScreen onStart={()=>setAuthStep("register")} onGuest={onGuest}/>;
     if(authStep==="register") return <RegisterScreen onDone={onRegDone}/>;
     if(page==="detail"&&buyData) return <DealDetail deal={buyData.deal} onBack={()=>setPage(null)} joined={joined} onJoin={onJoin} onBuy={onBuy}/>;
-    if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} onBack={()=>setPage(null)}/>;
+    if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={d=>{setDeals(prev=>[d,...prev]);setPage(null);}}/>;
     switch(tab){
       case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme}/>;

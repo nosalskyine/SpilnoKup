@@ -8,7 +8,17 @@ async function request(path, options = {}) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API}${path}`, { ...options, headers });
+  let res = await fetch(`${API}${path}`, { ...options, headers });
+
+  // Auto-refresh on 401
+  if (res.status === 401 && token) {
+    try {
+      await refreshToken();
+      headers['Authorization'] = `Bearer ${getToken()}`;
+      res = await fetch(`${API}${path}`, { ...options, headers });
+    } catch { /* refresh failed */ }
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Помилка сервера' }));
     throw new Error(err.error || `HTTP ${res.status}`);
@@ -58,6 +68,49 @@ export async function createDeal(deal) {
   return request('/deals', { method: 'POST', body: JSON.stringify(deal) });
 }
 
+export async function fetchSellerDeals() {
+  return request('/deals/seller/my');
+}
+
+// Orders
+export async function createOrder(dealId, quantity) {
+  return request('/orders', { method: 'POST', body: JSON.stringify({ dealId, quantity }) });
+}
+
+export async function fetchMyOrders() {
+  return request('/orders/my');
+}
+
+export async function fetchSellerOrders() {
+  return request('/orders/seller');
+}
+
+// QR
+export async function generateQR(orderId) {
+  return request(`/qr/generate/${orderId}`, { method: 'POST' });
+}
+
+export async function verifyQR(token) {
+  return request('/qr/verify', { method: 'POST', body: JSON.stringify({ token }) });
+}
+
+// Chat
+export async function fetchConversations() {
+  return request('/chat/conversations');
+}
+
+export async function createConversation(sellerId, dealId) {
+  return request('/chat/conversations', { method: 'POST', body: JSON.stringify({ sellerId, dealId }) });
+}
+
+export async function fetchMessages(conversationId) {
+  return request(`/chat/${conversationId}/messages`);
+}
+
+export async function sendMessageApi(conversationId, text) {
+  return request(`/chat/${conversationId}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+}
+
 // Wallet
 export async function fetchWallet() {
   return request('/wallet');
@@ -72,3 +125,9 @@ export function logout() {
   localStorage.removeItem('spilnokup_refresh');
   localStorage.removeItem('spilnokup_user');
 }
+
+export function isLoggedIn() {
+  return !!getToken();
+}
+
+export { API };

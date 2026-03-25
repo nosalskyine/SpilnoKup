@@ -22,6 +22,10 @@ Pods/
 .build/
 .swiftpm/
 
+# Environment
+.env
+.env.*
+
 # Node.js
 node_modules/
 npm-debug.log*
@@ -42,3 +46,4 @@ dist-ssr/
 *.swp
 *.sw?
 *~
+*.exe
