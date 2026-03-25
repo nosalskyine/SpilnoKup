@@ -133,6 +133,7 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
           displayId: generateUserDisplayId(),
           name: name || null,
           city: city || null,
+          role: 'SELLER',
           isVerified: true,
         },
       });
