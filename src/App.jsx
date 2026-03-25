@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout } from "./api";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -237,18 +238,39 @@ function WelcomeScreen({ onStart, onGuest }) {
 }
 
 function RegisterScreen({ onDone }) {
-  const [step,setStep]=useState(0),[name,setName]=useState(""),[email,setEmail]=useState(""),[phone,setPhone]=useState(""),[pass,setPass]=useState(""),[city,setCity]=useState(""),[code,setCode]=useState("");
+  const [step,setStep]=useState(0),[name,setName]=useState(""),[phone,setPhone]=useState(""),[city,setCity]=useState(""),[code,setCode]=useState("");
+  const [otpSent,setOtpSent]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState("");
+
+  const doSendOtp=async()=>{
+    setLoading(true);setError("");
+    try{
+      const res=await sendOtp(phone);
+      setOtpSent(true);
+      if(res.otp) setCode(res.otp); // dev mode: auto-fill
+      setStep(2);
+    }catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  };
+
+  const doVerify=async()=>{
+    setLoading(true);setError("");
+    try{
+      const data=await verifyOtp(phone,code);
+      onDone({...data.user, name: name || data.user.name, city: city || data.user.city});
+    }catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  };
+
   if(step===0) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
     <BackBtn onClick={()=>{}}/>
     <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Реєстрація</h2>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 1 з 3</p>
     <div style={{ display:"flex",flexDirection:"column",gap:12,flex:1 }}>
       <Input value={name} onChange={e=>setName(e.target.value)} placeholder="Ваше ім'я" icon={I.user}/>
-      <Input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" icon={I.mail} type="email"/>
       <Input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+380" icon={I.phone} type="tel"/>
-      <Input value={pass} onChange={e=>setPass(e.target.value)} placeholder="Пароль" icon={I.lock} type="password"/>
     </div>
-    <button onClick={()=>setStep(1)} disabled={!name||!email||!phone||!pass} style={{ ...S.btn,width:"100%",padding:15,background:(name&&email&&phone&&pass)?T.accent:T.cardAlt,color:(name&&email&&phone&&pass)?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>Далі</button>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginTop:8 }}>{error}</div>}
+    <button onClick={()=>setStep(1)} disabled={!name||!phone} style={{ ...S.btn,width:"100%",padding:15,background:(name&&phone)?T.accent:T.cardAlt,color:(name&&phone)?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>Далі</button>
   </div>;
   if(step===1) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
     <BackBtn onClick={()=>setStep(0)}/>
@@ -261,7 +283,8 @@ function RegisterScreen({ onDone }) {
       )}
     </div>
     <div style={{ flex:1 }}/>
-    <button onClick={()=>setStep(2)} disabled={!city} style={{ ...S.btn,width:"100%",padding:15,background:city?T.accent:T.cardAlt,color:city?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>Далі</button>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginTop:8 }}>{error}</div>}
+    <button onClick={doSendOtp} disabled={!city||loading} style={{ ...S.btn,width:"100%",padding:15,background:city?T.accent:T.cardAlt,color:city?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>{loading?"Надсилаємо...":"Далі"}</button>
   </div>;
   return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
     <BackBtn onClick={()=>setStep(1)}/>
@@ -269,11 +292,12 @@ function RegisterScreen({ onDone }) {
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 3 з 3 — SMS код</p>
     <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {phone}</div></div>
     <div style={{ ...S.flex,justifyContent:"center",gap:10,marginBottom:20 }}>
-      {[0,1,2,3].map(i=><input key={i} maxLength={1} value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(i<3)e.target.nextSibling?.focus();}}}
-        style={{ width:50,height:56,textAlign:"center",fontSize:22,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit" }}/>)}
+      {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
+        style={{ width:42,height:50,textAlign:"center",fontSize:20,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
     </div>
-    <button onClick={()=>{if(code.length>=4)onDone({name,email,phone,city});}} disabled={code.length<4}
-      style={{ ...S.btn,width:"100%",padding:15,background:code.length>=4?T.accent:T.cardAlt,color:code.length>=4?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>Підтвердити</button>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{error}</div>}
+    <button onClick={doVerify} disabled={code.length<6||loading}
+      style={{ ...S.btn,width:"100%",padding:15,background:code.length>=6?T.accent:T.cardAlt,color:code.length>=6?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>{loading?"Перевіряємо...":"Підтвердити"}</button>
   </div>;
 }
 
@@ -1088,10 +1112,27 @@ export default function App() {
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
 
+  // Load deals from API
+  const loadDeals=useCallback(async()=>{
+    try{
+      const data=await apiFetchDeals({limit:50});
+      const catMap={meat:"farm",dairy:"dairy",grocery:"honey",bakery:"food",vegetables:"veggies",services:"cafe",clothing:"handmade"};
+      const mapped=data.deals.map((d,i)=>({
+        id:d.id,cat:catMap[d.category]||d.category,seller:d.seller?.name||"",avatar:d.seller?.avatarUrl||"🏪",
+        city:d.city||d.seller?.city||"",rating:4.8,deals:0,title:d.title,unit:d.unit,
+        retail:Number(d.retailPrice),group:Number(d.groupPrice),min:d.minQty,max:d.maxQty,
+        joined:d.joined,needed:d.needed,days:Math.max(0,Math.ceil((new Date(d.deadline)-Date.now())/(1000*60*60*24))),
+        desc:d.description||"",tags:d.tags||[],hot:d.isHot,dbId:d.id,
+      }));
+      if(mapped.length>0) setDeals(mapped);
+    }catch(e){console.warn("API unavailable, using mock data:",e.message);}
+  },[]);
+  useEffect(()=>{loadDeals();},[loadDeals]);
+
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
   const onOpen=deal=>{setPage("detail");setBuyData({deal,qty:deal.min});};
   const onBuy=(deal,qty)=>{setBuyData({deal,qty});setPage("qr");};
-  const onRegDone=data=>{localStorage.setItem("spilnokup_user",JSON.stringify(data));setUser(data);setAuthStep(null);};
+  const onRegDone=data=>{localStorage.setItem("spilnokup_user",JSON.stringify(data));setUser(data);setAuthStep(null);loadDeals();};
   const onGuest=()=>{const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setAuthStep(null);};
 
   const showNav=!page&&!authStep;
