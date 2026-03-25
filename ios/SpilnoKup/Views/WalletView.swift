@@ -22,6 +22,7 @@ struct WalletView: View {
                         themeSection
                         transactionsSection
                         fopSection
+                        logoutButton
                     }
                     .padding(.top, 8)
                     .padding(.bottom, 20)
@@ -292,6 +293,27 @@ struct WalletView: View {
         .padding(14)
         .background(state.theme.card)
         .cornerRadius(14)
+        .padding(.horizontal)
+    }
+
+    var logoutButton: some View {
+        Button(action: {
+            APIService.shared.logout()
+            state.user = nil
+            state.isGuest = false
+            UserDefaults.standard.removeObject(forKey: "spilnokup_user")
+        }) {
+            HStack {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                Text("Вийти з акаунту")
+            }
+            .font(.subheadline.bold())
+            .foregroundColor(Color(hex: "ef4444"))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color(hex: "ef4444").opacity(0.1))
+            .cornerRadius(14)
+        }
         .padding(.horizontal)
     }
 
