@@ -87,7 +87,7 @@ router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
 // POST /api/auth/verify-otp
 router.post('/verify-otp', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { phone: rawPhone, otp, name, city } = req.body;
+    const { phone: rawPhone, otp, name, city, mode } = req.body;
     if (!rawPhone || !otp) {
       res.status(400).json({ error: 'Телефон і OTP обов\'язкові' });
       return;
@@ -143,6 +143,18 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
     // Знаходимо або створюємо користувача
     const phoneHash = hashForSearch(phone);
     let user = await prisma.user.findUnique({ where: { phoneHash } });
+
+    // Registration: phone must be free
+    if (mode === 'register' && user) {
+      res.status(400).json({ error: 'Цей номер вже зареєстрований. Використайте "Увійти"' });
+      return;
+    }
+
+    // Login: phone must exist
+    if (mode === 'login' && !user) {
+      res.status(400).json({ error: 'Акаунт не знайдено. Спочатку зареєструйтесь' });
+      return;
+    }
 
     if (!user) {
       user = await prisma.user.create({

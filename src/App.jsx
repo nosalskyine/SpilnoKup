@@ -277,7 +277,7 @@ function RegisterScreen({ onDone }) {
   const doVerify=async()=>{
     setLoading(true);setError("");
     try{
-      const data=await verifyOtp(phone,code,name,city);
+      const data=await verifyOtp(phone,code,name,city,"register");
       onDone(data.user);
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
@@ -1381,7 +1381,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const doAuthVerify=async()=>{
     setAuthLoading(true);setAuthError("");
     try{
-      const data=await verifyOtp(authPhone,authCode,authName,authCity);
+      const data=await verifyOtp(authPhone,authCode,authName,authCity,authMode);
       const u=data.user;
       localStorage.setItem("spilnokup_user",JSON.stringify(u));
       setUser(u);setShowAuth(false);setAuthStep(0);reconnectWithAuth();
