@@ -243,8 +243,7 @@ function WelcomeScreen({ onStart, onGuest }) {
     <div style={{ fontSize:56,marginBottom:12 }}>🛒</div>
     <h1 style={{ fontSize:28,fontWeight:900,color:T.text,marginBottom:6 }}>Spil</h1>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:28,lineHeight:1.6 }}>Спільні покупки від малого бізнесу України.<br/>Економте до 40% купуючи разом!</p>
-    <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:15,background:`linear-gradient(135deg,${T.accent},${T.green})`,color:"#fff",borderRadius:14,fontSize:15,marginBottom:10 }}>Створити акаунт</button>
-    <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:14,background:"transparent",color:T.green,borderRadius:14,fontSize:13,border:`1px solid ${T.border}`,marginBottom:10 }}>Вже маю акаунт</button>
+    <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:15,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:15,marginBottom:10 }}>Увійти через Telegram</button>
     <button onClick={onGuest} style={{ ...S.btn,width:"100%",padding:14,background:T.cardAlt,color:T.textSec,borderRadius:14,fontSize:13 }}>Увійти як гість</button>
     <div style={{ marginTop:28,background:T.cardAlt,borderRadius:T.radius,padding:14,textAlign:"left" }}>
       <div style={{ ...S.flex,gap:6,fontSize:12,fontWeight:700,color:T.text,marginBottom:6 }}>{I.down} Додати на екран:</div>
@@ -255,17 +254,24 @@ function WelcomeScreen({ onStart, onGuest }) {
 
 function RegisterScreen({ onDone }) {
   const [step,setStep]=useState(0),[name,setName]=useState(""),[phone,setPhone]=useState(""),[city,setCity]=useState(""),[code,setCode]=useState("");
-  const [loading,setLoading]=useState(false),[error,setError]=useState(""),[tgToken,setTgToken]=useState(""),[tgSent,setTgSent]=useState(false);
+  const [telegramToken,setTelegramToken]=useState(""),[loading,setLoading]=useState(false),[error,setError]=useState("");
 
   const doSendOtp=async()=>{
     setLoading(true);setError("");
     try{
       const res=await sendOtp(phone);
-      if(res.telegramToken) setTgToken(res.telegramToken);
-      if(res.telegram) setTgSent(true);
+      if(res.telegramToken) setTelegramToken(res.telegramToken);
       setStep(2);
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
+  };
+
+  const openTelegram=()=>{
+    if(telegramToken){
+      window.open(`https://t.me/spilnokupbot?start=${telegramToken}`,"_blank");
+    }else{
+      window.open("https://t.me/spilnokupbot","_blank");
+    }
   };
 
   const doVerify=async()=>{
@@ -277,53 +283,48 @@ function RegisterScreen({ onDone }) {
     finally{setLoading(false);}
   };
 
+  // Step 1: Name, phone, city
   if(step===0) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
     <BackBtn onClick={()=>{}}/>
-    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Реєстрація</h2>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Вхід / Реєстрація</h2>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 1 з 3</p>
     <div style={{ display:"flex",flexDirection:"column",gap:12,flex:1 }}>
+      <Input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+380..." icon={I.phone} type="tel"/>
       <Input value={name} onChange={e=>setName(e.target.value)} placeholder="Ваше ім'я" icon={I.user}/>
-      <Input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+380" icon={I.phone} type="tel"/>
+      <Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Місто"/>
+      <div style={{ display:"flex",flexWrap:"wrap",gap:8,marginTop:4 }}>
+        {["Київ","Харків","Одеса","Дніпро","Львів","Бориспіль","Бровари","Черкаси","Полтава"].map(c=>
+          <button key={c} onClick={()=>setCity(c)} style={{ ...S.btn,padding:"7px 12px",borderRadius:10,fontSize:11,background:city===c?T.accent:T.cardAlt,color:city===c?"#fff":T.textSec }}>{c}</button>
+        )}
+      </div>
     </div>
     {error&&<div style={{ color:"#ef4444",fontSize:12,marginTop:8 }}>{error}</div>}
-    <button onClick={()=>setStep(1)} disabled={!name||!phone} style={{ ...S.btn,width:"100%",padding:15,background:(name&&phone)?T.accent:T.cardAlt,color:(name&&phone)?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>Далі</button>
+    <button onClick={doSendOtp} disabled={!name||!phone||!city||loading} style={{ ...S.btn,width:"100%",padding:15,background:(name&&phone&&city)?T.accent:T.cardAlt,color:(name&&phone&&city)?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>{loading?"Зачекайте...":"Далі"}</button>
   </div>;
-  if(step===1) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
+
+  // Step 2: Open Telegram
+  if(step===2) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24,textAlign:"center" }}>
     <BackBtn onClick={()=>setStep(0)}/>
-    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Місто</h2>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Отримайте код</h2>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 2 з 3</p>
-    <Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Ваше місто"/>
-    <div style={{ display:"flex",flexWrap:"wrap",gap:8,marginTop:14 }}>
-      {["Київ","Харків","Одеса","Дніпро","Львів","Бориспіль","Бровари","Черкаси","Полтава"].map(c=>
-        <button key={c} onClick={()=>setCity(c)} style={{ ...S.btn,padding:"7px 12px",borderRadius:10,fontSize:11,background:city===c?T.accent:T.cardAlt,color:city===c?"#fff":T.textSec }}>{c}</button>
-      )}
-    </div>
-    <div style={{ flex:1 }}/>
-    {error&&<div style={{ color:"#ef4444",fontSize:12,marginTop:8 }}>{error}</div>}
-    <button onClick={doSendOtp} disabled={!city||loading} style={{ ...S.btn,width:"100%",padding:15,background:city?T.accent:T.cardAlt,color:city?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>{loading?"Надсилаємо...":"Далі"}</button>
+    <div style={{ fontSize:60,margin:"20px 0" }}>✈️</div>
+    <p style={{ fontSize:13,color:T.textSec,marginBottom:20,lineHeight:1.6 }}>Натисніть кнопку нижче — відкриється Telegram.<br/>Натисніть <b>Start</b> — бот надішле код.</p>
+    <button onClick={openTelegram} style={{ ...S.btn,width:"100%",padding:15,background:"#0088cc",color:"#fff",borderRadius:14,fontSize:15,marginBottom:14 }}>✈️ Відкрити Telegram</button>
+    <div style={{ fontSize:11,color:T.textMuted,lineHeight:1.6,marginBottom:20 }}>1. Натисніть Start в боті<br/>2. Бот надішле 6-значний код<br/>3. Введіть код на наступному кроці</div>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8 }}>{error}</div>}
+    <button onClick={()=>setStep(3)} style={{ ...S.btn,width:"100%",padding:15,background:T.accent,color:"#fff",borderRadius:14,fontSize:15 }}>Я отримав код</button>
   </div>;
+
+  // Step 3: Enter code
   return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
-    <BackBtn onClick={()=>setStep(1)}/>
-    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Підтвердження</h2>
-    <p style={{ fontSize:13,color:T.textSec,marginBottom:16 }}>Крок 3 з 3 — Код підтвердження</p>
-
-    {tgSent?<div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}>
-      <div style={{ fontSize:24,marginBottom:6 }}>✅</div>
-      <div style={{ fontSize:13,fontWeight:700,color:T.green }}>Код надіслано в Telegram!</div>
-      <div style={{ fontSize:10,color:T.textSec,marginTop:4 }}>Перевірте @spilnokupbot</div>
-    </div>:<div style={{ ...S.card,textAlign:"center",marginBottom:16,padding:16 }}>
-      <div style={{ fontSize:24,marginBottom:8 }}>📱</div>
-      <div style={{ fontSize:13,fontWeight:700,color:T.text,marginBottom:6 }}>Отримайте код через Telegram</div>
-      <div style={{ fontSize:10,color:T.textSec,marginBottom:12 }}>Натисніть кнопку нижче, відкрийте бот і код прийде автоматично</div>
-      <a href={`https://t.me/spilnokupbot?start=${tgToken}`} target="_blank" rel="noopener noreferrer"
-        style={{ ...S.btn,display:"inline-flex",alignItems:"center",gap:8,padding:"12px 24px",borderRadius:12,background:"#0088cc",color:"#fff",fontSize:14,textDecoration:"none" }}>
-        <span style={{fontSize:18}}>✈</span> Отримати код в Telegram
-      </a>
-      <div style={{ fontSize:9,color:T.textMuted,marginTop:10 }}>Після отримання коду поверніться сюди</div>
-    </div>}
-
-    <div style={{ fontSize:12,fontWeight:700,color:T.text,marginBottom:8,textAlign:"center" }}>Введіть 6-значний код</div>
-    <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
+    <BackBtn onClick={()=>setStep(2)}/>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Введіть код</h2>
+    <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 3 з 3</p>
+    <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}>
+      <span style={{ fontSize:16 }}>✈️</span>
+      <span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span>
+    </div>
+    <div style={{ ...S.flex,justifyContent:"center",gap:10,marginBottom:20 }}>
       {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
         style={{ width:42,height:50,textAlign:"center",fontSize:20,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
     </div>
@@ -1349,7 +1350,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [authMode,setAuthMode]=useState("register"); // "register" | "login"
   const [authPhone,setAuthPhone]=useState(""),[authCode,setAuthCode]=useState(""),[authName,setAuthName]=useState(""),[authCity,setAuthCity]=useState("");
   const [authStep,setAuthStep]=useState(0); // register: 0=name+phone, 1=city, 2=otp  |  login: 0=phone, 1=otp
-  const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState(""),[authTgToken,setAuthTgToken]=useState(""),[authTgSent,setAuthTgSent]=useState(false);
+  const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
 
@@ -1372,8 +1373,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     setAuthLoading(true);setAuthError("");
     try{
       const res=await sendOtp(authPhone);
-      if(res.telegramToken) setAuthTgToken(res.telegramToken);
-      if(res.telegram) setAuthTgSent(true);
+      if(res.otp) setAuthCode(res.otp);
       setAuthStep(2);
     }catch(e){setAuthError(e.message);setAuthStep(1);}
     finally{setAuthLoading(false);}
@@ -1469,17 +1469,8 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         </div>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
-        {authTgSent?<div style={{...S.card,background:T.greenLight,textAlign:"center",marginBottom:14}}>
-          <div style={{fontSize:22,marginBottom:4}}>✅</div>
-          <div style={{fontSize:12,fontWeight:700,color:T.green}}>Код надіслано в Telegram!</div>
-        </div>:<div style={{...S.card,textAlign:"center",marginBottom:14,padding:14}}>
-          <div style={{fontSize:22,marginBottom:6}}>📱</div>
-          <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:8}}>Отримайте код в Telegram</div>
-          <a href={`https://t.me/spilnokupbot?start=${authTgToken}`} target="_blank" rel="noopener noreferrer"
-            style={{...S.btn,display:"inline-flex",alignItems:"center",gap:6,padding:"10px 20px",borderRadius:12,background:"#0088cc",color:"#fff",fontSize:13,textDecoration:"none"}}>✈ Отримати код</a>
-        </div>}
-        <div style={{fontSize:11,fontWeight:700,color:T.text,marginBottom:6,textAlign:"center"}}>Введіть код</div>
-        <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:16 }}>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>
+        <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
           {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
             style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
         </div>
@@ -1518,17 +1509,8 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         <button onClick={()=>{setAuthStep(2);doAuthSendOtp();}} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>Далі</button>
       </>:<>
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
-        {authTgSent?<div style={{...S.card,background:T.greenLight,textAlign:"center",marginBottom:14}}>
-          <div style={{fontSize:22,marginBottom:4}}>✅</div>
-          <div style={{fontSize:12,fontWeight:700,color:T.green}}>Код надіслано в Telegram!</div>
-        </div>:<div style={{...S.card,textAlign:"center",marginBottom:14,padding:14}}>
-          <div style={{fontSize:22,marginBottom:6}}>📱</div>
-          <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:8}}>Отримайте код в Telegram</div>
-          <a href={`https://t.me/spilnokupbot?start=${authTgToken}`} target="_blank" rel="noopener noreferrer"
-            style={{...S.btn,display:"inline-flex",alignItems:"center",gap:6,padding:"10px 20px",borderRadius:12,background:"#0088cc",color:"#fff",fontSize:13,textDecoration:"none"}}>✈ Отримати код</a>
-        </div>}
-        <div style={{fontSize:11,fontWeight:700,color:T.text,marginBottom:6,textAlign:"center"}}>Введіть код</div>
-        <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:16 }}>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>
+        <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
           {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
             style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
         </div>

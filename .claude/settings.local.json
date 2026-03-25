@@ -13,7 +13,13 @@
       "Bash(cp SpilnoKup/SpilnoKupApp.swift ios/SpilnoKup/)",
       "Bash(cp SpilnoKup/ContentView.swift ios/SpilnoKup/)",
       "Bash(cp SpilnoKup/Views/*.swift ios/SpilnoKup/Views/)",
-      "Bash(cp SpilnoKup/Assets.xcassets/Contents.json ios/SpilnoKup/Assets.xcassets/)"
+      "Bash(cp SpilnoKup/Assets.xcassets/Contents.json ios/SpilnoKup/Assets.xcassets/)",
+      "Bash(git ls-remote:*)",
+      "Bash(where railway:*)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\)[''''result'''']; print\\(f''''URL: {d[url]}\\\\nPending: {d[pending_update_count]}\\\\nLast error: {d.get\\(last_error_message,none\\)}''''\\)\")"
     ]
   }
 }
