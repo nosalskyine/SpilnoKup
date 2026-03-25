@@ -1540,19 +1540,21 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     </div>
 
     <h3 style={{ color:T.text,fontSize:14,fontWeight:800,marginBottom:10 }}>Історія транзакцій</h3>
-    {walletData?.transactions?.length>0?walletData.transactions.map(t=>{
-      const isIncome=t.type==='PAYMENT_RELEASE';
-      const isHold=t.type==='PAYMENT_HOLD'&&t.description?.startsWith('Очікує');
-      const icon=isIncome?"↓":isHold?"◷":"↑";
-      const color=isIncome?T.green:isHold?T.yellow:T.orange;
-      const sign=isIncome?"+":"−";
-      const date=new Date(t.createdAt);
-      const dateStr=`${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')} · ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
-      return <div key={t.id} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
-        <div style={{width:36,height:36,borderRadius:10,background:color+"18",...S.flex,justifyContent:"center",fontSize:16,fontWeight:900,color}}>{icon}</div>
-        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{t.description||t.type}</div><div style={{fontSize:10,color:T.textSec}}>{dateStr}</div></div>
-        <div style={{fontSize:14,fontWeight:800,color}}>{sign}₴{Number(t.amount)}</div>
-      </div>;
+    {(walletData?.transactions||[]).length>0?(walletData.transactions||[]).map((t,idx)=>{
+      try{
+        const isIncome=t.type==='PAYMENT_RELEASE';
+        const isHold=t.type==='PAYMENT_HOLD'&&(t.description||'').startsWith('Очікує');
+        const icon=isIncome?"↓":isHold?"◷":"↑";
+        const color=isIncome?T.green:isHold?T.yellow:T.orange;
+        const sign=isIncome?"+":"−";
+        const d=t.createdAt?new Date(t.createdAt):new Date();
+        const ds=`${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        return <div key={t.id||idx} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
+          <div style={{width:36,height:36,borderRadius:10,background:color+"18",...S.flex,justifyContent:"center",fontSize:16,fontWeight:900,color}}>{icon}</div>
+          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{t.description||t.type||"Транзакція"}</div><div style={{fontSize:10,color:T.textSec}}>{ds}</div></div>
+          <div style={{fontSize:14,fontWeight:800,color}}>{sign}₴{Number(t.amount)||0}</div>
+        </div>;
+      }catch{return null;}
     }):<div style={{...S.card,textAlign:"center",padding:20}}><div style={{fontSize:12,color:T.textMuted}}>Поки немає транзакцій</div></div>}
 
     <div style={{ ...S.card,marginTop:14 }}>
@@ -1565,7 +1567,14 @@ function WalletPage({ user, setUser, theme, onTheme }) {
 }
 
 // ── App ─────────────────────────────────────────────────────────────────────
-export default function App() {
+import React from "react";
+class ErrorBoundary extends React.Component{
+  constructor(p){super(p);this.state={error:null};}
+  static getDerivedStateFromError(e){return{error:e};}
+  render(){if(this.state.error)return <div style={{padding:20,color:"#ef4444",background:"#111",minHeight:"100vh"}}><h2>Помилка</h2><pre style={{fontSize:10,whiteSpace:"pre-wrap"}}>{this.state.error?.message||"Unknown"}</pre><button onClick={()=>{this.setState({error:null});window.location.reload();}} style={{marginTop:10,padding:"10px 20px",background:"#3d8c5c",color:"#fff",border:"none",borderRadius:10}}>Перезавантажити</button></div>;return this.props.children;}
+}
+
+function AppInner() {
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem("spilnokup_user"));}catch{return null;}});
   const [authStep,setAuthStep]=useState(user?null:"welcome");
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
@@ -1639,3 +1648,5 @@ export default function App() {
     </div>
   </div>;
 }
+
+export default function App(){return <ErrorBoundary><AppInner/></ErrorBoundary>;}
