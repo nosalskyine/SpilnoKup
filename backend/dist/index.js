@@ -20,7 +20,9 @@ const wallet_routes_1 = __importDefault(require("./routes/wallet.routes"));
 const orders_routes_1 = __importDefault(require("./routes/orders.routes"));
 const qr_routes_1 = __importDefault(require("./routes/qr.routes"));
 const chat_routes_1 = __importDefault(require("./routes/chat.routes"));
+const telegram_routes_1 = __importDefault(require("./routes/telegram.routes"));
 const socket_1 = require("./socket");
+const telegram_1 = require("./utils/telegram");
 const app = (0, express_1.default)();
 exports.app = app;
 const httpServer = http_1.default.createServer(app);
@@ -49,6 +51,7 @@ app.use('/api/wallet', wallet_routes_1.default);
 app.use('/api/orders', orders_routes_1.default);
 app.use('/api/qr', qr_routes_1.default);
 app.use('/api/chat', chat_routes_1.default);
+app.use('/api/telegram', telegram_routes_1.default);
 // Health check
 app.get('/health', async (_req, res) => {
     let database = 'connected';
@@ -83,6 +86,11 @@ app.get('/health', async (_req, res) => {
 // Start server
 httpServer.listen(PORT, () => {
     logger_1.logger.info(`Server running on port ${PORT}`);
+    // Setup Telegram webhook
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${PORT}`;
+    if (process.env.TELEGRAM_BOT_TOKEN) {
+        (0, telegram_1.setupTelegramWebhook)(serverUrl);
+    }
 });
 // Graceful shutdown
 async function shutdown() {

@@ -42,6 +42,7 @@ const encryption_1 = require("../utils/encryption");
 const jwt_1 = require("../utils/jwt");
 const logger_1 = require("../utils/logger");
 const crypto_1 = __importDefault(require("crypto"));
+const telegram_1 = require("../utils/telegram");
 const router = (0, express_1.Router)();
 function generateUserDisplayId() {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -81,13 +82,17 @@ router.post('/send-otp', async (req, res) => {
             },
         });
         logger_1.logger.info(`OTP sent to ${phone.slice(0, 6)}****`);
+        // Спробувати відправити через Telegram
+        const sentViaTelegram = await (0, telegram_1.sendOtpViaTelegram)(phone, otp);
         // В development повертаємо код для тестування
         if (process.env.NODE_ENV === 'development') {
-            res.json({ message: 'OTP надіслано', otp });
+            res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram });
             return;
         }
-        // В production тут буде SMS відправка
-        res.json({ message: 'OTP надіслано' });
+        res.json({
+            message: sentViaTelegram ? 'Код надіслано в Telegram' : 'OTP надіслано',
+            telegram: sentViaTelegram,
+        });
     }
     catch (err) {
         logger_1.logger.error('send-otp error:', err);
