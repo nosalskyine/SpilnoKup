@@ -146,7 +146,7 @@ const INIT_DEALS = [
   { id:15,cat:"handmade",seller:"Свічкова Мануфактура",avatar:"🕯",city:"Харків",rating:4.7,deals:63,title:"Набір ароматичних свічок (4 шт)",unit:"набір",retail:560,group:380,min:1,max:5,joined:13,needed:18,days:4,desc:"Соєвий віск. Лаванда, ваніль, кедр, цитрус.",tags:["Соєвий віск","Натуральні","В коробці"],hot:false },
 ];
 
-const SELLER = { name:"Ферма Петренків",avatar:"🌾",fop:"ФОП Петренко Василь Іванович",ipn:"3456789012",iban:"UA213223130000026007233566001",bank:"АТ КБ «ПриватБанк»",group:"2 група",taxRate:"₴1,600/міс",city:"Бориспіль",rating:4.9 };
+const SELLER = { fop:"—",ipn:"—",iban:"—",bank:"—" };
 const TRANSACTIONS = [
   { id:"T1",type:"income",desc:"Курчата × 4кг (Олена В.)",amount:272,date:"24.03 · 14:22" },
   { id:"T2",type:"income",desc:"Яйця × 2 лотки (Микола І.)",amount:190,date:"24.03 · 11:05" },
@@ -1329,16 +1329,19 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
 
-  // Load real wallet balance (once on mount + websocket)
-  const walletLoaded=useRef(false);
+  // Load real wallet balance
   useEffect(()=>{
-    if(isGuest||walletLoaded.current) return;
-    walletLoaded.current=true;
-    const load=()=>fetchWallet().then(w=>{setBalance(Number(w.availableBalance));setWalletData(w);}).catch(()=>{});
+    if(isGuest||!isLoggedIn()) return;
+    let active=true;
+    const load=()=>{
+      fetchWallet().then(w=>{
+        if(active&&w){setBalance(Number(w.availableBalance)||0);setWalletData(w);}
+      }).catch(()=>{});
+    };
     load();
     const unsub=onEvent('wallet:update',load);
-    return ()=>unsub();
-  },[]);
+    return ()=>{active=false;unsub();};
+  },[user]);
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
 
   const doAuthSendOtp=async()=>{
@@ -1376,6 +1379,8 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     setPayDone(true);
     setTimeout(()=>{setShowPay(null);setPayMethod(null);setPayAmount("");setPayDone(false);},2000);
   };
+
+  if(!S||!T) return <div style={{padding:20,color:"#fff"}}>Завантаження...</div>;
 
   if(showPay) return <div style={S.page}>
     <BackBtn onClick={()=>{setShowPay(null);setPayMethod(null);setPayAmount("");setPayDone(false);}}/>
