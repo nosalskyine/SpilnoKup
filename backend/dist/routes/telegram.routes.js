@@ -92,4 +92,19 @@ router.post('/check', async (req, res) => {
     }
 });
 
+// GET /api/telegram/test-send - test if server can send Telegram messages
+router.get('/test-send', async (req, res) => {
+    try {
+        const testRes = await fetch(`${TG}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: 664869990, text: 'Server test: fetch works!' }),
+        });
+        const data = await testRes.json();
+        res.json({ fetchWorks: true, telegramResponse: data });
+    } catch (err) {
+        res.json({ fetchWorks: false, error: String(err) });
+    }
+});
+
 exports.default = router;
