@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
 import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, joinConversation } from "./socket";
+import jsQR from "jsqr";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -908,7 +909,9 @@ function QRHub() {
   const [scanning,setScanning]=useState(false),[scanned,setScanned]=useState(null),[confirmed,setConfirmed]=useState(false);
   const [manualCode,setManualCode]=useState(""),[verifyError,setVerifyError]=useState(""),[verifying,setVerifying]=useState(false);
   const [sellerOrders,setSellerOrders]=useState([]);
-  const videoRef=useState(null);
+  const videoRef=useRef(null);
+  const canvasRef=useRef(null);
+  const scanInterval=useRef(null);
 
   useEffect(()=>{
     if(!isLoggedIn()) return;
@@ -927,16 +930,33 @@ function QRHub() {
     finally{setVerifying(false);}
   };
 
-  // Camera scanner
+  // Camera scanner with jsQR
   const startCamera=async()=>{
-    setScanning(true);
+    setScanning(true);setVerifyError("");
     try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
-      if(videoRef[0]) videoRef[0].srcObject=stream;
-    }catch{}
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:640},height:{ideal:480}}});
+      if(videoRef.current){videoRef.current.srcObject=stream;videoRef.current.play();}
+      // Start scanning frames
+      scanInterval.current=setInterval(()=>{
+        if(!videoRef.current||!canvasRef.current) return;
+        const video=videoRef.current;
+        const canvas=canvasRef.current;
+        if(video.readyState!==video.HAVE_ENOUGH_DATA) return;
+        canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:"dontInvert"});
+        if(code&&code.data){
+          stopCamera();
+          doVerify(code.data);
+        }
+      },300);
+    }catch(e){setVerifyError("Камера недоступна: "+e.message);setScanning(false);}
   };
   const stopCamera=()=>{
-    if(videoRef[0]?.srcObject){videoRef[0].srcObject.getTracks().forEach(t=>t.stop());videoRef[0].srcObject=null;}
+    if(scanInterval.current){clearInterval(scanInterval.current);scanInterval.current=null;}
+    if(videoRef.current?.srcObject){videoRef.current.srcObject.getTracks().forEach(t=>t.stop());videoRef.current.srcObject=null;}
     setScanning(false);
   };
 
@@ -958,8 +978,9 @@ function QRHub() {
     <BackBtn onClick={stopCamera}/>
     <div style={{ ...S.card,textAlign:"center",padding:16 }}>
       <div style={{ fontSize:14,fontWeight:800,color:T.text,marginBottom:10 }}>Наведіть камеру на QR код</div>
-      <div style={{ width:"100%",height:240,background:"#000",borderRadius:T.radius,marginBottom:14,overflow:"hidden",position:"relative" }}>
-        <video ref={el=>videoRef[0]=el} autoPlay playsInline style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+      <canvas ref={canvasRef} style={{display:"none"}}/>
+      <div style={{ width:"100%",height:280,background:"#000",borderRadius:T.radius,marginBottom:14,overflow:"hidden",position:"relative" }}>
+        <video ref={videoRef} autoPlay playsInline muted style={{width:"100%",height:"100%",objectFit:"cover"}}/>
         <div style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:160,height:160,border:`3px solid ${T.accent}`,borderRadius:14 }}/>
       </div>
       <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:8}}>Або введіть код вручну</div>
@@ -1115,6 +1136,60 @@ function ChatPage() {
   </div>;
 }
 
+function MyOrderCard({ order: o, onRefresh }) {
+  const [showQR,setShowQR]=useState(false);
+  const [qrToken,setQrToken]=useState(o.qrToken?.token||null);
+  const [qrLoading,setQrLoading]=useState(false);
+  const [copied,setCopied]=useState(false);
+  const d=o.deal;
+  const p=d?Math.min(100,Math.round((d.joined/d.needed)*100)):0;
+
+  const loadQR=async()=>{
+    if(qrToken){setShowQR(!showQR);return;}
+    setQrLoading(true);
+    try{const res=await generateQR(o.id);setQrToken(res.token);setShowQR(true);}catch(e){alert(e.message);}
+    finally{setQrLoading(false);}
+  };
+
+  // Listen for completion
+  useEffect(()=>{
+    const unsub=onEvent('order:completed',(data)=>{
+      if(data.orderId===o.id&&onRefresh) onRefresh();
+    });
+    return ()=>unsub();
+  },[o.id]);
+
+  const shortCode=qrToken?qrToken.slice(0,12).toUpperCase():"";
+
+  return <div style={{...S.card}}>
+    <div style={{...S.flex,gap:10,marginBottom:8}}>
+      <Ic emoji="📦" size={36}/>
+      <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{d?.seller?.name||""} · {o.quantity} {d?.unit||"шт"}</div></div>
+      <div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{Number(o.amount)}</div>
+    </div>
+    <ProgressBar value={p} color={pCol(p)} h={5}/>
+    <div style={{...S.flex,justifyContent:"space-between",marginTop:6}}>
+      <span style={{fontSize:10,color:T.textSec}}>{d?.joined||0}/{d?.needed||0} учасників</span>
+      <Badge bg="#fef9c3" color="#a16207">{p>=100?"Група зібрана!":"Чекає на групу"}</Badge>
+    </div>
+
+    {showQR&&qrToken&&<div style={{marginTop:12,textAlign:"center",background:T.greenLight,borderRadius:12,padding:16}}>
+      <div style={{background:"#fff",borderRadius:12,padding:12,display:"inline-block",marginBottom:10}}><QRCode value={qrToken} size={160}/></div>
+      <div style={{...S.flex,justifyContent:"center",gap:6,marginBottom:4}}>
+        <span style={{fontSize:12,fontWeight:900,color:T.text,letterSpacing:1}}>{shortCode}</span>
+        <button onClick={()=>{navigator.clipboard.writeText(qrToken);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{...S.btn,background:"transparent",color:copied?T.green:T.textMuted,padding:2}}>{copied?I.check:I.copy}</button>
+      </div>
+      <div style={{fontSize:9,color:T.textMuted}}>Покажіть продавцю або надішліть код</div>
+      <button onClick={()=>{const t=`Spil: ${d?.title} — ${qrToken}`;if(navigator.share)navigator.share({title:"Spil QR",text:t});else{navigator.clipboard.writeText(qrToken);alert("Код скопійовано!");}}}
+        style={{...S.btn,marginTop:8,padding:"8px 16px",borderRadius:10,background:T.cardAlt,color:T.text,fontSize:10,...S.flex,gap:4,justifyContent:"center"}}>{I.share} Надіслати код</button>
+    </div>}
+
+    <button onClick={loadQR} disabled={qrLoading} style={{...S.btn,width:"100%",marginTop:10,padding:12,borderRadius:10,background:showQR?T.cardAlt:T.accent,color:showQR?T.text:"#fff",fontSize:12}}>
+      {qrLoading?"Завантаження...":(showQR?"Сховати QR":"Показати QR код")}
+    </button>
+  </div>;
+}
+
 const dashCache={data:null,loaded:false};
 function SellerDashboard({ deals, joined, onOpen, onBuy }) {
   const [subTab,setSubTab]=useState("biz");
@@ -1170,24 +1245,7 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
       {myOrders.length===0?<div style={{textAlign:"center",padding:50}}><div style={{fontSize:44}}>🛒</div><div style={{color:T.textMuted,marginTop:10,fontSize:12}}>Ще нічого не купували</div><div style={{color:T.textMuted,fontSize:10,marginTop:4}}>Долучіться до покупки в Маркеті</div></div>:
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
         {myPaid.length>0&&<><h3 style={{fontSize:13,fontWeight:800,color:T.text}}>Очікують ({myPaid.length})</h3>
-        {myPaid.map(o=>{const d=o.deal;const p=d?Math.min(100,Math.round((d.joined/d.needed)*100)):0;
-          return <div key={o.id} style={{...S.card}}>
-            <div style={{...S.flex,gap:10,marginBottom:8}}>
-              <Ic emoji="📦" size={36}/>
-              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{d?.seller?.name||""} · {o.quantity} {d?.unit||"шт"}</div></div>
-              <div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{Number(o.amount)}</div>
-            </div>
-            <ProgressBar value={p} color={pCol(p)} h={5}/>
-            <div style={{...S.flex,justifyContent:"space-between",marginTop:6}}>
-              <span style={{fontSize:10,color:T.textSec}}>{d?.joined||0}/{d?.needed||0} учасників · {p}%</span>
-              <Badge bg="#fef9c3" color="#a16207">{p>=100?"Група зібрана!":"Чекає на групу"}</Badge>
-            </div>
-            {o.qrToken&&!o.qrToken.isUsed&&<div style={{...S.flex,gap:8,marginTop:8}}>
-              <div style={{flex:1,background:T.greenLight,borderRadius:8,padding:8,textAlign:"center"}}><div style={{fontSize:9,color:T.green}}>QR код</div><div style={{fontSize:11,fontWeight:900,color:T.text,letterSpacing:1}}>{o.qrToken.token.slice(0,12).toUpperCase()}</div></div>
-            </div>}
-            <button onClick={async()=>{try{const qr=await generateQR(o.id);alert("QR код: "+qr.token.slice(0,12).toUpperCase());}catch(e){alert(e.message);}}} style={{...S.btn,width:"100%",marginTop:8,padding:10,borderRadius:10,background:T.accent,color:"#fff",fontSize:11}}>Показати QR код</button>
-          </div>;
-        })}</>}
+        {myPaid.map(o=><MyOrderCard key={o.id} order={o} onRefresh={loadAll}/>)}</>}
 
         {myDone.length>0&&<><h3 style={{fontSize:13,fontWeight:800,color:T.text,marginTop:8}}>Отримані ({myDone.length})</h3>
         {myDone.map(o=><div key={o.id} style={{...S.card,opacity:.6}}>
