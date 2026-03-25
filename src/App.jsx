@@ -319,8 +319,8 @@ function RegisterScreen({ onDone }) {
       <span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span>
     </div>
     <div style={{ ...S.flex,justifyContent:"center",gap:10,marginBottom:20 }}>
-      {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
-        style={{ width:42,height:50,textAlign:"center",fontSize:20,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
+      {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} inputMode="numeric" pattern="[0-9]*" value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(v&&i<5)e.target.nextSibling?.focus();}} onKeyDown={e=>{if(e.key==="Backspace"&&!code[i]&&i>0){const nc=code.split("");nc[i-1]="";setCode(nc.join(""));e.target.previousSibling?.focus();}}}
+        style={{ width:46,height:54,textAlign:"center",fontSize:24,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
     </div>
     {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{error}</div>}
     <button onClick={doVerify} disabled={code.length<6||loading}
@@ -1477,8 +1477,8 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
         <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><span style={{fontSize:16}}>✈️</span><span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span></div>
         <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
-          {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
-            style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
+          {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} inputMode="numeric" pattern="[0-9]*" value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(v&&i<5)e.target.nextSibling?.focus();}} onKeyDown={e=>{if(e.key==="Backspace"&&!authCode[i]&&i>0){const nc=authCode.split("");nc[i-1]="";setAuthCode(nc.join(""));e.target.previousSibling?.focus();}}}
+            style={{ width:46,height:54,textAlign:"center",fontSize:24,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
         </div>
         {authError&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{authError}</div>}
         <button onClick={doAuthVerify} disabled={authCode.length<6||authLoading}
@@ -1524,8 +1524,8 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
         <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16,...S.flex,justifyContent:"center",gap:6 }}><span style={{fontSize:16}}>✈️</span><span style={{ fontSize:12,color:T.green }}>Код надіслано в Telegram</span></div>
         <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
-          {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
-            style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
+          {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} inputMode="numeric" pattern="[0-9]*" value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(v&&i<5)e.target.nextSibling?.focus();}} onKeyDown={e=>{if(e.key==="Backspace"&&!authCode[i]&&i>0){const nc=authCode.split("");nc[i-1]="";setAuthCode(nc.join(""));e.target.previousSibling?.focus();}}}
+            style={{ width:46,height:54,textAlign:"center",fontSize:24,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
         </div>
         {authError&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{authError}</div>}
         <button onClick={doAuthVerify} disabled={authCode.length<6||authLoading}
