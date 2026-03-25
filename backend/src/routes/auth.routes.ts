@@ -43,7 +43,7 @@ router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    if (recentOtps >= 3) {
+    if (recentOtps >= 20) {
       res.status(429).json({ error: 'Забагато спроб. Зачекайте 10 хвилин' });
       return;
     }

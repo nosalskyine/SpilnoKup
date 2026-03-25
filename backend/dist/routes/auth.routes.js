@@ -52,13 +52,26 @@ function generateUserDisplayId() {
     return `${a}${b}-${num}`;
 }
 // POST /api/auth/send-otp
+function normalizePhone(raw) {
+    let p = raw.replace(/[\s\-\(\)]/g, '');
+    if (p.startsWith('8') && p.length === 10)
+        p = '+380' + p.slice(1);
+    if (p.startsWith('0') && p.length === 10)
+        p = '+380' + p.slice(1);
+    if (p.startsWith('380'))
+        p = '+' + p;
+    if (!p.startsWith('+'))
+        p = '+' + p;
+    return p;
+}
 router.post('/send-otp', async (req, res) => {
     try {
-        const { phone } = req.body;
-        if (!phone || typeof phone !== 'string') {
+        const rawPhone = req.body.phone;
+        if (!rawPhone || typeof rawPhone !== 'string') {
             res.status(400).json({ error: 'Телефон обов\'язковий' });
             return;
         }
+        const phone = normalizePhone(rawPhone);
         // Перевірка rate limit: максимум 3 OTP за 10 хвилин
         const recentOtps = await prisma_1.prisma.phoneVerification.count({
             where: {
@@ -66,7 +79,7 @@ router.post('/send-otp', async (req, res) => {
                 createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
             },
         });
-        if (recentOtps >= 3) {
+        if (recentOtps >= 20) {
             res.status(429).json({ error: 'Забагато спроб. Зачекайте 10 хвилин' });
             return;
         }
@@ -104,11 +117,12 @@ router.post('/send-otp', async (req, res) => {
 // POST /api/auth/verify-otp
 router.post('/verify-otp', async (req, res) => {
     try {
-        const { phone, otp, name, city } = req.body;
-        if (!phone || !otp) {
+        const { phone: rawPhone, otp, name, city } = req.body;
+        if (!rawPhone || !otp) {
             res.status(400).json({ error: 'Телефон і OTP обов\'язкові' });
             return;
         }
+        const phone = normalizePhone(rawPhone);
         const otpHash = crypto_1.default.createHash('sha256').update(otp).digest('hex');
         // Знаходимо найновіший невикористаний OTP
         const verification = await prisma_1.prisma.phoneVerification.findFirst({
