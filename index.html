@@ -7,9 +7,9 @@
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#faf8f5" />
+    <meta name="theme-color" content="#0e1320" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Spil" />
 
     <!-- Icons -->
@@ -30,8 +30,17 @@
     <script type="module" src="/src/main.jsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js');
+        window.addEventListener('load', async () => {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          // Auto-update every 30 seconds
+          setInterval(() => reg.update(), 30000);
+          // When new version found — activate immediately
+          reg.addEventListener('updatefound', () => {
+            const sw = reg.installing;
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'activated') location.reload();
+            });
+          });
         });
       }
     </script>
