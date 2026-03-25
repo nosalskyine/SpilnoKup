@@ -61,7 +61,7 @@ router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
 // POST /api/auth/verify-otp
 router.post('/verify-otp', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, otp, name, city } = req.body;
     if (!phone || !otp) {
       res.status(400).json({ error: 'Телефон і OTP обов\'язкові' });
       return;
@@ -122,6 +122,8 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
         data: {
           phoneEncrypted: encrypt(phone),
           phoneHash,
+          name: name || null,
+          city: city || null,
           isVerified: true,
         },
       });
@@ -132,6 +134,15 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
       });
 
       logger.info(`New user registered: ${user.id}`);
+    } else if (name || city) {
+      // Оновлюємо ім'я/місто якщо передані
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          ...(name && { name }),
+          ...(city && { city }),
+        },
+      });
     }
 
     // Генеруємо токени
@@ -211,6 +222,27 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
     res.json({ accessToken: newAccessToken });
   } catch {
     res.status(401).json({ error: 'Невалідний refresh token' });
+  }
+});
+
+// GET /api/auth/me — Get current user
+router.get('/me', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith('Bearer ')) {
+      res.status(401).json({ error: 'Не авторизовано' });
+      return;
+    }
+    const { verifyAccessToken } = await import('../utils/jwt');
+    const payload = verifyAccessToken(header.split(' ')[1]);
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, name: true, city: true, role: true, avatarUrl: true, isVerified: true },
+    });
+    if (!user) { res.status(404).json({ error: 'Користувач не знайдений' }); return; }
+    res.json(user);
+  } catch {
+    res.status(401).json({ error: 'Невалідний токен' });
   }
 });
 

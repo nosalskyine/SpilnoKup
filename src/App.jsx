@@ -255,8 +255,8 @@ function RegisterScreen({ onDone }) {
   const doVerify=async()=>{
     setLoading(true);setError("");
     try{
-      const data=await verifyOtp(phone,code);
-      onDone({...data.user, name: name || data.user.name, city: city || data.user.city});
+      const data=await verifyOtp(phone,code,name,city);
+      onDone(data.user);
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
   };
@@ -1022,7 +1022,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [payDone,setPayDone]=useState(false);
   const [showAuth,setShowAuth]=useState(false);
   const [authPhone,setAuthPhone]=useState(""),[authCode,setAuthCode]=useState(""),[authName,setAuthName]=useState(""),[authCity,setAuthCity]=useState("");
-  const [authStep,setAuthStep]=useState(0); // 0=phone, 1=city, 2=otp
+  const [authStep,setAuthStep]=useState(0); // 0=phone, 1=city, 2=sending, 3=otp
   const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
@@ -1034,14 +1034,14 @@ function WalletPage({ user, setUser, theme, onTheme }) {
       const res=await sendOtp(authPhone);
       if(res.otp) setAuthCode(res.otp);
       setAuthStep(2);
-    }catch(e){setAuthError(e.message);}
+    }catch(e){setAuthError(e.message);setAuthStep(1);}
     finally{setAuthLoading(false);}
   };
   const doAuthVerify=async()=>{
     setAuthLoading(true);setAuthError("");
     try{
-      const data=await verifyOtp(authPhone,authCode);
-      const u={...data.user,name:authName||data.user.name,city:authCity||data.user.city};
+      const data=await verifyOtp(authPhone,authCode,authName,authCity);
+      const u=data.user;
       localStorage.setItem("spilnokup_user",JSON.stringify(u));
       setUser(u);setShowAuth(false);setAuthStep(0);
     }catch(e){setAuthError(e.message);}
@@ -1127,7 +1127,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         )}
       </div>
       {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
-      <button onClick={doAuthSendOtp} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>{authLoading?"Надсилаємо...":"Отримати код"}</button>
+      <button onClick={()=>{setAuthStep(2);doAuthSendOtp();}} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>Далі</button>
     </>:<>
       <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
       <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>

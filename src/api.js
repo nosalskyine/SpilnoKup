@@ -33,8 +33,8 @@ export async function sendOtp(phone) {
   return request('/auth/send-otp', { method: 'POST', body: JSON.stringify({ phone }) });
 }
 
-export async function verifyOtp(phone, otp) {
-  const data = await request('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ phone, otp }) });
+export async function verifyOtp(phone, otp, name, city) {
+  const data = await request('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ phone, otp, name, city }) });
   if (data.accessToken) {
     localStorage.setItem('spilnokup_token', data.accessToken);
     localStorage.setItem('spilnokup_refresh', data.refreshToken);
