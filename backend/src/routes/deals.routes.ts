@@ -149,7 +149,9 @@ router.post('/', authenticate, requireRole('SELLER', 'ADMIN'), async (req: Reque
       return;
     }
 
-    if (groupPrice >= retailPrice) {
+    const rp = Number(retailPrice);
+    const gp = Number(groupPrice);
+    if (gp >= rp) {
       res.status(400).json({ error: 'Групова ціна має бути менше роздрібної' });
       return;
     }
@@ -160,12 +162,12 @@ router.post('/', authenticate, requireRole('SELLER', 'ADMIN'), async (req: Reque
         title,
         description: description || null,
         category,
-        retailPrice,
-        groupPrice,
+        retailPrice: rp,
+        groupPrice: gp,
         unit,
-        minQty: minQty || 1,
-        maxQty: maxQty || 100,
-        needed,
+        minQty: parseInt(minQty) || 1,
+        maxQty: parseInt(maxQty) || 100,
+        needed: parseInt(needed),
         deadline: new Date(deadline),
         images: images || [],
         tags: tags || [],
@@ -179,9 +181,9 @@ router.post('/', authenticate, requireRole('SELLER', 'ADMIN'), async (req: Reque
 
     logger.info(`Deal created: ${deal.id} by ${req.user!.userId}`);
     res.status(201).json(deal);
-  } catch (err) {
-    logger.error('POST /deals error:', err);
-    res.status(500).json({ error: 'Помилка сервера' });
+  } catch (err: any) {
+    logger.error('POST /deals error:', err?.message || err);
+    res.status(500).json({ error: err?.message || 'Помилка сервера' });
   }
 });
 
