@@ -6,7 +6,7 @@ exports.sendOtpViaTelegram = sendOtpViaTelegram;
 exports.processTelegramUpdate = processTelegramUpdate;
 exports.setupTelegramWebhook = setupTelegramWebhook;
 const logger_1 = require("./logger");
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
 // In-memory store for phone -> chatId mapping
 // In production, use the database
 const phoneChats = new Map();
@@ -18,10 +18,6 @@ function getChatId(phone) {
     return phoneChats.get(phone.replace(/\D/g, ''));
 }
 async function sendOtpViaTelegram(phone, otp) {
-    if (!BOT_TOKEN) {
-        logger_1.logger.warn('TELEGRAM_BOT_TOKEN not set, skipping Telegram OTP');
-        return false;
-    }
     const chatId = getChatId(phone);
     if (!chatId) {
         logger_1.logger.warn(`No Telegram chat_id for phone ***${phone.slice(-4)}`);
@@ -79,8 +75,6 @@ function processTelegramUpdate(update) {
     }
 }
 async function sendTelegramMessage(chatId, text) {
-    if (!BOT_TOKEN)
-        return;
     try {
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
@@ -94,10 +88,6 @@ async function sendTelegramMessage(chatId, text) {
 }
 // Setup webhook for Telegram
 async function setupTelegramWebhook(serverUrl) {
-    if (!BOT_TOKEN) {
-        logger_1.logger.warn('TELEGRAM_BOT_TOKEN not set, skipping webhook setup');
-        return;
-    }
     const webhookUrl = `${serverUrl}/api/telegram/webhook`;
     try {
         const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
