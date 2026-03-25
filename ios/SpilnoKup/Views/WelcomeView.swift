@@ -309,7 +309,8 @@ struct RegisterView: View {
         }
 
         if step == 1 {
-            step = 2
+            // Call /check to process Telegram updates and send code
+            checkTelegram()
             return
         }
 
@@ -334,6 +335,24 @@ struct RegisterView: View {
                 await MainActor.run {
                     loading = false
                     self.error = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    func checkTelegram() {
+        loading = true
+        Task {
+            do {
+                let codeSent = try await APIService.shared.checkTelegram(telegramToken: telegramToken)
+                await MainActor.run {
+                    loading = false
+                    step = 2
+                }
+            } catch {
+                await MainActor.run {
+                    loading = false
+                    step = 2 // Go to code step anyway
                 }
             }
         }

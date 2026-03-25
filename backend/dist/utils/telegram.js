@@ -81,6 +81,7 @@ function processTelegramUpdate(update) {
             if (session) {
                 saveChatId(session.phone, chatId);
                 sendTelegramMessage(chatId, `Your Spil code: ${session.otp}\n\nEnter this code in the app.`);
+                session.sent = true;
                 logger_1.logger.info(`Auth token ${token} used, code sent to ${chatId}`);
             } else {
                 sendTelegramMessage(chatId, `Session expired. Go back to the app and try again.`);
