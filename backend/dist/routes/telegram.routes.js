@@ -19,39 +19,99 @@ router.post('/webhook', (req, res) => {
     }
 });
 
-// POST /api/telegram/check - iOS calls this after user presses Start
-// Fetches latest Telegram updates, processes them, sends code if token matched
+// POST /api/telegram/check
+// iOS calls this after user presses Start in Telegram
+// Fetches new messages, finds /start with token, sends code
 router.post('/check', async (req, res) => {
     try {
         const { telegramToken } = req.body;
+        if (!telegramToken) {
+            res.json({ ok: false, message: 'No token' });
+            return;
+        }
 
-        // Fetch latest updates from Telegram
-        const updatesRes = await fetch(`${TG}/getUpdates?limit=20&timeout=0`);
+        const session = (0, telegram_1.getAuthSession)(telegramToken);
+        if (!session) {
+            res.json({ ok: false, message: 'Session expired' });
+            return;
+        }
+
+        // If code already sent
+        if (session.sent) {
+            res.json({ ok: true, codeSent: true });
+            return;
+        }
+
+        // Fetch latest updates directly from Telegram
+        // First delete webhook to allow getUpdates
+        await fetch(`${TG}/deleteWebhook`);
+
+        const updatesRes = await fetch(`${TG}/getUpdates?limit=50&timeout=0`);
         const updatesData = await updatesRes.json();
 
+        let found = false;
+        let maxId = 0;
+
         if (updatesData.ok && updatesData.result.length > 0) {
-            let maxId = 0;
             for (const update of updatesData.result) {
                 if (update.update_id > maxId) maxId = update.update_id;
-                (0, telegram_1.processTelegramUpdate)(update);
+
+                const msg = update.message;
+                if (!msg?.text) continue;
+
+                const text = msg.text.trim();
+                if (text.startsWith('/start')) {
+                    const parts = text.split(' ');
+                    const token = parts[1];
+
+                    if (token === telegramToken) {
+                        const chatId = msg.chat.id;
+                        // Save phone -> chatId mapping
+                        (0, telegram_1.saveChatId)(session.phone, chatId);
+                        // Send the code
+                        await fetch(`${TG}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: `Your Spil code: ${session.otp}\n\nEnter this code in the app.`
+                            }),
+                        });
+                        session.sent = true;
+                        found = true;
+                        logger_1.logger.info(`Code sent to chat ${chatId} for token ${token}`);
+                    }
+
+                    // Also process other /start commands
+                    if (token && token !== telegramToken) {
+                        const otherSession = (0, telegram_1.getAuthSession)(token);
+                        if (otherSession && !otherSession.sent) {
+                            const chatId = msg.chat.id;
+                            (0, telegram_1.saveChatId)(otherSession.phone, chatId);
+                            await fetch(`${TG}/sendMessage`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    chat_id: chatId,
+                                    text: `Your Spil code: ${otherSession.otp}\n\nEnter this code in the app.`
+                                }),
+                            });
+                            otherSession.sent = true;
+                        }
+                    }
+                }
             }
-            // Mark as read
-            await fetch(`${TG}/getUpdates?offset=${maxId + 1}&limit=1&timeout=0`);
+            // Mark updates as read
+            if (maxId > 0) {
+                await fetch(`${TG}/getUpdates?offset=${maxId + 1}&limit=1&timeout=0`);
+            }
         }
 
-        // Check if token was used (code was sent)
-        const session = (0, telegram_1.getAuthSession)(telegramToken);
-        if (session && session.sent) {
-            res.json({ ok: true, codeSent: true });
-        } else if (session) {
-            res.json({ ok: true, codeSent: false, message: 'Press Start in Telegram bot' });
-        } else {
-            res.json({ ok: false, message: 'Session not found' });
-        }
+        res.json({ ok: true, codeSent: found });
     }
     catch (err) {
         logger_1.logger.error('Check error:', err);
-        res.status(500).json({ ok: false });
+        res.status(500).json({ ok: false, error: String(err) });
     }
 });
 

@@ -125,13 +125,11 @@ async function startPolling() {
 }
 
 async function setupTelegramWebhook(serverUrl) {
-    // Delete webhook and use polling instead - more reliable
+    // No webhook, no polling - /check endpoint handles everything on-demand
     try {
         await fetch(`${TG}/deleteWebhook`);
-        logger_1.logger.info('Webhook deleted, switching to polling');
-        startPolling();
+        logger_1.logger.info('Telegram: webhook deleted, using on-demand /check');
     } catch (err) {
         logger_1.logger.error('Setup error:', err);
-        startPolling();
     }
 }
