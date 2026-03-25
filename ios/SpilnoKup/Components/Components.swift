@@ -171,8 +171,17 @@ func categoryGradient(for cat: DealCategory) -> LinearGradient {
     case .veggies: colors = [Color(hex: "102a15"), Color(hex: "081a0c")]
     case .dairy: colors = [Color(hex: "1a2030"), Color(hex: "101828")]
     case .food: colors = [Color(hex: "2a1a10"), Color(hex: "1a1008")]
+    case .bakery: colors = [Color(hex: "2a1a10"), Color(hex: "1a1008")]
+    case .drinks: colors = [Color(hex: "1a1510"), Color(hex: "100d08")]
+    case .sport: colors = [Color(hex: "102020"), Color(hex: "081418")]
+    case .electronics: colors = [Color(hex: "101a2a"), Color(hex: "080e1a")]
+    case .services: colors = [Color(hex: "1a1a20"), Color(hex: "101018")]
+    case .clothing: colors = [Color(hex: "201a20"), Color(hex: "141018")]
     case .handmade: colors = [Color(hex: "201a2a"), Color(hex: "14101a")]
+    case .beauty: colors = [Color(hex: "2a1020"), Color(hex: "1a0810")]
+    case .home: colors = [Color(hex: "1a2020"), Color(hex: "101414")]
     case .cafe: colors = [Color(hex: "1a1510"), Color(hex: "100d08")]
+    case .other: colors = [Color(hex: "1a1a1a"), Color(hex: "101010")]
     case .all: colors = [Color(hex: "151c2c"), Color(hex: "0e1320")]
     }
     return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
