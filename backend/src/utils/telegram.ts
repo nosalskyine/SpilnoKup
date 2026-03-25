@@ -1,6 +1,6 @@
 import { logger } from './logger';
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
+const BOT_TOKEN = "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
 const SERVER_URL = process.env.SERVER_URL || "https://iscup-production-25c2.up.railway.app";
 
 // In-memory stores
