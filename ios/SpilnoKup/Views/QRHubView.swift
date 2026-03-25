@@ -41,6 +41,15 @@ struct QRHubView: View {
                             }
                         }
                     }
+                        // Map
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Карта точок видачі")
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundColor(state.theme.text)
+                            VinnytsiaMapView(height: 160, label: "Вінниця, центр")
+                        }
+                        .padding(.horizontal)
+                    }
                     .padding(.top, 8)
                     .padding(.bottom, 20)
                 }

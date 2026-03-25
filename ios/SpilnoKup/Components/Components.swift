@@ -1,4 +1,5 @@
 import SwiftUI
+import MapKit
 
 // MARK: - Badge
 
@@ -93,6 +94,57 @@ struct ThemedTextField: View {
                 .stroke(state.theme.border, lineWidth: 1)
         )
     }
+}
+
+// MARK: - Vinnytsia Map
+
+struct VinnytsiaMapView: View {
+    var height: CGFloat = 200
+    var showShops: Bool = true
+    var label: String? = nil
+
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 49.2328, longitude: 28.4687),
+        span: MKCoordinateSpan(latitudeDelta: 0.024, longitudeDelta: 0.04)
+    )
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            Map(coordinateRegion: $region, annotationItems: showShops ? shopAnnotations : []) { shop in
+                MapAnnotation(coordinate: shop.coordinate) {
+                    Circle()
+                        .fill(Color(hex: "3068b8"))
+                        .frame(width: 10, height: 10)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        .shadow(radius: 2)
+                }
+            }
+            .frame(height: height)
+            .cornerRadius(12)
+            .allowsHitTesting(false)
+
+            if let label = label {
+                Text(label)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(6)
+                    .padding(6)
+            }
+        }
+    }
+
+    var shopAnnotations: [ShopAnnotation] {
+        SampleData.shops.map { ShopAnnotation(name: $0.name, coordinate: CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lng)) }
+    }
+}
+
+struct ShopAnnotation: Identifiable {
+    let id = UUID()
+    let name: String
+    let coordinate: CLLocationCoordinate2D
 }
 
 // MARK: - Price Color
