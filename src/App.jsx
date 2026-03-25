@@ -421,7 +421,7 @@ function HotSlider({ deals, onOpen }) {
   </div>;
 }
 
-function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
+function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme }) {
   const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all"),[discF,setDiscF]=useState("all"),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   const activeFilters=[cityF!=="all",priceF!=="all",discF!=="all",ratingF!=="all",daysF!=="all"].filter(Boolean).length;
@@ -448,6 +448,9 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
           <div style={{ fontSize:22,fontWeight:900,color:T.text }}>СпільноКуп</div>
           <div style={{ fontSize:11,color:T.green }}>{user?`${user.name}, вітаємо!`:"Купуй разом — плати менше"}</div>
         </div>
+        <button onClick={()=>onTheme(theme==="light"?"ocean":"light")} style={{ ...S.btn,width:40,height:40,borderRadius:12,background:T.cardAlt,color:T.text,fontSize:20,...S.flex,justifyContent:"center" }}>
+          {theme==="light"?"☀️":"🌙"}
+        </button>
       </div>
       <HowItWorks/>
     </div>
@@ -1101,7 +1104,7 @@ export default function App() {
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={d=>{setDeals(prev=>[d,...prev]);setPage(null);}}/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")}/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme}/>;
       case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
       case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen}/>;
