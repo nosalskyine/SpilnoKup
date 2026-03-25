@@ -82,16 +82,16 @@ router.post('/send-otp', async (req, res) => {
             },
         });
         logger_1.logger.info(`OTP sent to ${phone.slice(0, 6)}****`);
-        // Спробувати відправити через Telegram
+        const telegramToken = telegram_1.createAuthSession ? (0, telegram_1.createAuthSession)(phone, otp) : '';
         const sentViaTelegram = await (0, telegram_1.sendOtpViaTelegram)(phone, otp);
-        // В development повертаємо код для тестування
         if (process.env.NODE_ENV === 'development') {
-            res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram });
+            res.json({ message: 'OTP надіслано', otp, telegram: sentViaTelegram, telegramToken });
             return;
         }
         res.json({
             message: sentViaTelegram ? 'Код надіслано в Telegram' : 'OTP надіслано',
             telegram: sentViaTelegram,
+            telegramToken,
         });
     }
     catch (err) {
