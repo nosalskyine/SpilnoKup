@@ -23,6 +23,18 @@ class APIService {
         return try JSONDecoder().decode(SendOtpResponse.self, from: data)
     }
 
+    // MARK: - Check Telegram (fetches updates and processes /start)
+
+    func checkTelegram(telegramToken: String) async throws -> Bool {
+        let body: [String: Any] = ["telegramToken": telegramToken]
+        let data = try await request(path: "/telegram/check", method: "POST", body: body)
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let codeSent = json["codeSent"] as? Bool {
+            return codeSent
+        }
+        return false
+    }
+
     // MARK: - Verify OTP
 
     func verifyOtp(phone: String, otp: String, name: String, city: String) async throws -> VerifyOtpResponse {
