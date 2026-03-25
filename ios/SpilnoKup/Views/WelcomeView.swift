@@ -28,27 +28,13 @@ struct WelcomeView: View {
 
                 VStack(spacing: 12) {
                     Button(action: { showRegister = true }) {
-                        Text("Створити акаунт")
+                        Text("Увійти через Telegram")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(state.theme.accent)
+                            .background(Color(hex: "0088cc"))
                             .cornerRadius(14)
-                    }
-
-                    Button(action: { showRegister = true }) {
-                        Text("Увійти")
-                            .font(.headline)
-                            .foregroundColor(state.theme.accent)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(state.theme.card)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(state.theme.accent.opacity(0.3), lineWidth: 1)
-                            )
                     }
 
                     Button(action: {
@@ -83,7 +69,7 @@ struct RegisterView: View {
     @State private var code = ""
     @State private var loading = false
     @State private var error = ""
-    @State private var telegramLinked = false
+    @State private var telegramToken = ""
 
     var body: some View {
         ZStack {
@@ -101,7 +87,7 @@ struct RegisterView: View {
                         }
                     }
                     Spacer()
-                    Text("Крок \(step + 1) з 4")
+                    Text("Крок \(step + 1) з 3")
                         .font(.caption)
                         .foregroundColor(state.theme.textSec)
                 }
@@ -110,7 +96,7 @@ struct RegisterView: View {
 
                 // Progress
                 HStack(spacing: 4) {
-                    ForEach(0..<4, id: \.self) { i in
+                    ForEach(0..<3, id: \.self) { i in
                         RoundedRectangle(cornerRadius: 2)
                             .fill(i <= step ? state.theme.accent : state.theme.cardAlt)
                             .frame(height: 4)
@@ -121,10 +107,8 @@ struct RegisterView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         if step == 0 {
-                            stepOneView
+                            stepInfoView
                         } else if step == 1 {
-                            stepTwoView
-                        } else if step == 2 {
                             stepTelegramView
                         } else {
                             stepCodeView
@@ -135,7 +119,6 @@ struct RegisterView: View {
 
                 Spacer()
 
-                // Error
                 if !error.isEmpty {
                     Text(error)
                         .font(.caption)
@@ -165,28 +148,18 @@ struct RegisterView: View {
         }
     }
 
-    // MARK: - Step 1: Name & Phone
+    // MARK: - Step 1: Phone, Name, City
 
-    var stepOneView: some View {
+    var stepInfoView: some View {
         VStack(spacing: 14) {
-            Text("Реєстрація")
+            Text("Вхід / Реєстрація")
                 .font(.title2.bold())
                 .foregroundColor(state.theme.text)
 
-            ThemedTextField(placeholder: "Ваше ім'я", text: $name, icon: "👤")
-            ThemedTextField(placeholder: "+380...", text: $phone, icon: "📱")
-        }
-    }
+            ThemedTextField(placeholder: "📱 +380...", text: $phone)
+            ThemedTextField(placeholder: "👤 Ваше ім'я", text: $name)
 
-    // MARK: - Step 2: City
-
-    var stepTwoView: some View {
-        VStack(spacing: 14) {
-            Text("Ваше місто")
-                .font(.title2.bold())
-                .foregroundColor(state.theme.text)
-
-            ThemedTextField(placeholder: "Введіть місто", text: $city, icon: "📍")
+            ThemedTextField(placeholder: "📍 Місто", text: $city)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                 ForEach(SampleData.cities, id: \.self) { c in
@@ -204,20 +177,19 @@ struct RegisterView: View {
         }
     }
 
-    // MARK: - Step 3: Connect Telegram
+    // MARK: - Step 2: Open Telegram
 
     var stepTelegramView: some View {
         VStack(spacing: 18) {
-            Text("Підключіть Telegram")
+            Text("Отримайте код")
                 .font(.title2.bold())
                 .foregroundColor(state.theme.text)
 
-            Text("Код підтвердження прийде у Telegram.\nНатисніть кнопку нижче щоб підключити бота.")
+            Text("Натисніть кнопку нижче, відкриється Telegram.\nНатисніть Start — бот надішле код.")
                 .font(.subheadline)
                 .foregroundColor(state.theme.textSec)
                 .multilineTextAlignment(.center)
 
-            // Telegram icon
             Text("✈️")
                 .font(.system(size: 60))
                 .padding(.vertical, 8)
@@ -235,24 +207,17 @@ struct RegisterView: View {
                 .cornerRadius(14)
             }
 
-            if telegramLinked {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(state.theme.green)
-                    Text("Telegram відкрито!")
-                        .foregroundColor(state.theme.green)
-                }
-                .font(.subheadline)
+            VStack(spacing: 6) {
+                Text("1. Натисніть Start в боті")
+                Text("2. Бот надішле 6-значний код")
+                Text("3. Введіть код на наступному кроці")
             }
-
-            Text("Після підключення натисніть «Далі» для отримання коду")
-                .font(.caption)
-                .foregroundColor(state.theme.textMuted)
-                .multilineTextAlignment(.center)
+            .font(.caption)
+            .foregroundColor(state.theme.textMuted)
         }
     }
 
-    // MARK: - Step 4: Enter Code
+    // MARK: - Step 3: Enter Code
 
     var stepCodeView: some View {
         VStack(spacing: 14) {
@@ -294,56 +259,61 @@ struct RegisterView: View {
 
     var buttonTitle: String {
         switch step {
-        case 2: return "Далі — отримати код"
-        case 3: return loading ? "Перевіряємо..." : "Підтвердити"
+        case 0: return loading ? "Зачекайте..." : "Далі"
+        case 1: return "Я отримав код"
+        case 2: return loading ? "Перевіряємо..." : "Підтвердити"
         default: return "Далі"
         }
     }
 
     var canProceed: Bool {
         switch step {
-        case 0: return !name.isEmpty && !phone.isEmpty
-        case 1: return !city.isEmpty
-        case 2: return true
-        case 3: return code.count == 6
+        case 0: return !phone.isEmpty && !name.isEmpty && !city.isEmpty
+        case 1: return true
+        case 2: return code.count == 6
         default: return false
         }
     }
 
     func openTelegram() {
-        let api = APIService.shared
+        let botUsername = APIService.shared.botUsername
 
-        // Try native Telegram app first
-        if let url = api.telegramStartURL(phone: phone),
+        // Deep link with auth token
+        if !telegramToken.isEmpty,
+           let url = URL(string: "tg://resolve?domain=\(botUsername)&start=\(telegramToken)"),
            UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
-            telegramLinked = true
             return
         }
 
-        // Fallback to web link
-        if let url = api.telegramWebStartURL(phone: phone) {
+        // Fallback to web
+        if !telegramToken.isEmpty,
+           let url = URL(string: "https://t.me/\(botUsername)?start=\(telegramToken)") {
             UIApplication.shared.open(url)
-            telegramLinked = true
+            return
+        }
+
+        // No token yet - just open bot
+        if let url = URL(string: "https://t.me/\(botUsername)") {
+            UIApplication.shared.open(url)
         }
     }
 
     func nextStep() {
         error = ""
 
-        if step == 0 || step == 1 {
-            step += 1
-            return
-        }
-
-        if step == 2 {
-            // Send OTP via API
+        if step == 0 {
+            // Send OTP and get telegram token
             sendOTP()
             return
         }
 
-        if step == 3 {
-            // Verify code
+        if step == 1 {
+            step = 2
+            return
+        }
+
+        if step == 2 {
             verifyCode()
         }
     }
@@ -355,11 +325,10 @@ struct RegisterView: View {
                 let response = try await APIService.shared.sendOtp(phone: phone)
                 await MainActor.run {
                     loading = false
-                    // In dev mode, auto-fill code
-                    if let otp = response.otp {
-                        code = otp
+                    if let token = response.telegramToken {
+                        telegramToken = token
                     }
-                    step = 3
+                    step = 1
                 }
             } catch {
                 await MainActor.run {
@@ -386,11 +355,10 @@ struct RegisterView: View {
                             phone: phone,
                             city: apiUser.city ?? city
                         )
-                        state.saveUser()
                     } else {
                         state.user = AppUser(name: name, email: "", phone: phone, city: city)
-                        state.saveUser()
                     }
+                    state.saveUser()
                     presentationMode.wrappedValue.dismiss()
                 }
             } catch {

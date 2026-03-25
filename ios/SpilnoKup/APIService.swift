@@ -138,6 +138,7 @@ struct SendOtpResponse: Codable {
     let message: String
     let otp: String?
     let telegram: Bool?
+    let telegramToken: String?
 }
 
 struct VerifyOtpResponse: Codable {
