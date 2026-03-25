@@ -204,6 +204,7 @@ model Deal {
   tags        String[]
   isHot       Boolean    @default(false)
   isNew       Boolean    @default(true)
+  autoConfirm Boolean    @default(false)
   city        String?
   views       Int        @default(0)
   createdAt   DateTime   @default(now())

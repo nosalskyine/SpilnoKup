@@ -319,14 +319,14 @@ function RegisterScreen({ onDone }) {
 
 // ── Картка угоди ────────────────────────────────────────────────────────────
 function DealPhoto({ deal, h=90 }) {
-  const ph=dealPhoto(deal);
-  if(ph && PHOTOS[ph]) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}>{PHOTOS[ph](999,h)}</div>;
-  if(ph && typeof ph==="string" && ph.startsWith("data:")) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}><img src={ph} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>;
-  const cats={farm:["#1a2010","#2a3518"],honey:["#2a200a","#3a3015"],veggies:["#102010","#1a3018"],dairy:["#1a1a20","#2a2a30"],food:["#201510","#302518"],handmade:["#1a1020","#2a1a30"],cafe:["#1a1510","#2a2018"]};
+  // Real photo from DB
+  if(deal.photo && typeof deal.photo==="string" && deal.photo.startsWith("data:")) return <div style={{width:"100%",height:h,borderRadius:8,overflow:"hidden"}}><img src={deal.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>;
+  // Fallback gradient
+  const cats={farm:["#1a2010","#2a3518"],food:["#201510","#302518"],veggies:["#102010","#1a3018"],dairy:["#1a1a20","#2a2a30"],bakery:["#201510","#302518"],drinks:["#1a1510","#2a2018"],sport:["#0a1520","#1a2530"],electronics:["#101520","#1a2530"],services:["#151018","#251828"],clothing:["#1a1020","#2a1a30"],handmade:["#1a1020","#2a1a30"],beauty:["#1a0a18","#2a1a28"],home:["#141410","#242418"],other:["#1a1a20","#2a2a30"]};
   const c=cats[deal.cat]||["#1a1a20","#2a2a30"];
   return <div style={{width:"100%",height:h,borderRadius:8,background:`linear-gradient(135deg,${c[0]},${c[1]})`,...getS().flex,justifyContent:"center",flexDirection:"column",gap:4}}>
-    <span style={{fontSize:28}}>{deal.avatar}</span>
-    <span style={{fontSize:8,color:T.textMuted,fontWeight:600}}>{deal.title.length>20?deal.title.slice(0,20)+"...":deal.title}</span>
+    <span style={{fontSize:28}}>{CATEGORIES.find(ct=>ct.id===deal.cat)?.icon||"📦"}</span>
+    <span style={{fontSize:8,color:T.textMuted,fontWeight:600}}>{deal.title?.length>20?deal.title.slice(0,20)+"...":deal.title}</span>
   </div>;
 }
 
@@ -611,6 +611,7 @@ function CreateDealPage({ onBack, onSave }) {
   const [saving,setSaving]=useState(false),[error,setError]=useState("");
   const [deliveryTags,setDeliveryTags]=useState(["Самовивіз"]);
   const [customTags,setCustomTags]=useState("");
+  const [autoConf,setAutoConf]=useState(false);
 
   const units=["шт","кг","л","набір","пачка","лоток","банка","упаковка"];
   const deliveryOptions=["Самовивіз","Доставка","Нова Пошта","Укрпошта","Meest"];
@@ -709,6 +710,13 @@ function CreateDealPage({ onBack, onSave }) {
       </div>
 
       <div>
+        <div onClick={()=>setAutoConf(!autoConf)} style={{...S.flex,gap:10,cursor:"pointer",padding:"10px 0"}}>
+          <div style={{width:22,height:22,borderRadius:6,border:`2px solid ${autoConf?T.accent:T.border}`,background:autoConf?T.accent:"transparent",...S.flex,justifyContent:"center"}}>
+            {autoConf&&<span style={{color:"#fff",fontSize:14,fontWeight:900}}>✓</span>}
+          </div>
+          <div><div style={{fontSize:12,fontWeight:700,color:T.text}}>Автопідтвердження видачі</div><div style={{fontSize:10,color:T.textSec}}>Покупець отримує товар без QR сканування</div></div>
+        </div>
+
         <Label text="Додаткові теги" hint="(необов'язково, через кому)"/>
         <Input value={customTags} onChange={e=>setCustomTags(e.target.value)} placeholder="Органік, Без ГМО, Сертифікат"/>
       </div>
@@ -743,7 +751,7 @@ function CreateDealPage({ onBack, onSave }) {
         try{
           const deadline=new Date();deadline.setDate(deadline.getDate()+parseInt(days));
           const fullCity=address?`${city}, ${address}`:city;
-          await createDeal({title,description:desc,category:cat,retailPrice:+retail,groupPrice:+price,unit,minQty:+min,maxQty:+max,needed:+needed,deadline:deadline.toISOString(),images:photo?[photo]:[],tags:allTags,city:fullCity});
+          await createDeal({title,description:desc,category:cat,retailPrice:+retail,groupPrice:+price,unit,minQty:+min,maxQty:+max,needed:+needed,deadline:deadline.toISOString(),images:photo?[photo]:[],tags:allTags,city:fullCity,autoConfirm:autoConf});
           onSave();
         }catch(e){setError(e.message);}
         finally{setSaving(false);}
@@ -1593,7 +1601,7 @@ function AppInner() {
         sellerId:d.sellerId,city:d.city||d.seller?.city||"",rating:4.8,deals:0,title:d.title,unit:d.unit,
         retail:Number(d.retailPrice),group:Number(d.groupPrice),min:d.minQty,max:d.maxQty,
         joined:d.joined,needed:d.needed,days:Math.max(0,Math.ceil((new Date(d.deadline)-Date.now())/(1000*60*60*24))),
-        desc:d.description||"",tags:d.tags||[],hot:d.isHot,dbId:d.id,
+        desc:d.description||"",tags:d.tags||[],hot:d.isHot,dbId:d.id,photo:d.images?.[0]||null,autoConfirm:d.autoConfirm||false,
       }));
       setDeals(mapped);
     }catch(e){console.warn("API unavailable, using mock data:",e.message);}

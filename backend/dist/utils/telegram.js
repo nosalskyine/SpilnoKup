@@ -3,33 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.saveChatId = saveChatId;
 exports.getChatId = getChatId;
 exports.sendOtpViaTelegram = sendOtpViaTelegram;
-exports.sendOtpDirect = sendOtpDirect;
 exports.processTelegramUpdate = processTelegramUpdate;
 exports.setupTelegramWebhook = setupTelegramWebhook;
-exports.createAuthSession = createAuthSession;
-exports.getAuthSession = getAuthSession;
-exports.getSessionByPhone = getSessionByPhone;
-exports.startPolling = startPolling;
 const logger_1 = require("./logger");
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
-const TG = `https://api.telegram.org/bot${BOT_TOKEN}`;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+// In-memory store for phone -> chatId mapping
+// In production, use the database
 const phoneChats = new Map();
-const authSessions = new Map();
-const phoneSessions = new Map();
-
-function createAuthSession(phone, otp) {
-    const token = Math.random().toString(36).substring(2, 10).toUpperCase();
-    authSessions.set(token, { phone, otp, createdAt: Date.now() });
-    phoneSessions.set(phone.replace(/\D/g, ''), { otp, token, createdAt: Date.now() });
-    logger_1.logger.info(`Auth session created: ${token} for ***${phone.slice(-4)}`);
-    return token;
-}
-function getAuthSession(token) {
-    return authSessions.get(token) || null;
-}
-function getSessionByPhone(phone) {
-    return phoneSessions.get(phone.replace(/\D/g, '')) || null;
-}
 function saveChatId(phone, chatId) {
     phoneChats.set(phone.replace(/\D/g, ''), chatId);
     logger_1.logger.info(`Saved chat_id ${chatId} for phone ***${phone.slice(-4)}`);
@@ -37,99 +17,99 @@ function saveChatId(phone, chatId) {
 function getChatId(phone) {
     return phoneChats.get(phone.replace(/\D/g, ''));
 }
-async function sendTelegramMessage(chatId, text) {
+async function sendOtpViaTelegram(phone, otp) {
+    if (!BOT_TOKEN) {
+        logger_1.logger.warn('TELEGRAM_BOT_TOKEN not set, skipping Telegram OTP');
+        return false;
+    }
+    const chatId = getChatId(phone);
+    if (!chatId) {
+        logger_1.logger.warn(`No Telegram chat_id for phone ***${phone.slice(-4)}`);
+        return false;
+    }
     try {
-        const res = await fetch(`${TG}/sendMessage`, {
+        const message = `🔐 Ваш код підтвердження Spil: *${otp}*\n\nДійсний 5 хвилин. Не повідомляйте нікому.`;
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: message,
+                parse_mode: 'Markdown',
+            }),
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            logger_1.logger.error('Telegram send error:', err);
+            return false;
+        }
+        logger_1.logger.info(`OTP sent via Telegram to chat_id ${chatId}`);
+        return true;
+    }
+    catch (err) {
+        logger_1.logger.error('Telegram send error:', err);
+        return false;
+    }
+}
+// Process incoming Telegram updates (webhook)
+function processTelegramUpdate(update) {
+    const message = update.message;
+    if (!message?.text)
+        return;
+    const chatId = message.chat.id;
+    const text = message.text.trim();
+    if (text.startsWith('/start')) {
+        const parts = text.split(' ');
+        const phone = parts[1]; // /start +380XXXXXXXXX
+        if (phone) {
+            saveChatId(phone, chatId);
+            sendTelegramMessage(chatId, `✅ Telegram підключено!\n\n📱 Телефон: ${phone}\n\nТепер ви будете отримувати коди підтвердження в цей чат.\n\nПоверніться до додатку Spil і продовжте реєстрацію.`);
+        }
+        else {
+            sendTelegramMessage(chatId, `👋 Привіт! Це бот Spil.\n\n📲 Щоб підключити Telegram, відкрийте додаток Spil і натисніть "Увійти через Telegram".\n\nБот автоматично надішле вам код підтвердження.`);
+        }
+        return;
+    }
+    // If user sends a phone number directly
+    const phoneMatch = text.match(/^\+?\d{10,13}$/);
+    if (phoneMatch) {
+        saveChatId(text, chatId);
+        sendTelegramMessage(chatId, `✅ Номер ${text} прив'язано! Тепер OTP коди будуть приходити сюди.`);
+        return;
+    }
+}
+async function sendTelegramMessage(chatId, text) {
+    if (!BOT_TOKEN)
+        return;
+    try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: chatId, text }),
         });
-        if (!res.ok) {
-            const err = await res.json();
-            logger_1.logger.error('TG send error:', JSON.stringify(err));
-            return false;
-        }
-        return true;
-    } catch (err) {
-        logger_1.logger.error('TG send error:', err);
-        return false;
+    }
+    catch (err) {
+        logger_1.logger.error('Telegram message error:', err);
     }
 }
-async function sendOtpViaTelegram(phone, otp) {
-    const chatId = getChatId(phone);
-    if (!chatId) {
-        logger_1.logger.warn(`No chat_id for ***${phone.slice(-4)}`);
-        return false;
-    }
-    return sendOtpDirect(chatId, otp);
-}
-async function sendOtpDirect(chatId, otp) {
-    const text = `Your Spil code: ${otp}\n\nValid for 5 minutes.`;
-    return sendTelegramMessage(chatId, text);
-}
-function processTelegramUpdate(update) {
-    const message = update.message;
-    if (!message?.text) return;
-    const chatId = message.chat.id;
-    const text = message.text.trim();
-    logger_1.logger.info(`TG message from ${chatId}: ${text}`);
-    if (text.startsWith('/start')) {
-        const parts = text.split(' ');
-        const token = parts[1];
-        if (token) {
-            const session = authSessions.get(token);
-            if (session) {
-                saveChatId(session.phone, chatId);
-                sendTelegramMessage(chatId, `Your Spil code: ${session.otp}\n\nEnter this code in the app.`);
-                session.sent = true;
-                logger_1.logger.info(`Auth token ${token} used, code sent to ${chatId}`);
-            } else {
-                sendTelegramMessage(chatId, `Session expired. Go back to the app and try again.`);
-            }
-        } else {
-            sendTelegramMessage(chatId, `Welcome to Spil bot!\n\nOpen the Spil app and follow the registration steps.`);
-        }
-        return;
-    }
-    const phoneMatch = text.match(/^\+?\d{10,13}$/);
-    if (phoneMatch) {
-        saveChatId(text, chatId);
-        sendTelegramMessage(chatId, `Phone ${text} linked! Codes will be sent here.`);
-        return;
-    }
-    sendTelegramMessage(chatId, `Open the Spil app to sign in.`);
-}
-
-// Polling fallback - check for new messages every 2 seconds
-let pollingOffset = 0;
-let pollingActive = false;
-async function startPolling() {
-    if (pollingActive) return;
-    pollingActive = true;
-    logger_1.logger.info('Telegram polling started');
-    while (pollingActive) {
-        try {
-            const res = await fetch(`${TG}/getUpdates?offset=${pollingOffset}&timeout=10&limit=10`);
-            const data = await res.json();
-            if (data.ok && data.result.length > 0) {
-                for (const update of data.result) {
-                    pollingOffset = update.update_id + 1;
-                    processTelegramUpdate(update);
-                }
-            }
-        } catch (err) {
-            logger_1.logger.error('Polling error:', err);
-        }
-        await new Promise(r => setTimeout(r, 2000));
-    }
-}
-
+// Setup webhook for Telegram
 async function setupTelegramWebhook(serverUrl) {
-    // No webhook, no polling - /check endpoint handles everything on-demand
+    if (!BOT_TOKEN) {
+        logger_1.logger.warn('TELEGRAM_BOT_TOKEN not set, skipping webhook setup');
+        return;
+    }
+    const webhookUrl = `${serverUrl}/api/telegram/webhook`;
     try {
-        await fetch(`${TG}/deleteWebhook`);
-        logger_1.logger.info('Telegram: webhook deleted, using on-demand /check');
-    } catch (err) {
-        logger_1.logger.error('Setup error:', err);
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: webhookUrl }),
+        });
+        const data = await res.json();
+        logger_1.logger.info('Telegram webhook setup:', data);
+    }
+    catch (err) {
+        logger_1.logger.error('Telegram webhook setup error:', err);
     }
 }
+//# sourceMappingURL=telegram.js.map

@@ -35,12 +35,13 @@ router.post('/', auth_middleware_1.authenticate, async (req, res) => {
             res.status(400).json({ error: 'Недостатньо місць' });
             return;
         }
-        // Check if already ordered
-        const existing = await prisma_1.prisma.order.findFirst({
+        // Check total quantity with existing orders
+        const existingOrders = await prisma_1.prisma.order.findMany({
             where: { dealId, buyerId: req.user.userId, status: { in: ['PENDING', 'PAID'] } },
         });
-        if (existing) {
-            res.status(400).json({ error: 'Ви вже долучились до цієї пропозиції' });
+        const totalBought = existingOrders.reduce((s, o) => s + o.quantity, 0);
+        if (totalBought + quantity > deal.maxQty) {
+            res.status(400).json({ error: `Ліміт ${deal.maxQty} ${deal.unit}. Вже куплено: ${totalBought}` });
             return;
         }
         const amount = Number(deal.groupPrice) * quantity;
@@ -126,6 +127,23 @@ router.post('/', auth_middleware_1.authenticate, async (req, res) => {
             io.to('public').emit('deal:update', { dealId, joined: deal.joined + quantity });
         }
         catch { }
+        // Auto-confirm if seller enabled it
+        if (deal.autoConfirm) {
+            await prisma_1.prisma.order.update({ where: { id: order.id }, data: { status: 'COMPLETED', completedAt: new Date() } });
+            if (sellerWallet) {
+                await prisma_1.prisma.wallet.update({
+                    where: { userId: deal.sellerId },
+                    data: { heldBalance: { decrement: amount }, availableBalance: { increment: amount }, totalEarned: { increment: amount } },
+                });
+                await prisma_1.prisma.transaction.create({
+                    data: { walletId: sellerWallet.id, orderId: order.id, type: 'PAYMENT_RELEASE', amount, netAmount: amount, balanceBefore: Number(sellerWallet.availableBalance), balanceAfter: Number(sellerWallet.availableBalance) + amount, description: `Авто: ${deal.title}` },
+                });
+            }
+            try {
+                (0, socket_1.getIO)().to(`user:${deal.sellerId}`).emit('wallet:update');
+            }
+            catch { }
+        }
         const fullOrder = await prisma_1.prisma.order.findUnique({
             where: { id: order.id },
             include: { deal: { include: { seller: { select: { name: true, city: true } } } } },

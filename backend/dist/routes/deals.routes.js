@@ -119,7 +119,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/deals
 router.post('/', auth_middleware_1.authenticate, (0, auth_middleware_2.requireRole)('SELLER', 'ADMIN'), async (req, res) => {
     try {
-        const { title, description, category, retailPrice, groupPrice, unit, minQty, maxQty, needed, deadline, images, tags, city, } = req.body;
+        const { title, description, category, retailPrice, groupPrice, unit, minQty, maxQty, needed, deadline, autoConfirm, images, tags, city, } = req.body;
         if (!title || !category || !retailPrice || !groupPrice || !unit || !needed || !deadline) {
             res.status(400).json({ error: 'Заповніть всі обов\'язкові поля' });
             return;
@@ -147,6 +147,7 @@ router.post('/', auth_middleware_1.authenticate, (0, auth_middleware_2.requireRo
                 tags: tags || [],
                 city: city || null,
                 isNew: true,
+                autoConfirm: autoConfirm || false,
             },
             include: {
                 seller: { select: { name: true, city: true, avatarUrl: true } },

@@ -34,12 +34,13 @@ router.post('/', authenticate, async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Check if already ordered
-    const existing = await prisma.order.findFirst({
+    // Check total quantity with existing orders
+    const existingOrders = await prisma.order.findMany({
       where: { dealId, buyerId: req.user!.userId, status: { in: ['PENDING', 'PAID'] } },
     });
-    if (existing) {
-      res.status(400).json({ error: 'Ви вже долучились до цієї пропозиції' });
+    const totalBought = existingOrders.reduce((s, o) => s + o.quantity, 0);
+    if (totalBought + quantity > deal.maxQty) {
+      res.status(400).json({ error: `Ліміт ${deal.maxQty} ${deal.unit}. Вже куплено: ${totalBought}` });
       return;
     }
 
@@ -134,6 +135,21 @@ router.post('/', authenticate, async (req: Request, res: Response): Promise<void
       const io = getIO();
       io.to('public').emit('deal:update', { dealId, joined: deal.joined + quantity });
     } catch {}
+
+    // Auto-confirm if seller enabled it
+    if (deal.autoConfirm) {
+      await prisma.order.update({ where: { id: order.id }, data: { status: 'COMPLETED', completedAt: new Date() } });
+      if (sellerWallet) {
+        await prisma.wallet.update({
+          where: { userId: deal.sellerId },
+          data: { heldBalance: { decrement: amount }, availableBalance: { increment: amount }, totalEarned: { increment: amount } },
+        });
+        await prisma.transaction.create({
+          data: { walletId: sellerWallet.id, orderId: order.id, type: 'PAYMENT_RELEASE', amount, netAmount: amount, balanceBefore: Number(sellerWallet.availableBalance), balanceAfter: Number(sellerWallet.availableBalance) + amount, description: `Авто: ${deal.title}` },
+        });
+      }
+      try { getIO().to(`user:${deal.sellerId}`).emit('wallet:update'); } catch {}
+    }
 
     const fullOrder = await prisma.order.findUnique({
       where: { id: order.id },

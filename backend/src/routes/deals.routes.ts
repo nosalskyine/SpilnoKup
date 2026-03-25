@@ -140,6 +140,7 @@ router.post('/', authenticate, requireRole('SELLER', 'ADMIN'), async (req: Reque
       maxQty,
       needed,
       deadline,
+      autoConfirm,
       images,
       tags,
       city,
@@ -174,6 +175,7 @@ router.post('/', authenticate, requireRole('SELLER', 'ADMIN'), async (req: Reque
         tags: tags || [],
         city: city || null,
         isNew: true,
+        autoConfirm: autoConfirm || false,
       },
       include: {
         seller: { select: { name: true, city: true, avatarUrl: true } },
