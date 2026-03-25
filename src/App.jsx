@@ -1,7 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
+import { connectSocket, disconnectSocket, onEvent, joinDeal, joinConversation } from "./socket";
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
+  light: {
+    name: "Світла", emoji: "☀️",
+    bg:"#f5f5f5",card:"#ffffff",cardAlt:"#eef0f4",border:"#d0d5dd",
+    text:"#1a1a2e",textSec:"#6b7280",textMuted:"#9ca3af",
+    accent:"#3d8c5c",green:"#2e7d4f",greenLight:"#e6f4ec",greenBorder:"#b8dcc8",
+    orange:"#c46a20",yellow:"#b8960a",purple:"#6b5fa8",blue:"#4a78b0",
+    navBg:"rgba(255,255,255,0.85)",navText:"#6b7280",
+    gradA:"#3d8c5c",gradB:"#b8960a",gradC:"#c46a20",
+  },
+  cream: {
+    name: "Кремова", emoji: "🍦",
+    bg:"#faf8f2",card:"#ffffff",cardAlt:"#f0ece2",border:"#d6ceb8",
+    text:"#2c2416",textSec:"#8a7e6a",textMuted:"#b0a690",
+    accent:"#8b6e3e",green:"#5a7a4a",greenLight:"#f0f4e8",greenBorder:"#c8d4b0",
+    orange:"#c46a20",yellow:"#b8960a",purple:"#7a6890",blue:"#5a7090",
+    navBg:"rgba(250,248,242,0.85)",navText:"#8a7e6a",
+    gradA:"#8b6e3e",gradB:"#b8960a",gradC:"#5a7a4a",
+  },
   dark: {
     name: "Графіт", emoji: "🌑",
     bg:"#111116",card:"#1a1a22",cardAlt:"#22222c",border:"#b8960a",
@@ -89,10 +109,21 @@ const dealPhoto=(d)=>{
 
 // ── Дані ────────────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { id:"all", label:"Всі", icon:"🏪" }, { id:"farm", label:"Ферма", icon:"🐔" },
-  { id:"honey", label:"Мед", icon:"🍯" }, { id:"veggies", label:"Городина", icon:"🥬" },
-  { id:"dairy", label:"Молочне", icon:"🥛" }, { id:"food", label:"Випічка", icon:"🍞" },
-  { id:"handmade", label:"Handmade", icon:"🧵" }, { id:"cafe", label:"Кафе", icon:"☕" },
+  { id:"all", label:"Всі", icon:"🏪" },
+  { id:"food", label:"Їжа", icon:"🍽" },
+  { id:"farm", label:"Ферма", icon:"🐔" },
+  { id:"veggies", label:"Городина", icon:"🥬" },
+  { id:"dairy", label:"Молочне", icon:"🥛" },
+  { id:"bakery", label:"Випічка", icon:"🍞" },
+  { id:"drinks", label:"Напої", icon:"☕" },
+  { id:"sport", label:"Спорт", icon:"⚽" },
+  { id:"electronics", label:"Електроніка", icon:"📱" },
+  { id:"services", label:"Послуги", icon:"🛠" },
+  { id:"clothing", label:"Одяг", icon:"👕" },
+  { id:"handmade", label:"Handmade", icon:"🧵" },
+  { id:"beauty", label:"Краса", icon:"💄" },
+  { id:"home", label:"Дім", icon:"🏠" },
+  { id:"other", label:"Інше", icon:"📦" },
 ];
 
 const INIT_DEALS = [
@@ -191,8 +222,10 @@ const NAV = [["market",I.home,"Маркет"],["qr",I.qr,"QR"],["chat",I.msg,"Ч
 
 function Nav({ tab, setTab }) {
   const isCenter=(t)=>t==="chat";
+  const logged=isLoggedIn();
+  const guestTabs=["market","wallet"];
   return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:68,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 4px" }}>
-    {NAV.map(([t,icon,label])=>(
+    {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>(
       <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isCenter(t)?2:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",marginTop:isCenter(t)?-8:0 }}>
         <div style={{ opacity:tab===t?1:0.45,transform:isCenter(t)?"scale(1.2)":"scale(1)" }}>{icon}</div>
         <span style={{ fontSize:isCenter(t)?10:9,fontWeight:tab===t?800:500,opacity:tab===t?1:0.45 }}>{label}</span>
@@ -206,7 +239,7 @@ function Nav({ tab, setTab }) {
 function WelcomeScreen({ onStart, onGuest }) {
   return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",justifyContent:"center",padding:24,textAlign:"center" }}>
     <div style={{ fontSize:56,marginBottom:12 }}>🛒</div>
-    <h1 style={{ fontSize:28,fontWeight:900,color:T.text,marginBottom:6 }}>СпільноКуп</h1>
+    <h1 style={{ fontSize:28,fontWeight:900,color:T.text,marginBottom:6 }}>Spil</h1>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:28,lineHeight:1.6 }}>Спільні покупки від малого бізнесу України.<br/>Економте до 40% купуючи разом!</p>
     <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:15,background:`linear-gradient(135deg,${T.accent},${T.green})`,color:"#fff",borderRadius:14,fontSize:15,marginBottom:10 }}>Створити акаунт</button>
     <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:14,background:"transparent",color:T.green,borderRadius:14,fontSize:13,border:`1px solid ${T.border}`,marginBottom:10 }}>Вже маю акаунт</button>
@@ -219,18 +252,39 @@ function WelcomeScreen({ onStart, onGuest }) {
 }
 
 function RegisterScreen({ onDone }) {
-  const [step,setStep]=useState(0),[name,setName]=useState(""),[email,setEmail]=useState(""),[phone,setPhone]=useState(""),[pass,setPass]=useState(""),[city,setCity]=useState(""),[code,setCode]=useState("");
+  const [step,setStep]=useState(0),[name,setName]=useState(""),[phone,setPhone]=useState(""),[city,setCity]=useState(""),[code,setCode]=useState("");
+  const [otpSent,setOtpSent]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState("");
+
+  const doSendOtp=async()=>{
+    setLoading(true);setError("");
+    try{
+      const res=await sendOtp(phone);
+      setOtpSent(true);
+      if(res.otp) setCode(res.otp); // dev mode: auto-fill
+      setStep(2);
+    }catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  };
+
+  const doVerify=async()=>{
+    setLoading(true);setError("");
+    try{
+      const data=await verifyOtp(phone,code,name,city);
+      onDone(data.user);
+    }catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  };
+
   if(step===0) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
     <BackBtn onClick={()=>{}}/>
     <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Реєстрація</h2>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 1 з 3</p>
     <div style={{ display:"flex",flexDirection:"column",gap:12,flex:1 }}>
       <Input value={name} onChange={e=>setName(e.target.value)} placeholder="Ваше ім'я" icon={I.user}/>
-      <Input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" icon={I.mail} type="email"/>
       <Input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+380" icon={I.phone} type="tel"/>
-      <Input value={pass} onChange={e=>setPass(e.target.value)} placeholder="Пароль" icon={I.lock} type="password"/>
     </div>
-    <button onClick={()=>setStep(1)} disabled={!name||!email||!phone||!pass} style={{ ...S.btn,width:"100%",padding:15,background:(name&&email&&phone&&pass)?T.accent:T.cardAlt,color:(name&&email&&phone&&pass)?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>Далі</button>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginTop:8 }}>{error}</div>}
+    <button onClick={()=>setStep(1)} disabled={!name||!phone} style={{ ...S.btn,width:"100%",padding:15,background:(name&&phone)?T.accent:T.cardAlt,color:(name&&phone)?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>Далі</button>
   </div>;
   if(step===1) return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
     <BackBtn onClick={()=>setStep(0)}/>
@@ -243,7 +297,8 @@ function RegisterScreen({ onDone }) {
       )}
     </div>
     <div style={{ flex:1 }}/>
-    <button onClick={()=>setStep(2)} disabled={!city} style={{ ...S.btn,width:"100%",padding:15,background:city?T.accent:T.cardAlt,color:city?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>Далі</button>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginTop:8 }}>{error}</div>}
+    <button onClick={doSendOtp} disabled={!city||loading} style={{ ...S.btn,width:"100%",padding:15,background:city?T.accent:T.cardAlt,color:city?"#fff":T.textMuted,borderRadius:14,fontSize:15,marginTop:20 }}>{loading?"Надсилаємо...":"Далі"}</button>
   </div>;
   return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",padding:24 }}>
     <BackBtn onClick={()=>setStep(1)}/>
@@ -251,11 +306,12 @@ function RegisterScreen({ onDone }) {
     <p style={{ fontSize:13,color:T.textSec,marginBottom:20 }}>Крок 3 з 3 — SMS код</p>
     <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {phone}</div></div>
     <div style={{ ...S.flex,justifyContent:"center",gap:10,marginBottom:20 }}>
-      {[0,1,2,3].map(i=><input key={i} maxLength={1} value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(i<3)e.target.nextSibling?.focus();}}}
-        style={{ width:50,height:56,textAlign:"center",fontSize:22,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit" }}/>)}
+      {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={code[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=code.split("");nc[i]=v;setCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
+        style={{ width:42,height:50,textAlign:"center",fontSize:20,fontWeight:900,border:`2px solid ${code[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
     </div>
-    <button onClick={()=>{if(code.length>=4)onDone({name,email,phone,city});}} disabled={code.length<4}
-      style={{ ...S.btn,width:"100%",padding:15,background:code.length>=4?T.accent:T.cardAlt,color:code.length>=4?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>Підтвердити</button>
+    {error&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{error}</div>}
+    <button onClick={doVerify} disabled={code.length<6||loading}
+      style={{ ...S.btn,width:"100%",padding:15,background:code.length>=6?T.accent:T.cardAlt,color:code.length>=6?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>{loading?"Перевіряємо...":"Підтвердити"}</button>
   </div>;
 }
 
@@ -272,7 +328,7 @@ function DealPhoto({ deal, h=90 }) {
   </div>;
 }
 
-function DealCard({ deal, onOpen, joined, onJoin }) {
+function DealCard({ deal, onOpen, joined, onJoin, onRefresh }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   const bc=discBorder(deal);
   return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:10,overflow:"hidden",cursor:"pointer",padding:0,border:`1px solid ${bc}44` }}>
@@ -285,7 +341,10 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
           <div style={{flex:1}}><ProgressBar value={p} color={col} h={2}/></div>
           <span style={{fontSize:7,color:T.textMuted}}>{deal.joined}/{deal.needed}</span>
           <span style={{fontSize:7,color:T.textMuted}}>{deal.days}д</span>
-          <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8}}>{isIn?"✓":"+"}</button>
+          {isLoggedIn()&&!isIn&&<button onClick={async e=>{e.stopPropagation();
+            try{await createOrder(deal.dbId||deal.id,deal.min);onJoin(deal.id);if(onRefresh)onRefresh();}catch(ex){alert(ex.message);}
+          }} style={{...S.btn,background:T.accent,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8}}>+</button>}
+          {isIn&&<span style={{background:T.green,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8,fontWeight:700}}>✓</span>}
         </div>
       </div>
       <div style={{flexShrink:0,padding:"6px 8px 6px 0",textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:3}}>
@@ -403,7 +462,7 @@ function HotSlider({ deals, onOpen }) {
   </div>;
 }
 
-function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
+function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh }) {
   const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all"),[discF,setDiscF]=useState("all"),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   const activeFilters=[cityF!=="all",priceF!=="all",discF!=="all",ratingF!=="all",daysF!=="all"].filter(Boolean).length;
@@ -427,9 +486,12 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
     <div style={{ padding:"16px 16px 12px" }}>
       <div style={{ ...S.flex,justifyContent:"space-between",marginBottom:12 }}>
         <div>
-          <div style={{ fontSize:22,fontWeight:900,color:T.text }}>СпільноКуп</div>
+          <div style={{ fontSize:22,fontWeight:900,color:T.text }}>Spil</div>
           <div style={{ fontSize:11,color:T.green }}>{user?`${user.name}, вітаємо!`:"Купуй разом — плати менше"}</div>
         </div>
+        <button onClick={()=>onTheme(theme==="light"?"ocean":"light")} style={{ ...S.btn,width:40,height:40,borderRadius:12,background:T.cardAlt,color:T.text,fontSize:20,...S.flex,justifyContent:"center" }}>
+          {theme==="light"?"☀️":"🌙"}
+        </button>
       </div>
       <HowItWorks/>
     </div>
@@ -487,7 +549,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal }) {
 
     <div style={{padding:"0 16px 4px",fontSize:10,color:T.textMuted}}>{list.length} оголошень</div>
     <div style={{ padding:"0 16px 90px",display:"flex",flexDirection:"column",gap:10 }}>
-      {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin}/>)}
+      {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin} onRefresh={onRefresh}/>)}
       {list.length===0&&<div style={{ textAlign:"center",padding:60,color:T.textMuted }}>Нічого не знайдено</div>}
     </div>
 
@@ -543,54 +605,155 @@ function RouteMap({ status }) {
 }
 
 function CreateDealPage({ onBack, onSave }) {
-  const [title,setTitle]=useState(""),[cat,setCat]=useState("farm"),[price,setPrice]=useState(""),[retail,setRetail]=useState(""),[unit,setUnit]=useState("кг"),[min,setMin]=useState("1"),[max,setMax]=useState("10"),[needed,setNeeded]=useState("20"),[days,setDays]=useState("7"),[desc,setDesc]=useState(""),[city,setCity]=useState(""),[tags,setTags]=useState(""),[pin,setPin]=useState({x:50,y:45}),[photo,setPhoto]=useState(null);
+  const [title,setTitle]=useState(""),[cat,setCat]=useState("food"),[price,setPrice]=useState(""),[retail,setRetail]=useState(""),[unit,setUnit]=useState("шт"),[min,setMin]=useState("1"),[max,setMax]=useState("10"),[needed,setNeeded]=useState("20"),[days,setDays]=useState("7"),[desc,setDesc]=useState(""),[city,setCity]=useState(""),[address,setAddress]=useState(""),[coords,setCoords]=useState(""),[pin,setPin]=useState({x:50,y:45}),[photo,setPhoto]=useState(null);
+  const [saving,setSaving]=useState(false),[error,setError]=useState("");
+  const [deliveryTags,setDeliveryTags]=useState(["Самовивіз"]);
+  const [customTags,setCustomTags]=useState("");
 
-  const canSave = title && price && retail && city && desc;
+  const units=["шт","кг","л","набір","пачка","лоток","банка","упаковка"];
+  const deliveryOptions=["Самовивіз","Доставка","Нова Пошта","Укрпошта","Meest"];
+  const toggleDelivery=(tag)=>setDeliveryTags(prev=>prev.includes(tag)?prev.filter(t=>t!==tag):[...prev,tag]);
+
+  const [tried,setTried]=useState(false);
+  const canSave = title && price && retail && Number(price)<Number(retail) && city && desc && unit && needed && days;
+  const miss=(field)=>tried&&!field;
+  const reqStyle=(field)=>miss(field)?{border:`2px solid #ef4444`,borderRadius:14}:{};
+  const allTags=[...deliveryTags,...(customTags?customTags.split(",").map(t=>t.trim()).filter(Boolean):[])];
+
+  const Label=({text,hint,required})=><div style={{marginBottom:6}}>
+    <span style={{fontSize:12,fontWeight:700,color:T.text}}>{text}</span>
+    {required&&<span style={{color:"#ef4444",marginLeft:2}}>*</span>}
+    {hint&&<span style={{fontSize:10,color:T.textMuted,marginLeft:6}}>{hint}</span>}
+  </div>;
+
   return <div style={S.page}>
     <BackBtn onClick={onBack}/>
     <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Нове оголошення</h2>
-    <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Створіть групову покупку</p>
-    <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+    <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Заповніть інформацію про товар або послугу</p>
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+
       <div>
-        <div style={{ fontSize:11,fontWeight:700,color:T.text,marginBottom:6 }}>Фото товару</div>
+        <Label text="Фото товару" hint="(необов'язково)"/>
         <label style={{ ...S.card,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:16,cursor:"pointer",borderStyle:"dashed" }}>
-          {photo?<img src={photo} alt="" style={{width:"100%",height:100,objectFit:"cover",borderRadius:8}}/>:
+          {photo?<img src={photo} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:8}}/>:
           <>{I.cam}<div style={{fontSize:11,color:T.textMuted}}>Натисніть щоб додати фото</div></>}
-          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>setPhoto(ev.target.result);r.readAsDataURL(f);}}}/>
+          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){const img=new Image();const r=new FileReader();r.onload=ev=>{img.onload=()=>{const max=800;let w=img.width,h=img.height;if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);setPhoto(c.toDataURL('image/jpeg',0.7));};img.src=ev.target.result;};r.readAsDataURL(f);}}}/>
         </label>
       </div>
-      <Input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Назва товару"/>
-      <div style={{ display:"flex",gap:8 }}>
-        <div style={{ flex:1 }}><Input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Групова ціна" type="number"/></div>
-        <div style={{ flex:1 }}><Input value={retail} onChange={e=>setRetail(e.target.value)} placeholder="Роздрібна ціна" type="number"/></div>
+
+      <div style={reqStyle(title)}>
+        <Label text="Назва" hint="Що продаєте?" required/>
+        <Input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Наприклад: Мед акацієвий 1л"/>
+        {miss(title)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Введіть назву товару</div>}
       </div>
-      <div style={{ fontSize:11,fontWeight:700,color:T.text }}>Категорія</div>
-      <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
-        {CATEGORIES.filter(c=>c.id!=="all").map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,padding:"6px 10px",borderRadius:10,fontSize:11,background:cat===c.id?T.accent:T.cardAlt,color:cat===c.id?"#fff":T.textSec }}>{c.icon} {c.label}</button>)}
+
+      <div>
+        <Label text="Категорія" required/>
+        <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+          {CATEGORIES.filter(c=>c.id!=="all").map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,padding:"6px 10px",borderRadius:10,fontSize:10,background:cat===c.id?T.accent:T.cardAlt,color:cat===c.id?"#fff":T.textSec }}>{c.icon} {c.label}</button>)}
+        </div>
       </div>
-      <div style={{ display:"flex",gap:8 }}>
-        <div style={{ flex:1 }}><Input value={unit} onChange={e=>setUnit(e.target.value)} placeholder="Одиниця"/></div>
-        <div style={{ flex:1 }}><Input value={needed} onChange={e=>setNeeded(e.target.value)} placeholder="Потрібно учасників" type="number"/></div>
+
+      <div>
+        <Label text="Ціна (₴)" hint="Групова має бути менше роздрібної" required/>
+        <div style={{ display:"flex",gap:8 }}>
+          <div style={{ flex:1,...reqStyle(price) }}><Input value={price} onChange={e=>setPrice(e.target.value)} placeholder="Групова ціна, ₴" type="number"/></div>
+          <div style={{ flex:1,...reqStyle(retail) }}><Input value={retail} onChange={e=>setRetail(e.target.value)} placeholder="Роздрібна ціна, ₴" type="number"/></div>
+        </div>
+        {(miss(price)||miss(retail))&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Вкажіть обидві ціни</div>}
+        {price&&retail&&Number(price)>=Number(retail)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Групова ціна має бути менше роздрібної</div>}
+        {price&&retail&&Number(price)<Number(retail)&&<div style={{fontSize:10,color:T.green,marginTop:4}}>Знижка: {Math.round((1-Number(price)/Number(retail))*100)}%</div>}
       </div>
-      <div style={{ display:"flex",gap:8 }}>
-        <div style={{ flex:1 }}><Input value={min} onChange={e=>setMin(e.target.value)} placeholder="Мін." type="number"/></div>
-        <div style={{ flex:1 }}><Input value={max} onChange={e=>setMax(e.target.value)} placeholder="Макс." type="number"/></div>
-        <div style={{ flex:1 }}><Input value={days} onChange={e=>setDays(e.target.value)} placeholder="Днів" type="number"/></div>
+
+      <div>
+        <Label text="Одиниця виміру" required/>
+        <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+          {units.map(u=><button key={u} onClick={()=>setUnit(u)} style={{ ...S.btn,padding:"6px 12px",borderRadius:10,fontSize:11,background:unit===u?T.accent:T.cardAlt,color:unit===u?"#fff":T.textSec }}>{u}</button>)}
+        </div>
       </div>
-      <Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Місто" icon={I.pin}/>
-      <div style={{ fontSize:11,fontWeight:700,color:T.text }}>Точка самовивозу (натисніть на карту)</div>
-      <MapView pin={pin} onPin={setPin} label={city||"Оберіть місце"}/>
-      <Input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Опис товару..." area/>
-      <Input value={tags} onChange={e=>setTags(e.target.value)} placeholder="Теги через кому"/>
-      <button onClick={()=>{if(canSave){onSave({id:Date.now(),cat,seller:"Моє оголошення",avatar:CATEGORIES.find(c=>c.id===cat)?.icon||"📦",city,rating:5.0,deals:0,title,unit,retail:+retail,group:+price,min:+min,max:+max,joined:0,needed:+needed,days:+days,desc,tags:tags?tags.split(",").map(t=>t.trim()):[],hot:false,photo:photo||null});}}}
-        style={{ ...S.btn,width:"100%",padding:15,background:canSave?`linear-gradient(135deg,${T.accent},${T.green})`:T.cardAlt,color:canSave?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>Опублікувати</button>
+
+      <div>
+        <Label text="Кількість" hint="Мін / Макс на одного покупця"/>
+        <div style={{ display:"flex",gap:8 }}>
+          <div style={{ flex:1 }}><Input value={min} onChange={e=>setMin(e.target.value)} placeholder="Мін: 1" type="number"/></div>
+          <div style={{ flex:1 }}><Input value={max} onChange={e=>setMax(e.target.value)} placeholder="Макс: 10" type="number"/></div>
+        </div>
+      </div>
+
+      <div>
+        <div style={{ display:"flex",gap:8 }}>
+          <div style={{ flex:1,...reqStyle(needed) }}>
+            <Label text="Учасників потрібно" required/>
+            <Input value={needed} onChange={e=>setNeeded(e.target.value)} placeholder="20" type="number"/>
+          </div>
+          <div style={{ flex:1,...reqStyle(days) }}>
+            <Label text="Термін (днів)" required/>
+            <Input value={days} onChange={e=>setDays(e.target.value)} placeholder="7" type="number"/>
+          </div>
+        </div>
+      </div>
+
+      <div style={reqStyle(desc)}>
+        <Label text="Опис товару" hint="Коротко про якість, склад, особливості" required/>
+        <Input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Натуральний продукт без ГМО..." area/>
+        {miss(desc)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Додайте опис</div>}
+      </div>
+
+      <div>
+        <Label text="Спосіб отримання" hint="(оберіть один або кілька)"/>
+        <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+          {deliveryOptions.map(d=><button key={d} onClick={()=>toggleDelivery(d)} style={{ ...S.btn,padding:"6px 12px",borderRadius:10,fontSize:11,background:deliveryTags.includes(d)?T.accent:T.cardAlt,color:deliveryTags.includes(d)?"#fff":T.textSec }}>{d}</button>)}
+        </div>
+      </div>
+
+      <div>
+        <Label text="Додаткові теги" hint="(необов'язково, через кому)"/>
+        <Input value={customTags} onChange={e=>setCustomTags(e.target.value)} placeholder="Органік, Без ГМО, Сертифікат"/>
+      </div>
+
+      <div style={{ ...S.card,background:T.greenLight }}>
+        <Label text="Місце отримання" required/>
+        <div style={reqStyle(city)}><Input value={city} onChange={e=>setCity(e.target.value)} placeholder="Місто" icon={I.pin}/></div>
+        {miss(city)&&<div style={{fontSize:10,color:"#ef4444",marginTop:4}}>Вкажіть місто</div>}
+        <div style={{marginTop:8}}>
+          <Input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Адреса: вул. Хрещатик, 1"/>
+        </div>
+        <div style={{marginTop:8}}>
+          <Input value={coords} onChange={e=>setCoords(e.target.value)} placeholder="Координати: 50.4501, 30.5234"/>
+          <div style={{fontSize:9,color:T.textMuted,marginTop:4}}>Відкрийте Google Maps → ПКМ на точці → Копіювати координати</div>
+        </div>
+        <div style={{marginTop:8}}>
+          <div style={{fontSize:10,fontWeight:700,color:T.text,marginBottom:4}}>Або вкажіть на карті</div>
+          <MapView pin={pin} onPin={setPin} label={address||city||"Оберіть місце"}/>
+        </div>
+      </div>
+
+      {allTags.length>0&&<div>
+        <div style={{fontSize:10,color:T.textSec,marginBottom:4}}>Теги:</div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+          {allTags.map((t,i)=><span key={i} style={{background:T.cardAlt,color:T.textSec,fontSize:10,padding:"3px 8px",borderRadius:6}}>{t}</span>)}
+        </div>
+      </div>}
+
+      {error&&<div style={{ color:"#ef4444",fontSize:12 }}>{error}</div>}
+      <button onClick={async()=>{setTried(true);if(!canSave||saving) return;
+        setSaving(true);setError("");
+        try{
+          const deadline=new Date();deadline.setDate(deadline.getDate()+parseInt(days));
+          const fullCity=address?`${city}, ${address}`:city;
+          await createDeal({title,description:desc,category:cat,retailPrice:+retail,groupPrice:+price,unit,minQty:+min,maxQty:+max,needed:+needed,deadline:deadline.toISOString(),images:photo?[photo]:[],tags:allTags,city:fullCity});
+          onSave();
+        }catch(e){setError(e.message);}
+        finally{setSaving(false);}
+      }} style={{ ...S.btn,width:"100%",padding:15,background:canSave&&!saving?`linear-gradient(135deg,${T.accent},${T.green})`:T.cardAlt,color:canSave?"#fff":T.textMuted,borderRadius:14,fontSize:15 }}>{saving?"Публікуємо...":"Опублікувати"}</button>
     </div>
   </div>;
 }
 
 // ── Деталі угоди ────────────────────────────────────────────────────────────
-function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
+function DealDetail({ deal, onBack, joined, onJoin, onBuy, onChat, onRefresh }) {
   const [qty,setQty]=useState(deal.min);
+  const [joining,setJoining]=useState(false);
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   return <div style={{ paddingBottom:100 }}>
     <div style={{ background:`linear-gradient(180deg,${T.greenLight},${T.card})`,padding:"20px 16px 20px" }}>
@@ -605,8 +768,8 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
         <div style={{ flex:1 }}>
           <div style={{ fontSize:14,fontWeight:800,color:T.text }}>{deal.seller}</div>
           <div style={{ ...S.flex,gap:4,fontSize:11,color:T.textSec,marginTop:2 }}>{I.pin} {deal.city}</div>
-          <div style={{ ...S.flex,gap:3,fontSize:11,color:T.yellow,marginTop:2 }}>{I.star} {deal.rating} · {deal.deals} угод</div>
         </div>
+        {isLoggedIn()&&deal.sellerId&&<button onClick={()=>onChat&&onChat(deal.sellerId,deal.dbId||deal.id)} style={{ ...S.btn,...S.flex,gap:4,padding:"8px 12px",borderRadius:10,background:T.accent,color:"#fff",fontSize:11 }}>{I.msg} Написати</button>}
       </div>
     </div>
     <div style={{ padding:14,display:"flex",flexDirection:"column",gap:14 }}>
@@ -648,10 +811,18 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
       </div>}
     </div>
     <div style={{ position:"fixed",bottom:0,left:0,right:0,padding:"10px 16px 20px",background:"rgba(255,255,255,0.7)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderTop:`1px solid ${T.border}22`,zIndex:50 }}>
-      {isIn?<div style={{ ...S.flex,gap:8 }}>
-        <div style={{ flex:1,background:T.greenLight,borderRadius:12,padding:12,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>В групі!</div></div>
+      {!isLoggedIn()?<div style={{ textAlign:"center",padding:14 }}>
+        <div style={{ fontSize:12,color:T.textSec,marginBottom:8 }}>Увійдіть щоб долучитись</div>
+        <div style={{ fontSize:10,color:T.textMuted }}>Вкладка Гаманець → Увійти або Створити акаунт</div>
+      </div>:isIn?<div style={{ ...S.flex,gap:8 }}>
+        <div style={{ flex:1,background:T.greenLight,borderRadius:12,padding:12,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>В групі! ({qty} {deal.unit})</div></div>
         <button onClick={()=>onBuy(deal,qty)} style={{ ...S.btn,background:"#6366f1",color:"#fff",borderRadius:12,padding:"12px 18px",fontSize:12 }}>QR</button>
-      </div>:<button onClick={()=>{onJoin(deal.id);onBuy(deal,qty);}} style={{ ...S.btn,width:"100%",padding:14,background:`linear-gradient(135deg,${T.accent},${T.green})`,borderRadius:14,color:"#fff",fontSize:15 }}>Долучитись · ₴{deal.group*qty}</button>}
+        {deal.sellerId&&<button onClick={()=>onChat&&onChat(deal.sellerId,deal.dbId||deal.id)} style={{ ...S.btn,background:T.cardAlt,color:T.text,borderRadius:12,padding:"12px 14px",fontSize:12 }}>{I.msg}</button>}
+      </div>:<button disabled={joining} onClick={async()=>{
+        setJoining(true);
+        try{const order=await createOrder(deal.dbId||deal.id,qty);onJoin(deal.id);if(onRefresh)onRefresh();onBuy(deal,qty,order.id);}catch(e){alert(e.message);}
+        finally{setJoining(false);}
+      }} style={{ ...S.btn,width:"100%",padding:14,background:joining?T.cardAlt:`linear-gradient(135deg,${T.accent},${T.green})`,borderRadius:14,color:"#fff",fontSize:15 }}>{joining?"Обробка...":(`Долучитись · ₴${deal.group*qty}`)}</button>}
     </div>
   </div>;
 }
@@ -684,9 +855,18 @@ function QRCode({ value, size=180 }) {
   </svg>;
 }
 
-function BuyerQRPage({ deal, qty, onBack }) {
+function BuyerQRPage({ deal, qty, onBack, orderId }) {
   const [status,setStatus]=useState("active"),[copied,setCopied]=useState(false);
-  const code=`SC-${(deal.id*1000+qty).toString(36).toUpperCase().padStart(6,"0")}`,total=deal.group*qty;
+  const [qrToken,setQrToken]=useState(null),[qrLoading,setQrLoading]=useState(true);
+  const total=deal.group*qty;
+
+  useEffect(()=>{
+    if(!orderId){setQrLoading(false);return;}
+    generateQR(orderId).then(data=>{setQrToken(data.token);}).catch(()=>{}).finally(()=>setQrLoading(false));
+  },[orderId]);
+
+  const code=qrToken?qrToken.slice(0,12).toUpperCase():`SC-${String(Date.now()).slice(-6)}`;
+
   return <div style={S.page}>
     <BackBtn onClick={onBack}/>
     <div style={{ ...S.card,textAlign:"center",padding:20 }}>
@@ -694,10 +874,11 @@ function BuyerQRPage({ deal, qty, onBack }) {
         <div style={{ width:8,height:8,borderRadius:"50%",background:status==="active"?T.accent:status==="scanned"?T.yellow:T.green,animation:status==="active"?"pulse 2s infinite":"none" }}/>
         <span style={{ fontSize:11,fontWeight:700,color:status==="active"?T.green:status==="scanned"?"#a16207":T.green }}>{status==="active"?"Активний":status==="scanned"?"Зіскановано":"Отримано"}</span>
       </div>
-      <div style={{ background:T.cardAlt,borderRadius:T.radius,padding:14,display:"inline-block",marginBottom:14 }}><QRCode value={code+"|"+deal.title} size={180}/></div>
+      {qrLoading?<div style={{padding:40,color:T.textSec}}>Генерація QR...</div>
+      :<div style={{ background:T.cardAlt,borderRadius:T.radius,padding:14,display:"inline-block",marginBottom:14 }}><QRCode value={qrToken||code} size={180}/></div>}
       <div style={{ ...S.flex,justifyContent:"center",gap:6,marginBottom:4 }}>
-        <span style={{ fontSize:18,fontWeight:900,color:T.text,letterSpacing:2 }}>{code}</span>
-        <button onClick={()=>{navigator.clipboard.writeText(code);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{ ...S.btn,background:"transparent",color:copied?T.green:T.textMuted,padding:2 }}>{copied?I.check:I.copy}</button>
+        <span style={{ fontSize:14,fontWeight:900,color:T.text,letterSpacing:1,wordBreak:"break-all" }}>{code}</span>
+        <button onClick={()=>{navigator.clipboard.writeText(qrToken||code);setCopied(true);setTimeout(()=>setCopied(false),2000);}} style={{ ...S.btn,background:"transparent",color:copied?T.green:T.textMuted,padding:2 }}>{copied?I.check:I.copy}</button>
       </div>
       <div style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>{deal.title} × {qty} {deal.unit}</div>
       <div style={{ ...S.card,background:T.greenLight,marginBottom:14 }}><div style={{ fontSize:11,color:T.green }}>Сума</div><div style={{ fontSize:28,fontWeight:900,color:T.green }}>₴{total}</div></div>
@@ -720,7 +901,7 @@ function BuyerQRPage({ deal, qty, onBack }) {
 // ── QR Хаб ──────────────────────────────────────────────────────────────────
 function QRHub() {
   const [scanning,setScanning]=useState(false),[scanned,setScanned]=useState(null);
-  if(scanned) return <div style={S.page}><BackBtn onClick={()=>setScanned(null)}/>
+  if(scanned) return <div style={{...S.page}}><BackBtn onClick={()=>setScanned(null)}/>
     <div style={{ ...S.card,textAlign:"center",padding:20 }}>
       <div style={{ fontSize:44,marginBottom:10 }}>✅</div>
       <h3 style={{ color:T.text,fontSize:16,fontWeight:900,marginBottom:10 }}>Знайдено!</h3>
@@ -731,7 +912,7 @@ function QRHub() {
     </div>
   </div>;
 
-  if(scanning) return <div style={S.page}><BackBtn onClick={()=>setScanning(false)}/>
+  if(scanning) return <div style={{...S.page}}><BackBtn onClick={()=>setScanning(false)}/>
     <div style={{ ...S.card,textAlign:"center",padding:20 }}>
       <div style={{ width:"100%",height:220,background:T.text,borderRadius:T.radius,marginBottom:14,...S.flex,justifyContent:"center",position:"relative",overflow:"hidden" }}>
         <div style={{ width:160,height:160,border:`3px solid ${T.accent}`,borderRadius:14 }}/>
@@ -749,7 +930,7 @@ function QRHub() {
     {id:"SC-9004",buyer:"Тест: Часткова видача",avatar:"½",item:"Набір овочів",qty:5,unit:"кг",amount:290,status:"partial",scenario:"partial"},
   ];
 
-  return <div style={S.page}>
+  return <div style={{...S.page}}>
     <h2 style={{ color:T.text,fontSize:22,fontWeight:900,marginBottom:16 }}>QR-центр</h2>
     <div onClick={()=>setScanning(true)} style={{ ...S.card,...S.flex,gap:14,padding:16,cursor:"pointer",marginBottom:12 }}><Ic emoji="📷" size={44}/><div><div style={{ fontSize:14,fontWeight:800,color:T.text }}>Сканувати QR</div><div style={{ fontSize:11,color:T.textSec }}>Підтвердити видачу товару</div></div></div>
 
@@ -781,50 +962,73 @@ function QRHub() {
 
 // ── Дашборд продавця ────────────────────────────────────────────────────────
 // ── Месенджер ──────────────────────────────────────────────────────────────
+const chatCache={chats:null,loaded:false};
 function ChatPage() {
-  const chats=[
-    {id:1,name:"Ферма Петренків",avatar:"🌾",last:"Курчата будуть у четвер, чекайте!",time:"14:22",unread:2,online:true},
-    {id:2,name:"Пасіка Коваля",avatar:"🐝",last:"Дякую за замовлення! Мед вже пакуємо",time:"12:05",unread:0,online:true},
-    {id:3,name:"Пекарня Оленки",avatar:"👩‍🍳",last:"Самовивіз з 10:00 до 18:00",time:"вчора",unread:1,online:false},
-    {id:4,name:"Молочна від Галини",avatar:"🐄",last:"Нова партія сиру буде в п'ятницю",time:"вчора",unread:0,online:false},
-    {id:5,name:"Кав'ярня Зерно",avatar:"☕",last:"Купони активовані, приходьте!",time:"Пн",unread:0,online:true},
-  ];
+  const [chats,setChats]=useState(chatCache.chats||[]);
   const [activeChat,setActiveChat]=useState(null);
   const [msg,setMsg]=useState("");
-  const [messages,setMessages]=useState({
-    1:[{from:"them",text:"Привіт! Ваше замовлення на курчата прийнято",time:"10:00"},{from:"me",text:"Дякую! Коли можна забрати?",time:"10:15"},{from:"them",text:"Курчата будуть у четвер, чекайте!",time:"14:22"}],
-    2:[{from:"them",text:"Мед вже готовий до відправки",time:"11:00"},{from:"me",text:"Відправляйте Новою Поштою, будь ласка",time:"11:30"},{from:"them",text:"Дякую за замовлення! Мед вже пакуємо",time:"12:05"}],
-    3:[{from:"them",text:"Ваша випічка готова!",time:"09:00"},{from:"me",text:"О котрій можна забрати?",time:"09:20"},{from:"them",text:"Самовивіз з 10:00 до 18:00",time:"09:25"}],
-  });
+  const [messages,setMessages]=useState([]);
+  const [loading,setLoading]=useState(!chatCache.loaded);
+  const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
 
-  const sendMsg=()=>{
-    if(!msg.trim()||!activeChat) return;
-    const now=new Date();const t=`${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
-    setMessages(m=>({...m,[activeChat]:[...(m[activeChat]||[]),{from:"me",text:msg,time:t}]}));
-    setMsg("");
-    setTimeout(()=>{
-      const replies=["Зрозумів, дякую!","Добре, чекайте повідомлення","Так, все вірно","Скоро буде готово!","Без проблем!"];
-      const t2=`${now.getHours()}:${String(now.getMinutes()+1).padStart(2,"0")}`;
-      setMessages(m=>({...m,[activeChat]:[...(m[activeChat]||[]),{from:"them",text:replies[Math.floor(Math.random()*replies.length)],time:t2}]}));
-    },1500);
+  useEffect(()=>{
+    if(!isLoggedIn()) { setLoading(false); return; }
+    // Load in background without blocking UI if cached
+    fetchConversations().then(c=>{setChats(c);chatCache.chats=c;chatCache.loaded=true;}).catch(()=>{}).finally(()=>setLoading(false));
+    const unsub=onEvent('chat:new',(data)=>{
+      fetchConversations().then(c=>{setChats(c);chatCache.chats=c;}).catch(()=>{});
+      if(data.conversationId===activeChat){
+        setMessages(prev=>[...prev,data.message]);
+      }
+    });
+    return ()=>unsub();
+  },[activeChat]);
+
+  const openChat=async(chatId)=>{
+    setActiveChat(chatId);
+    joinConversation(chatId);
+    try{const msgs=await fetchMessages(chatId);setMessages(msgs);}catch{}
   };
+
+  const sendMsg=async()=>{
+    if(!msg.trim()||!activeChat) return;
+    try{
+      const m=await sendMessageApi(activeChat,msg.trim());
+      setMessages(prev=>[...prev,m]);setMsg("");
+    }catch(e){alert(e.message);}
+  };
+
+  // WebSocket for live messages in active chat
+  useEffect(()=>{
+    if(!activeChat) return;
+    const unsub=onEvent('chat:message',(data)=>{
+      if(data.senderId!==userId) setMessages(prev=>[...prev,data]);
+    });
+    return ()=>unsub();
+  },[activeChat,userId]);
+
+  const fmtTime=(d)=>{const dt=new Date(d);return `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
+
+  if(!isLoggedIn()) return <div style={S.page}>
+    <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
+    <div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Створіть акаунт щоб спілкуватись з продавцями</div></div>
+  </div>;
 
   if(activeChat){
     const ch=chats.find(c=>c.id===activeChat);
-    const msgs=messages[activeChat]||[];
     return <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{...S.flex,gap:10,padding:"14px 16px",borderBottom:`1px solid ${T.border}22`}}>
         <button onClick={()=>setActiveChat(null)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
-        <Ic emoji={ch.avatar} size={36}/>
-        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>{ch.name}</div><div style={{fontSize:9,color:ch.online?T.green:T.textMuted}}>{ch.online?"Онлайн":"Був(ла) нещодавно"}</div></div>
+        <Ic emoji={ch?.other?.avatarUrl||"💬"} size={36}/>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:800,color:T.text}}>{ch?.other?.name||"Чат"}</div>{ch?.deal&&<div style={{fontSize:9,color:T.green}}>{ch.deal.title}</div>}</div>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
-        {msgs.map((m,i)=><div key={i} style={{alignSelf:m.from==="me"?"flex-end":"flex-start",maxWidth:"78%"}}>
-          <div style={{background:m.from==="me"?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:m.from==="me"?4:12,borderBottomLeftRadius:m.from==="me"?12:4}}>
+        {messages.map((m,i)=>{const mine=m.senderId===userId||m.sender?.id===userId;return <div key={m.id||i} style={{alignSelf:mine?"flex-end":"flex-start",maxWidth:"78%"}}>
+          <div style={{background:mine?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:mine?4:12,borderBottomLeftRadius:mine?12:4}}>
             <div style={{fontSize:12,color:T.text,lineHeight:1.4}}>{m.text}</div>
           </div>
-          <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:m.from==="me"?"right":"left"}}>{m.time}</div>
-        </div>)}
+          <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:mine?"right":"left"}}>{fmtTime(m.createdAt)}</div>
+        </div>;})}
       </div>
       <div style={{...S.flex,gap:8,padding:"10px 16px",borderTop:`1px solid ${T.border}22`}}>
         <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()} placeholder="Повідомлення..."
@@ -838,103 +1042,158 @@ function ChatPage() {
 
   return <div style={S.page}>
     <h2 style={{color:T.text,fontSize:22,fontWeight:900,marginBottom:14}}>Повідомлення</h2>
-    {chats.map(ch=><div key={ch.id} onClick={()=>setActiveChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
-      <div style={{position:"relative"}}><Ic emoji={ch.avatar} size={42}/>
-        {ch.online&&<div style={{position:"absolute",bottom:0,right:0,width:10,height:10,borderRadius:"50%",background:T.green,border:`2px solid ${T.card}`}}/>}
-      </div>
+    {loading?<div style={{textAlign:"center",color:T.textSec,padding:20}}>Завантаження...</div>
+    :chats.length===0?<div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:14,color:T.textSec}}>Поки немає повідомлень</div><div style={{fontSize:11,color:T.textMuted,marginTop:4}}>Долучіться до покупки щоб почати чат</div></div>
+    :chats.map(ch=><div key={ch.id} onClick={()=>openChat(ch.id)} style={{...S.card,...S.flex,gap:10,marginBottom:8,cursor:"pointer",padding:12}}>
+      <Ic emoji={ch.other?.avatarUrl||"💬"} size={42}/>
       <div style={{flex:1,minWidth:0}}>
         <div style={{...S.flex,justifyContent:"space-between",marginBottom:2}}>
-          <span style={{fontSize:13,fontWeight:700,color:T.text}}>{ch.name}</span>
-          <span style={{fontSize:10,color:T.textMuted}}>{ch.time}</span>
+          <span style={{fontSize:13,fontWeight:700,color:T.text}}>{ch.other?.name||"Чат"}</span>
+          <span style={{fontSize:10,color:T.textMuted}}>{ch.lastMessage?fmtTime(ch.lastMessage.createdAt):""}</span>
         </div>
-        <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ch.last}</div>
+        <div style={{fontSize:11,color:T.textSec,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ch.lastMessage?.text||ch.deal?.title||"..."}</div>
       </div>
       {ch.unread>0&&<div style={{width:20,height:20,borderRadius:"50%",background:T.accent,...S.flex,justifyContent:"center",fontSize:10,fontWeight:800,color:"#fff",flexShrink:0}}>{ch.unread}</div>}
     </div>)}
   </div>;
 }
 
-function SellerDashboard({ deals, joined, onOpen }) {
+const dashCache={data:null,loaded:false};
+function SellerDashboard({ deals, joined, onOpen, onBuy }) {
   const [subTab,setSubTab]=useState("biz");
-  const active=ORDERS.filter(o=>o.status==="paid"),done=ORDERS.filter(o=>o.status==="done"),rev=ORDERS.reduce((s,o)=>s+o.amount,0);
-  const allOrders=[...ORDERS,
-    {id:"SC-8844",buyer:"Дмитро Шевченко",avatar:"👨‍💼",item:"Картопля молода",qty:10,unit:"кг",amount:170,status:"paid"},
-    {id:"SC-8845",buyer:"Марія Ткаченко",avatar:"👩‍🦰",item:"Мед соняшниковий",qty:1,unit:"набір",amount:210,status:"paid"},
-    {id:"SC-8846",buyer:"Петро Бондаренко",avatar:"👴",item:"Набір випічки",qty:2,unit:"набір",amount:420,status:"done"},
-    {id:"SC-8847",buyer:"Анна Кравченко",avatar:"👧",item:"Форель свіжа",qty:3,unit:"кг",amount:840,status:"done"},
-    {id:"SC-8848",buyer:"Віктор Мельник",avatar:"👨‍🔧",item:"Сир крафтовий",qty:1,unit:"набір",amount:450,status:"paid"},
-  ];
-  const act2=allOrders.filter(o=>o.status==="paid"),don2=allOrders.filter(o=>o.status==="done");
-  const totalRev=allOrders.reduce((s,o)=>s+o.amount,0);
-  const weekData=[320,280,450,380,520,410,totalRev/7|0];
-  const maxW=Math.max(...weekData);
+  const [myOrders,setMyOrders]=useState(dashCache.data?.my||[]);
+  const [sellerOrders,setSellerOrders]=useState(dashCache.data?.seller||[]);
+  const [sellerDeals,setSellerDeals]=useState(dashCache.data?.deals||[]);
+  const [loading,setLoading]=useState(!dashCache.loaded);
+  const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
+  const userName=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.name; } catch { return ""; } })();
 
-  const myDeals=deals?deals.filter(d=>joined[d.id]):[];
+  const loadAll=useCallback(()=>{
+    return Promise.all([
+      fetchMyOrders().catch(()=>[]),
+      fetchSellerOrders().catch(()=>[]),
+      fetchSellerDeals().catch(()=>[]),
+    ]).then(([my,seller,deals])=>{
+      setMyOrders(my);setSellerOrders(seller);setSellerDeals(deals);
+      dashCache.data={my,seller,deals};dashCache.loaded=true;
+    });
+  },[]);
+
+  useEffect(()=>{
+    if(!isLoggedIn()){setLoading(false);return;}
+    loadAll().finally(()=>setLoading(false));
+    // WebSocket updates — all changes refresh instantly
+    const unsub1=onEvent('deal:update',()=>loadAll());
+    const unsub2=onEvent('order:completed',()=>loadAll());
+    const unsub3=onEvent('deal:new',()=>loadAll());
+    const unsub4=onEvent('deal:deleted',()=>loadAll());
+    return ()=>{unsub1();unsub2();unsub3();unsub4();};
+  },[]);
+
+  const actSeller=sellerOrders.filter(o=>o.status==="PAID");
+  const doneSeller=sellerOrders.filter(o=>o.status==="COMPLETED");
+  const totalRev=sellerOrders.reduce((s,o)=>s+Number(o.amount),0);
+
+  const myPaid=myOrders.filter(o=>o.status==="PAID");
+  const myDone=myOrders.filter(o=>o.status==="COMPLETED");
+
+  if(loading) return <div style={S.page}><div style={{textAlign:"center",padding:40,color:T.textSec}}>Завантаження...</div></div>;
 
   return <div style={S.page}>
     <div style={{...S.flex,gap:0,background:T.cardAlt,borderRadius:10,padding:3,marginBottom:14}}>
-      {[["biz","Бізнес"],["my","Мої покупки"]].map(([id,label])=>
+      {[["biz","Мої товари"],["my","Мої покупки"]].map(([id,label])=>
         <button key={id} onClick={()=>setSubTab(id)} style={{...S.btn,flex:1,padding:"8px 0",borderRadius:8,fontSize:11,background:subTab===id?T.card:"transparent",color:subTab===id?T.text:T.textMuted}}>{label}</button>
       )}
     </div>
 
     {subTab==="my"?<>
       <h2 style={{color:T.text,fontSize:18,fontWeight:900,marginBottom:4}}>Мої покупки</h2>
-      <p style={{color:T.textSec,fontSize:11,marginBottom:14}}>{myDeals.length} активних</p>
-      {myDeals.length===0?<div style={{textAlign:"center",padding:50}}><div style={{fontSize:44}}>🛒</div><div style={{color:T.textMuted,marginTop:10,fontSize:12}}>Ще нічого немає</div></div>:
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>{myDeals.map(d=>{const p=pct(d);return <div key={d.id} onClick={()=>onOpen&&onOpen(d)} style={{...S.card,cursor:"pointer"}}>
-        <div style={{...S.flex,gap:10,marginBottom:6}}><Ic emoji={d.avatar} size={36}/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:10,color:T.textSec}}>{d.seller}</div></div><div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{d.group}</div></div>
-        <div style={{...S.flex,gap:8}}><div style={{flex:1}}><ProgressBar value={p} color={pCol(p)}/></div><Badge>В групі</Badge></div>
-      </div>;})}</div>}
+      <p style={{color:T.textSec,fontSize:11,marginBottom:14}}>{myOrders.length} замовлень</p>
+
+      {myOrders.length===0?<div style={{textAlign:"center",padding:50}}><div style={{fontSize:44}}>🛒</div><div style={{color:T.textMuted,marginTop:10,fontSize:12}}>Ще нічого не купували</div><div style={{color:T.textMuted,fontSize:10,marginTop:4}}>Долучіться до покупки в Маркеті</div></div>:
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {myPaid.length>0&&<><h3 style={{fontSize:13,fontWeight:800,color:T.text}}>Очікують ({myPaid.length})</h3>
+        {myPaid.map(o=>{const d=o.deal;const p=d?Math.min(100,Math.round((d.joined/d.needed)*100)):0;
+          return <div key={o.id} style={{...S.card}}>
+            <div style={{...S.flex,gap:10,marginBottom:8}}>
+              <Ic emoji="📦" size={36}/>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{d?.seller?.name||""} · {o.quantity} {d?.unit||"шт"}</div></div>
+              <div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{Number(o.amount)}</div>
+            </div>
+            <ProgressBar value={p} color={pCol(p)} h={5}/>
+            <div style={{...S.flex,justifyContent:"space-between",marginTop:6}}>
+              <span style={{fontSize:10,color:T.textSec}}>{d?.joined||0}/{d?.needed||0} учасників · {p}%</span>
+              <Badge bg="#fef9c3" color="#a16207">{p>=100?"Група зібрана!":"Чекає на групу"}</Badge>
+            </div>
+            {o.qrToken&&!o.qrToken.isUsed&&<div style={{...S.flex,gap:8,marginTop:8}}>
+              <div style={{flex:1,background:T.greenLight,borderRadius:8,padding:8,textAlign:"center"}}><div style={{fontSize:9,color:T.green}}>QR код</div><div style={{fontSize:11,fontWeight:900,color:T.text,letterSpacing:1}}>{o.qrToken.token.slice(0,12).toUpperCase()}</div></div>
+            </div>}
+            <button onClick={async()=>{try{const qr=await generateQR(o.id);alert("QR код: "+qr.token.slice(0,12).toUpperCase());}catch(e){alert(e.message);}}} style={{...S.btn,width:"100%",marginTop:8,padding:10,borderRadius:10,background:T.accent,color:"#fff",fontSize:11}}>Показати QR код</button>
+          </div>;
+        })}</>}
+
+        {myDone.length>0&&<><h3 style={{fontSize:13,fontWeight:800,color:T.text,marginTop:8}}>Отримані ({myDone.length})</h3>
+        {myDone.map(o=><div key={o.id} style={{...S.card,opacity:.6}}>
+          <div style={{...S.flex,gap:10}}>
+            <Ic emoji="✅" size={32}/>
+            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{o.deal?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{o.quantity} {o.deal?.unit||"шт"}</div></div>
+            <Badge>Отримано</Badge>
+          </div>
+        </div>)}</>}
+      </div>}
     </>:<>
 
-    <div style={{ background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,borderRadius:T.radius,padding:18,marginBottom:16 }}>
-      <div style={{ ...S.flex,gap:10,marginBottom:14 }}><Ic emoji={SELLER.avatar} size={44}/><div><div style={{ fontSize:16,fontWeight:900,color:T.text }}>{SELLER.name}</div><div style={{ ...S.flex,gap:4,fontSize:10,color:T.green }}>{I.pin} {SELLER.city} {I.star} {SELLER.rating}</div></div></div>
+    <h2 style={{color:T.text,fontSize:18,fontWeight:900,marginBottom:4}}>Мої товари</h2>
+
+    {sellerDeals.length>0&&<div style={{ background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,borderRadius:T.radius,padding:16,marginBottom:14 }}>
       <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4 }}>
-        {[[`₴${totalRev}`,"Дохід"],[`${act2.length}`,"Активні"],[`${don2.length}`,"Видані"],[`${allOrders.length}`,"Всього"]].map(([v,l],i)=>
-          <div key={i} style={{ background:"rgba(255,255,255,.7)",borderRadius:T.radiusSm,padding:8,textAlign:"center" }}><div style={{ fontSize:14,fontWeight:900,color:T.green }}>{v}</div><div style={{ fontSize:8,color:T.textSec }}>{l}</div></div>
+        {[[`₴${totalRev}`,"Дохід"],[`${actSeller.length}`,"Очікують"],[`${doneSeller.length}`,"Видані"],[`${sellerDeals.length}`,"Товарів"]].map(([v,l],i)=>
+          <div key={i} style={{ background:"rgba(255,255,255,.7)",borderRadius:T.radiusSm,padding:8,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:900,color:T.green }}>{v}</div><div style={{ fontSize:8,color:T.textSec }}>{l}</div></div>
         )}
       </div>
-    </div>
+    </div>}
 
-    <div style={{ ...S.card,marginBottom:14 }}>
-      <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:10 }}>Дохід за тиждень</div>
-      <div style={{ ...S.flex,gap:3,height:60,alignItems:"flex-end" }}>
-        {weekData.map((v,i)=><div key={i} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2 }}>
-          <span style={{ fontSize:7,color:T.textMuted }}>₴{v}</span>
-          <div style={{ width:"100%",height:`${(v/maxW)*100}%`,background:i===6?T.accent:T.accent+"55",borderRadius:3,minHeight:4 }}/>
-          <span style={{ fontSize:7,color:T.textSec }}>{["Пн","Вт","Ср","Чт","Пт","Сб","Нд"][i]}</span>
-        </div>)}
+    {sellerDeals.length===0?<div style={{textAlign:"center",padding:40}}>
+      <div style={{fontSize:44}}>📦</div>
+      <div style={{color:T.textMuted,marginTop:10,fontSize:12}}>У вас ще немає товарів</div>
+      <div style={{color:T.textMuted,fontSize:10,marginTop:4}}>Створіть оголошення в Маркеті (кнопка +)</div>
+    </div>:<>
+
+    <h3 style={{fontSize:13,fontWeight:800,color:T.text,marginBottom:8}}>Мої оголошення ({sellerDeals.length})</h3>
+    {sellerDeals.map(d=>{const p=Math.min(100,Math.round((d.joined/d.needed)*100));return <div key={d.id} style={{...S.card,marginBottom:8}}>
+      <div style={{...S.flex,gap:10,marginBottom:6}}>
+        <Ic emoji="📦" size={36}/>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:10,color:T.textSec}}>₴{Number(d.groupPrice)} · {d.city}</div></div>
+        <Badge bg={d.status==="ACTIVE"?T.greenLight:T.cardAlt} color={d.status==="ACTIVE"?T.green:T.textMuted}>{d.status==="ACTIVE"?"Активне":"Закрите"}</Badge>
       </div>
-    </div>
+      <ProgressBar value={p} color={pCol(p)} h={5}/>
+      <div style={{...S.flex,justifyContent:"space-between",marginTop:4}}><span style={{fontSize:10,color:T.textSec}}>{d.joined}/{d.needed} учасників</span><span style={{fontSize:10,fontWeight:700,color:pCol(p)}}>{p}%</span></div>
+      <div style={{...S.flex,justifyContent:"space-between",marginTop:6}}>
+        {d._count?.orders>0&&<div style={{fontSize:10,color:T.accent,fontWeight:700}}>{d._count.orders} замовлень</div>}
+        <button onClick={async(e)=>{e.stopPropagation();if(!confirm(`Видалити "${d.title}"?`))return;try{await deleteDeal(d.id);setSellerDeals(prev=>prev.filter(x=>x.id!==d.id));}catch(ex){alert(ex.message);}}} style={{...S.btn,padding:"4px 10px",borderRadius:8,background:"#ef444418",color:"#ef4444",fontSize:10}}>Видалити</button>
+      </div>
+    </div>;})}
 
-    <div style={{ ...S.card,marginBottom:14 }}>
-      <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:8 }}>Як працює СпільноКуп для бізнесу</div>
-      {[["1. Створіть оголошення","Вкажіть товар, ціну, мін. кількість учасників"],["2. Збирайте групу","Покупці приєднуються — ви бачите прогрес"],["3. Підтвердіть оплату","Гроші надходять на баланс після оплати"],["4. Видайте товар","Скануйте QR покупця при видачі"],["5. Отримайте кошти","Виведіть на картку, Apple Pay чи крипто"]].map(([t,d],i)=>
-        <div key={i} style={{ ...S.flex,gap:10,padding:"6px 0",borderBottom:i<4?`1px solid ${T.border}22`:"none" }}>
-          <div style={{ width:24,height:24,borderRadius:8,background:T.accent+"18",...S.flex,justifyContent:"center",fontSize:11,fontWeight:900,color:T.accent,flexShrink:0 }}>{i+1}</div>
-          <div><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{t.slice(3)}</div><div style={{ fontSize:10,color:T.textSec }}>{d}</div></div>
-        </div>
-      )}
-    </div>
+    {actSeller.length>0&&<>
+    <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"14px 0 8px"}}>Нові замовлення ({actSeller.length})</h3>
+    {actSeller.map(o=><div key={o.id} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
+      <Ic emoji="👤" size={36}/>
+      <div style={{flex:1}}>
+        <div style={{fontSize:11,fontWeight:700,color:T.text}}>{o.buyer?.name||"Покупець"}</div>
+        <div style={{fontSize:10,color:T.textSec}}>{o.deal?.title} × {o.quantity} {o.deal?.unit}</div>
+      </div>
+      <div style={{textAlign:"right"}}><div style={{fontSize:13,fontWeight:800,color:T.green}}>₴{Number(o.amount)}</div><Badge bg="#fef9c3" color="#a16207">Оплачено</Badge></div>
+    </div>)}</>}
 
-    <div style={{ fontSize:13,fontWeight:800,color:T.text,marginBottom:8 }}>Точки видачі</div>
-    <MapView pin={{x:35,y:40}} label={SELLER.city+", ринок"} height={120}/>
-
-    <h3 style={{ color:T.text,fontSize:13,fontWeight:800,margin:"14px 0 8px" }}>Очікують видачі ({act2.length})</h3>
-    {act2.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
-      <Ic emoji={o.avatar} size={36}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:10,color:T.textSec }}>{o.item} × {o.qty} {o.unit}</div></div>
-      <div style={{ textAlign:"right" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>₴{o.amount}</div><Badge bg="#fef9c3" color="#a16207">Оплачено</Badge></div>
-    </div>)}
-
-    <h3 style={{ color:T.text,fontSize:13,fontWeight:800,margin:"14px 0 8px" }}>Видані ({don2.length})</h3>
-    {don2.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8,opacity:.55 }}>
-      <Ic emoji={o.avatar} size={32}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:10,color:T.textSec }}>{o.item}</div></div>
+    {doneSeller.length>0&&<>
+    <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"14px 0 8px"}}>Видані ({doneSeller.length})</h3>
+    {doneSeller.map(o=><div key={o.id} style={{...S.card,...S.flex,gap:10,marginBottom:8,opacity:.55}}>
+      <Ic emoji="✅" size={32}/>
+      <div style={{flex:1}}><div style={{fontSize:11,fontWeight:700,color:T.text}}>{o.buyer?.name||"Покупець"}</div><div style={{fontSize:10,color:T.textSec}}>{o.deal?.title}</div></div>
       <Badge>Видано</Badge>
-    </div>)}
+    </div>)}</>}
 
+    </>}
     </>}
   </div>;
 }
@@ -947,8 +1206,35 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [payMethod,setPayMethod]=useState(null);
   const [payAmount,setPayAmount]=useState("");
   const [payDone,setPayDone]=useState(false);
+  const [showAuth,setShowAuth]=useState(false);
+  const [authMode,setAuthMode]=useState("register"); // "register" | "login"
+  const [authPhone,setAuthPhone]=useState(""),[authCode,setAuthCode]=useState(""),[authName,setAuthName]=useState(""),[authCity,setAuthCity]=useState("");
+  const [authStep,setAuthStep]=useState(0); // register: 0=name+phone, 1=city, 2=otp  |  login: 0=phone, 1=otp
+  const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
+  const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
   const initials=(user?.name||"Г").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+
+  const doAuthSendOtp=async()=>{
+    setAuthLoading(true);setAuthError("");
+    try{
+      const res=await sendOtp(authPhone);
+      if(res.otp) setAuthCode(res.otp);
+      setAuthStep(2);
+    }catch(e){setAuthError(e.message);setAuthStep(1);}
+    finally{setAuthLoading(false);}
+  };
+  const doAuthVerify=async()=>{
+    setAuthLoading(true);setAuthError("");
+    try{
+      const data=await verifyOtp(authPhone,authCode,authName,authCity);
+      const u=data.user;
+      localStorage.setItem("spilnokup_user",JSON.stringify(u));
+      setUser(u);setShowAuth(false);setAuthStep(0);
+    }catch(e){setAuthError(e.message);}
+    finally{setAuthLoading(false);}
+  };
+  const doLogout=()=>{disconnectSocket();apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);};
 
   const payMethods=[
     {id:"card",name:"Картка",icon:"💳",desc:"Visa / Mastercard"},
@@ -1006,6 +1292,79 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     </>}
   </div>;
 
+  // Auth form in wallet
+  if(showAuth) {
+    const resetAuth=()=>{setShowAuth(false);setAuthStep(0);setAuthError("");setAuthCode("");setAuthPhone("");setAuthName("");setAuthCity("");};
+
+    // Login mode: phone → OTP
+    if(authMode==="login") return <div style={S.page}>
+      <BackBtn onClick={resetAuth}/>
+      {authStep===0?<>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Увійти в акаунт</h2>
+        <p style={{ fontSize:12,color:T.textSec,marginBottom:20 }}>Введіть номер телефону з якого реєструвались</p>
+        <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+          <Input value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="+380XXXXXXXXX" icon={I.phone} type="tel"/>
+        </div>
+        {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
+        <button onClick={()=>{setAuthStep(1);doAuthSendOtp();}} disabled={!authPhone||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authPhone?T.accent:T.cardAlt,color:authPhone?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>{authLoading?"Надсилаємо...":"Отримати код"}</button>
+        <div style={{ textAlign:"center",marginTop:16 }}>
+          <span style={{ fontSize:11,color:T.textSec }}>Немає акаунту? </span>
+          <button onClick={()=>{setAuthMode("register");setAuthStep(0);setAuthError("");}} style={{ ...S.btn,background:"none",color:T.accent,fontSize:11,padding:0 }}>Створити</button>
+        </div>
+      </>:<>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>
+        <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
+          {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
+            style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
+        </div>
+        {authError&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{authError}</div>}
+        <button onClick={doAuthVerify} disabled={authCode.length<6||authLoading}
+          style={{ ...S.btn,width:"100%",padding:14,background:authCode.length>=6?T.accent:T.cardAlt,color:authCode.length>=6?"#fff":T.textMuted,borderRadius:14,fontSize:14 }}>{authLoading?"Перевіряємо...":"Увійти"}</button>
+      </>}
+    </div>;
+
+    // Register mode: name+phone → city → OTP
+    return <div style={S.page}>
+      <BackBtn onClick={resetAuth}/>
+      {authStep===0?<>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Створити акаунт</h2>
+        <p style={{ fontSize:12,color:T.textSec,marginBottom:20 }}>Введіть дані для реєстрації</p>
+        <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+          <Input value={authName} onChange={e=>setAuthName(e.target.value)} placeholder="Ваше ім'я" icon={I.user}/>
+          <Input value={authPhone} onChange={e=>setAuthPhone(e.target.value)} placeholder="+380XXXXXXXXX" icon={I.phone} type="tel"/>
+        </div>
+        {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
+        <button onClick={()=>setAuthStep(1)} disabled={!authName||!authPhone} style={{ ...S.btn,width:"100%",padding:14,background:(authName&&authPhone)?T.accent:T.cardAlt,color:(authName&&authPhone)?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>Далі</button>
+        <div style={{ textAlign:"center",marginTop:16 }}>
+          <span style={{ fontSize:11,color:T.textSec }}>Вже є акаунт? </span>
+          <button onClick={()=>{setAuthMode("login");setAuthStep(0);setAuthError("");}} style={{ ...S.btn,background:"none",color:T.accent,fontSize:11,padding:0 }}>Увійти</button>
+        </div>
+      </>:authStep===1?<>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Ваше місто</h2>
+        <p style={{ fontSize:12,color:T.textSec,marginBottom:20 }}>Оберіть або введіть місто</p>
+        <Input value={authCity} onChange={e=>setAuthCity(e.target.value)} placeholder="Місто"/>
+        <div style={{ display:"flex",flexWrap:"wrap",gap:8,marginTop:14 }}>
+          {["Київ","Харків","Одеса","Дніпро","Львів","Бориспіль","Бровари","Черкаси"].map(c=>
+            <button key={c} onClick={()=>setAuthCity(c)} style={{ ...S.btn,padding:"7px 12px",borderRadius:10,fontSize:11,background:authCity===c?T.accent:T.cardAlt,color:authCity===c?"#fff":T.textSec }}>{c}</button>
+          )}
+        </div>
+        {authError&&<div style={{ color:"#ef4444",fontSize:12,marginTop:10 }}>{authError}</div>}
+        <button onClick={()=>{setAuthStep(2);doAuthSendOtp();}} disabled={!authCity||authLoading} style={{ ...S.btn,width:"100%",padding:14,background:authCity?T.accent:T.cardAlt,color:authCity?"#fff":T.textMuted,borderRadius:14,fontSize:14,marginTop:20 }}>Далі</button>
+      </>:<>
+        <h2 style={{ fontSize:20,fontWeight:900,color:T.text,marginBottom:4 }}>Код підтвердження</h2>
+        <div style={{ ...S.card,background:T.greenLight,textAlign:"center",marginBottom:16 }}><div style={{ fontSize:12,color:T.green }}>Код надіслано на {authPhone}</div></div>
+        <div style={{ ...S.flex,justifyContent:"center",gap:8,marginBottom:20 }}>
+          {[0,1,2,3,4,5].map(i=><input key={i} maxLength={1} value={authCode[i]||""} onChange={e=>{const v=e.target.value.replace(/\D/g,"");if(v){const nc=authCode.split("");nc[i]=v;setAuthCode(nc.join(""));if(i<5)e.target.nextSibling?.focus();}}}
+            style={{ width:40,height:48,textAlign:"center",fontSize:18,fontWeight:900,border:`2px solid ${authCode[i]?T.accent:T.border}`,borderRadius:12,outline:"none",color:T.text,fontFamily:"inherit",background:T.card }}/>)}
+        </div>
+        {authError&&<div style={{ color:"#ef4444",fontSize:12,marginBottom:8,textAlign:"center" }}>{authError}</div>}
+        <button onClick={doAuthVerify} disabled={authCode.length<6||authLoading}
+          style={{ ...S.btn,width:"100%",padding:14,background:authCode.length>=6?T.accent:T.cardAlt,color:authCode.length>=6?"#fff":T.textMuted,borderRadius:14,fontSize:14 }}>{authLoading?"Перевіряємо...":"Підтвердити"}</button>
+      </>}
+    </div>;
+  }
+
   return <div style={S.page}>
     <div style={{ ...S.card,marginBottom:16,textAlign:"center",position:"relative",overflow:"hidden" }}>
       <div style={{ position:"absolute",top:0,left:0,right:0,height:80,background:`linear-gradient(135deg,${T.accent},${T.purple},${T.blue})` }}/>
@@ -1014,8 +1373,16 @@ function WalletPage({ user, setUser, theme, onTheme }) {
           {initials}
         </div>
         <div style={{ fontSize:18,fontWeight:900,color:T.text }}>{user?.name||"Гість"}</div>
-        <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>{user?.email||"Не вказано"}</div>
-        <button onClick={()=>setEditing(!editing)} style={{ ...S.btn,...S.flex,gap:4,justifyContent:"center",margin:"10px auto 0",padding:"6px 14px",borderRadius:10,background:T.cardAlt,color:T.textSec,fontSize:11 }}>{I.edit} {editing?"Закрити":"Редагувати"}</button>
+        {user?.displayId&&<div style={{ fontSize:10,color:T.accent,fontWeight:700,marginTop:2 }}>ID: {user.displayId}</div>}
+        <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>{user?.city||"Не вказано"}</div>
+        <div style={{ ...S.flex,gap:8,justifyContent:"center",marginTop:10 }}>
+          {isGuest?<div style={{...S.flex,gap:8}}>
+            <button onClick={()=>{setShowAuth(true);setAuthMode("register");}} style={{ ...S.btn,...S.flex,gap:4,padding:"8px 14px",borderRadius:10,background:T.accent,color:"#fff",fontSize:11 }}>{I.user} Створити</button>
+            <button onClick={()=>{setShowAuth(true);setAuthMode("login");}} style={{ ...S.btn,...S.flex,gap:4,padding:"8px 14px",borderRadius:10,background:T.cardAlt,color:T.text,fontSize:11,border:`1px solid ${T.border}44` }}>{I.lock} Увійти</button>
+          </div>
+          :<><button onClick={()=>setEditing(!editing)} style={{ ...S.btn,...S.flex,gap:4,padding:"6px 14px",borderRadius:10,background:T.cardAlt,color:T.textSec,fontSize:11 }}>{I.edit} {editing?"Закрити":"Редагувати"}</button>
+            <button onClick={doLogout} style={{ ...S.btn,padding:"6px 14px",borderRadius:10,background:T.cardAlt,color:T.orange,fontSize:11 }}>Вийти</button></>}
+        </div>
       </div>
       {editing&&<div style={{ textAlign:"left",marginTop:14,display:"flex",flexDirection:"column",gap:10 }}>
         <Input value={eName} onChange={e=>setEName(e.target.value)} placeholder="Ім'я" icon={I.user}/>
@@ -1062,15 +1429,47 @@ export default function App() {
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem("spilnokup_user"));}catch{return null;}});
   const [authStep,setAuthStep]=useState(user?null:"welcome");
   const [tab,setTab]=useState("market"),[page,setPage]=useState(null),[joined,setJoined]=useState({}),[buyData,setBuyData]=useState(null);
-  const [deals,setDeals]=useState(INIT_DEALS);
+  const [deals,setDeals]=useState([]);
   const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"ocean");
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
 
+  // Load deals from API
+  const loadDeals=useCallback(async()=>{
+    try{
+      const data=await apiFetchDeals({limit:50});
+      const catMap={meat:"farm",dairy:"dairy",grocery:"food",bakery:"bakery",vegetables:"veggies",services:"services",clothing:"clothing",food:"food",sport:"sport",electronics:"electronics",handmade:"handmade",beauty:"beauty",home:"home",drinks:"drinks",other:"other"};
+      const mapped=data.deals.map((d,i)=>({
+        id:d.id,cat:catMap[d.category]||d.category,seller:d.seller?.name||"",avatar:d.seller?.avatarUrl||"🏪",
+        sellerId:d.sellerId,city:d.city||d.seller?.city||"",rating:4.8,deals:0,title:d.title,unit:d.unit,
+        retail:Number(d.retailPrice),group:Number(d.groupPrice),min:d.minQty,max:d.maxQty,
+        joined:d.joined,needed:d.needed,days:Math.max(0,Math.ceil((new Date(d.deadline)-Date.now())/(1000*60*60*24))),
+        desc:d.description||"",tags:d.tags||[],hot:d.isHot,dbId:d.id,
+      }));
+      setDeals(mapped);
+    }catch(e){console.warn("API unavailable, using mock data:",e.message);}
+  },[]);
+  useEffect(()=>{loadDeals();},[loadDeals]);
+
+  // WebSocket connection
+  useEffect(()=>{
+    if(!isLoggedIn()) return;
+    connectSocket();
+    const unsub1=onEvent('deal:update',(data)=>{
+      setDeals(prev=>prev.map(d=>d.id===data.dealId||d.dbId===data.dealId?{...d,joined:data.joined}:d));
+    });
+    const unsub2=onEvent('order:completed',()=>loadDeals());
+    const unsub3=onEvent('deal:new',()=>loadDeals());
+    const unsub4=onEvent('deal:deleted',(data)=>{
+      setDeals(prev=>prev.filter(d=>d.id!==data.dealId&&d.dbId!==data.dealId));
+    });
+    return ()=>{unsub1();unsub2();unsub3();unsub4();};
+  },[user]);
+
   const onJoin=id=>setJoined(j=>({...j,[id]:!j[id]}));
   const onOpen=deal=>{setPage("detail");setBuyData({deal,qty:deal.min});};
-  const onBuy=(deal,qty)=>{setBuyData({deal,qty});setPage("qr");};
-  const onRegDone=data=>{localStorage.setItem("spilnokup_user",JSON.stringify(data));setUser(data);setAuthStep(null);};
+  const onBuy=(deal,qty,orderId)=>{setBuyData({deal,qty,orderId});setPage("qr");};
+  const onRegDone=data=>{localStorage.setItem("spilnokup_user",JSON.stringify(data));setUser(data);setAuthStep(null);loadDeals();};
   const onGuest=()=>{const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setAuthStep(null);};
 
   const showNav=!page&&!authStep;
@@ -1079,14 +1478,16 @@ export default function App() {
   function render() {
     if(authStep==="welcome") return <WelcomeScreen onStart={()=>setAuthStep("register")} onGuest={onGuest}/>;
     if(authStep==="register") return <RegisterScreen onDone={onRegDone}/>;
-    if(page==="detail"&&buyData) return <DealDetail deal={buyData.deal} onBack={()=>setPage(null)} joined={joined} onJoin={onJoin} onBuy={onBuy}/>;
-    if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} onBack={()=>setPage(null)}/>;
-    if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={d=>{setDeals(prev=>[d,...prev]);setPage(null);}}/>;
+    if(page==="detail"&&buyData) return <DealDetail deal={buyData.deal} onBack={()=>setPage(null)} joined={joined} onJoin={onJoin} onBuy={onBuy} onRefresh={loadDeals} onChat={async(sellerId,dealId)=>{
+      try{const conv=await createConversation(sellerId,dealId);setPage(null);setTab("chat");}catch(e){alert(e.message);}
+    }}/>;
+    if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
+    if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")}/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals}/>;
       case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
-      case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen}/>;
+      case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen} onBuy={onBuy}/>;
       case"wallet":return <WalletPage user={user} setUser={setUser} theme={theme} onTheme={changeTheme}/>;
       default:return null;
     }
