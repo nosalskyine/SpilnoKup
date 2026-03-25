@@ -1049,87 +1049,133 @@ function ChatPage() {
   </div>;
 }
 
-function SellerDashboard({ deals, joined, onOpen }) {
+function SellerDashboard({ deals, joined, onOpen, onBuy }) {
   const [subTab,setSubTab]=useState("biz");
-  const active=ORDERS.filter(o=>o.status==="paid"),done=ORDERS.filter(o=>o.status==="done"),rev=ORDERS.reduce((s,o)=>s+o.amount,0);
-  const allOrders=[...ORDERS,
-    {id:"SC-8844",buyer:"Дмитро Шевченко",avatar:"👨‍💼",item:"Картопля молода",qty:10,unit:"кг",amount:170,status:"paid"},
-    {id:"SC-8845",buyer:"Марія Ткаченко",avatar:"👩‍🦰",item:"Мед соняшниковий",qty:1,unit:"набір",amount:210,status:"paid"},
-    {id:"SC-8846",buyer:"Петро Бондаренко",avatar:"👴",item:"Набір випічки",qty:2,unit:"набір",amount:420,status:"done"},
-    {id:"SC-8847",buyer:"Анна Кравченко",avatar:"👧",item:"Форель свіжа",qty:3,unit:"кг",amount:840,status:"done"},
-    {id:"SC-8848",buyer:"Віктор Мельник",avatar:"👨‍🔧",item:"Сир крафтовий",qty:1,unit:"набір",amount:450,status:"paid"},
-  ];
-  const act2=allOrders.filter(o=>o.status==="paid"),don2=allOrders.filter(o=>o.status==="done");
-  const totalRev=allOrders.reduce((s,o)=>s+o.amount,0);
-  const weekData=[320,280,450,380,520,410,totalRev/7|0];
-  const maxW=Math.max(...weekData);
+  const [myOrders,setMyOrders]=useState([]);
+  const [sellerOrders,setSellerOrders]=useState([]);
+  const [sellerDeals,setSellerDeals]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const userId=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.id; } catch { return null; } })();
+  const userName=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user"))?.name; } catch { return ""; } })();
 
-  const myDeals=deals?deals.filter(d=>joined[d.id]):[];
+  useEffect(()=>{
+    if(!isLoggedIn()){setLoading(false);return;}
+    Promise.all([
+      fetchMyOrders().catch(()=>[]),
+      fetchSellerOrders().catch(()=>[]),
+      fetchSellerDeals().catch(()=>[]),
+    ]).then(([my,seller,deals])=>{
+      setMyOrders(my);setSellerOrders(seller);setSellerDeals(deals);
+    }).finally(()=>setLoading(false));
+    const interval=setInterval(()=>{
+      fetchMyOrders().then(setMyOrders).catch(()=>{});
+      fetchSellerOrders().then(setSellerOrders).catch(()=>{});
+      fetchSellerDeals().then(setSellerDeals).catch(()=>{});
+    },8000);
+    return ()=>clearInterval(interval);
+  },[]);
+
+  const actSeller=sellerOrders.filter(o=>o.status==="PAID");
+  const doneSeller=sellerOrders.filter(o=>o.status==="COMPLETED");
+  const totalRev=sellerOrders.reduce((s,o)=>s+Number(o.amount),0);
+
+  const myPaid=myOrders.filter(o=>o.status==="PAID");
+  const myDone=myOrders.filter(o=>o.status==="COMPLETED");
+
+  if(loading) return <div style={S.page}><div style={{textAlign:"center",padding:40,color:T.textSec}}>Завантаження...</div></div>;
 
   return <div style={S.page}>
     <div style={{...S.flex,gap:0,background:T.cardAlt,borderRadius:10,padding:3,marginBottom:14}}>
-      {[["biz","Бізнес"],["my","Мої покупки"]].map(([id,label])=>
+      {[["biz","Мої товари"],["my","Мої покупки"]].map(([id,label])=>
         <button key={id} onClick={()=>setSubTab(id)} style={{...S.btn,flex:1,padding:"8px 0",borderRadius:8,fontSize:11,background:subTab===id?T.card:"transparent",color:subTab===id?T.text:T.textMuted}}>{label}</button>
       )}
     </div>
 
     {subTab==="my"?<>
       <h2 style={{color:T.text,fontSize:18,fontWeight:900,marginBottom:4}}>Мої покупки</h2>
-      <p style={{color:T.textSec,fontSize:11,marginBottom:14}}>{myDeals.length} активних</p>
-      {myDeals.length===0?<div style={{textAlign:"center",padding:50}}><div style={{fontSize:44}}>🛒</div><div style={{color:T.textMuted,marginTop:10,fontSize:12}}>Ще нічого немає</div></div>:
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>{myDeals.map(d=>{const p=pct(d);return <div key={d.id} onClick={()=>onOpen&&onOpen(d)} style={{...S.card,cursor:"pointer"}}>
-        <div style={{...S.flex,gap:10,marginBottom:6}}><Ic emoji={d.avatar} size={36}/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:10,color:T.textSec}}>{d.seller}</div></div><div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{d.group}</div></div>
-        <div style={{...S.flex,gap:8}}><div style={{flex:1}}><ProgressBar value={p} color={pCol(p)}/></div><Badge>В групі</Badge></div>
-      </div>;})}</div>}
+      <p style={{color:T.textSec,fontSize:11,marginBottom:14}}>{myOrders.length} замовлень</p>
+
+      {myOrders.length===0?<div style={{textAlign:"center",padding:50}}><div style={{fontSize:44}}>🛒</div><div style={{color:T.textMuted,marginTop:10,fontSize:12}}>Ще нічого не купували</div><div style={{color:T.textMuted,fontSize:10,marginTop:4}}>Долучіться до покупки в Маркеті</div></div>:
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {myPaid.length>0&&<><h3 style={{fontSize:13,fontWeight:800,color:T.text}}>Очікують ({myPaid.length})</h3>
+        {myPaid.map(o=>{const d=o.deal;const p=d?Math.min(100,Math.round((d.joined/d.needed)*100)):0;
+          return <div key={o.id} style={{...S.card}}>
+            <div style={{...S.flex,gap:10,marginBottom:8}}>
+              <Ic emoji="📦" size={36}/>
+              <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{d?.seller?.name||""} · {o.quantity} {d?.unit||"шт"}</div></div>
+              <div style={{fontSize:15,fontWeight:900,color:T.green}}>₴{Number(o.amount)}</div>
+            </div>
+            <ProgressBar value={p} color={pCol(p)} h={5}/>
+            <div style={{...S.flex,justifyContent:"space-between",marginTop:6}}>
+              <span style={{fontSize:10,color:T.textSec}}>{d?.joined||0}/{d?.needed||0} учасників · {p}%</span>
+              <Badge bg="#fef9c3" color="#a16207">{p>=100?"Група зібрана!":"Чекає на групу"}</Badge>
+            </div>
+            {o.qrToken&&!o.qrToken.isUsed&&<div style={{...S.flex,gap:8,marginTop:8}}>
+              <div style={{flex:1,background:T.greenLight,borderRadius:8,padding:8,textAlign:"center"}}><div style={{fontSize:9,color:T.green}}>QR код</div><div style={{fontSize:11,fontWeight:900,color:T.text,letterSpacing:1}}>{o.qrToken.token.slice(0,12).toUpperCase()}</div></div>
+            </div>}
+            <button onClick={async()=>{try{const qr=await generateQR(o.id);alert("QR код: "+qr.token.slice(0,12).toUpperCase());}catch(e){alert(e.message);}}} style={{...S.btn,width:"100%",marginTop:8,padding:10,borderRadius:10,background:T.accent,color:"#fff",fontSize:11}}>Показати QR код</button>
+          </div>;
+        })}</>}
+
+        {myDone.length>0&&<><h3 style={{fontSize:13,fontWeight:800,color:T.text,marginTop:8}}>Отримані ({myDone.length})</h3>
+        {myDone.map(o=><div key={o.id} style={{...S.card,opacity:.6}}>
+          <div style={{...S.flex,gap:10}}>
+            <Ic emoji="✅" size={32}/>
+            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:T.text}}>{o.deal?.title||"Товар"}</div><div style={{fontSize:10,color:T.textSec}}>{o.quantity} {o.deal?.unit||"шт"}</div></div>
+            <Badge>Отримано</Badge>
+          </div>
+        </div>)}</>}
+      </div>}
     </>:<>
 
-    <div style={{ background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,borderRadius:T.radius,padding:18,marginBottom:16 }}>
-      <div style={{ ...S.flex,gap:10,marginBottom:14 }}><Ic emoji={SELLER.avatar} size={44}/><div><div style={{ fontSize:16,fontWeight:900,color:T.text }}>{SELLER.name}</div><div style={{ ...S.flex,gap:4,fontSize:10,color:T.green }}>{I.pin} {SELLER.city} {I.star} {SELLER.rating}</div></div></div>
+    <h2 style={{color:T.text,fontSize:18,fontWeight:900,marginBottom:4}}>Мої товари</h2>
+
+    {sellerDeals.length>0&&<div style={{ background:`linear-gradient(135deg,${T.greenLight},${T.greenBorder})`,borderRadius:T.radius,padding:16,marginBottom:14 }}>
       <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4 }}>
-        {[[`₴${totalRev}`,"Дохід"],[`${act2.length}`,"Активні"],[`${don2.length}`,"Видані"],[`${allOrders.length}`,"Всього"]].map(([v,l],i)=>
-          <div key={i} style={{ background:"rgba(255,255,255,.7)",borderRadius:T.radiusSm,padding:8,textAlign:"center" }}><div style={{ fontSize:14,fontWeight:900,color:T.green }}>{v}</div><div style={{ fontSize:8,color:T.textSec }}>{l}</div></div>
+        {[[`₴${totalRev}`,"Дохід"],[`${actSeller.length}`,"Очікують"],[`${doneSeller.length}`,"Видані"],[`${sellerDeals.length}`,"Товарів"]].map(([v,l],i)=>
+          <div key={i} style={{ background:"rgba(255,255,255,.7)",borderRadius:T.radiusSm,padding:8,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:900,color:T.green }}>{v}</div><div style={{ fontSize:8,color:T.textSec }}>{l}</div></div>
         )}
       </div>
-    </div>
+    </div>}
 
-    <div style={{ ...S.card,marginBottom:14 }}>
-      <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:10 }}>Дохід за тиждень</div>
-      <div style={{ ...S.flex,gap:3,height:60,alignItems:"flex-end" }}>
-        {weekData.map((v,i)=><div key={i} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2 }}>
-          <span style={{ fontSize:7,color:T.textMuted }}>₴{v}</span>
-          <div style={{ width:"100%",height:`${(v/maxW)*100}%`,background:i===6?T.accent:T.accent+"55",borderRadius:3,minHeight:4 }}/>
-          <span style={{ fontSize:7,color:T.textSec }}>{["Пн","Вт","Ср","Чт","Пт","Сб","Нд"][i]}</span>
-        </div>)}
+    {sellerDeals.length===0?<div style={{textAlign:"center",padding:40}}>
+      <div style={{fontSize:44}}>📦</div>
+      <div style={{color:T.textMuted,marginTop:10,fontSize:12}}>У вас ще немає товарів</div>
+      <div style={{color:T.textMuted,fontSize:10,marginTop:4}}>Створіть оголошення в Маркеті (кнопка +)</div>
+    </div>:<>
+
+    <h3 style={{fontSize:13,fontWeight:800,color:T.text,marginBottom:8}}>Мої оголошення ({sellerDeals.length})</h3>
+    {sellerDeals.map(d=>{const p=Math.min(100,Math.round((d.joined/d.needed)*100));return <div key={d.id} style={{...S.card,marginBottom:8}}>
+      <div style={{...S.flex,gap:10,marginBottom:6}}>
+        <Ic emoji="📦" size={36}/>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:800,color:T.text}}>{d.title}</div><div style={{fontSize:10,color:T.textSec}}>₴{Number(d.groupPrice)} · {d.city}</div></div>
+        <Badge bg={d.status==="ACTIVE"?T.greenLight:T.cardAlt} color={d.status==="ACTIVE"?T.green:T.textMuted}>{d.status==="ACTIVE"?"Активне":"Закрите"}</Badge>
       </div>
-    </div>
+      <ProgressBar value={p} color={pCol(p)} h={5}/>
+      <div style={{...S.flex,justifyContent:"space-between",marginTop:4}}><span style={{fontSize:10,color:T.textSec}}>{d.joined}/{d.needed} учасників</span><span style={{fontSize:10,fontWeight:700,color:pCol(p)}}>{p}%</span></div>
+      {d._count?.orders>0&&<div style={{fontSize:10,color:T.accent,marginTop:4,fontWeight:700}}>{d._count.orders} замовлень</div>}
+    </div>;})}
 
-    <div style={{ ...S.card,marginBottom:14 }}>
-      <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:8 }}>Як працює Spil для бізнесу</div>
-      {[["1. Створіть оголошення","Вкажіть товар, ціну, мін. кількість учасників"],["2. Збирайте групу","Покупці приєднуються — ви бачите прогрес"],["3. Підтвердіть оплату","Гроші надходять на баланс після оплати"],["4. Видайте товар","Скануйте QR покупця при видачі"],["5. Отримайте кошти","Виведіть на картку, Apple Pay чи крипто"]].map(([t,d],i)=>
-        <div key={i} style={{ ...S.flex,gap:10,padding:"6px 0",borderBottom:i<4?`1px solid ${T.border}22`:"none" }}>
-          <div style={{ width:24,height:24,borderRadius:8,background:T.accent+"18",...S.flex,justifyContent:"center",fontSize:11,fontWeight:900,color:T.accent,flexShrink:0 }}>{i+1}</div>
-          <div><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{t.slice(3)}</div><div style={{ fontSize:10,color:T.textSec }}>{d}</div></div>
-        </div>
-      )}
-    </div>
+    {actSeller.length>0&&<>
+    <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"14px 0 8px"}}>Нові замовлення ({actSeller.length})</h3>
+    {actSeller.map(o=><div key={o.id} style={{...S.card,...S.flex,gap:10,marginBottom:8}}>
+      <Ic emoji="👤" size={36}/>
+      <div style={{flex:1}}>
+        <div style={{fontSize:11,fontWeight:700,color:T.text}}>{o.buyer?.name||"Покупець"}</div>
+        <div style={{fontSize:10,color:T.textSec}}>{o.deal?.title} × {o.quantity} {o.deal?.unit}</div>
+      </div>
+      <div style={{textAlign:"right"}}><div style={{fontSize:13,fontWeight:800,color:T.green}}>₴{Number(o.amount)}</div><Badge bg="#fef9c3" color="#a16207">Оплачено</Badge></div>
+    </div>)}</>}
 
-    <div style={{ fontSize:13,fontWeight:800,color:T.text,marginBottom:8 }}>Точки видачі</div>
-    <MapView pin={{x:35,y:40}} label={SELLER.city+", ринок"} height={120}/>
-
-    <h3 style={{ color:T.text,fontSize:13,fontWeight:800,margin:"14px 0 8px" }}>Очікують видачі ({act2.length})</h3>
-    {act2.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8 }}>
-      <Ic emoji={o.avatar} size={36}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:10,color:T.textSec }}>{o.item} × {o.qty} {o.unit}</div></div>
-      <div style={{ textAlign:"right" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>₴{o.amount}</div><Badge bg="#fef9c3" color="#a16207">Оплачено</Badge></div>
-    </div>)}
-
-    <h3 style={{ color:T.text,fontSize:13,fontWeight:800,margin:"14px 0 8px" }}>Видані ({don2.length})</h3>
-    {don2.map(o=><div key={o.id} style={{ ...S.card,...S.flex,gap:10,marginBottom:8,opacity:.55 }}>
-      <Ic emoji={o.avatar} size={32}/>
-      <div style={{ flex:1 }}><div style={{ fontSize:11,fontWeight:700,color:T.text }}>{o.buyer}</div><div style={{ fontSize:10,color:T.textSec }}>{o.item}</div></div>
+    {doneSeller.length>0&&<>
+    <h3 style={{fontSize:13,fontWeight:800,color:T.text,margin:"14px 0 8px"}}>Видані ({doneSeller.length})</h3>
+    {doneSeller.map(o=><div key={o.id} style={{...S.card,...S.flex,gap:10,marginBottom:8,opacity:.55}}>
+      <Ic emoji="✅" size={32}/>
+      <div style={{flex:1}}><div style={{fontSize:11,fontWeight:700,color:T.text}}>{o.buyer?.name||"Покупець"}</div><div style={{fontSize:10,color:T.textSec}}>{o.deal?.title}</div></div>
       <Badge>Видано</Badge>
-    </div>)}
+    </div>)}</>}
 
+    </>}
     </>}
   </div>;
 }
@@ -1408,7 +1454,7 @@ export default function App() {
       case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals}/>;
       case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
-      case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen}/>;
+      case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen} onBuy={onBuy}/>;
       case"wallet":return <WalletPage user={user} setUser={setUser} theme={theme} onTheme={changeTheme}/>;
       default:return null;
     }
