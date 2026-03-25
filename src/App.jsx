@@ -210,8 +210,10 @@ const NAV = [["market",I.home,"Маркет"],["qr",I.qr,"QR"],["chat",I.msg,"Ч
 
 function Nav({ tab, setTab }) {
   const isCenter=(t)=>t==="chat";
+  const logged=isLoggedIn();
+  const guestTabs=["market","wallet"];
   return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:68,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 4px" }}>
-    {NAV.map(([t,icon,label])=>(
+    {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>(
       <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isCenter(t)?2:3,background:"transparent",color:tab===t?T.accent:T.navText,transition:"all .25s",transform:tab===t?"scale(1.15)":"scale(1)",marginTop:isCenter(t)?-8:0 }}>
         <div style={{ opacity:tab===t?1:0.45,transform:isCenter(t)?"scale(1.2)":"scale(1)" }}>{icon}</div>
         <span style={{ fontSize:isCenter(t)?10:9,fontWeight:tab===t?800:500,opacity:tab===t?1:0.45 }}>{label}</span>
@@ -225,7 +227,7 @@ function Nav({ tab, setTab }) {
 function WelcomeScreen({ onStart, onGuest }) {
   return <div style={{ minHeight:"100%",display:"flex",flexDirection:"column",justifyContent:"center",padding:24,textAlign:"center" }}>
     <div style={{ fontSize:56,marginBottom:12 }}>🛒</div>
-    <h1 style={{ fontSize:28,fontWeight:900,color:T.text,marginBottom:6 }}>СпільноКуп</h1>
+    <h1 style={{ fontSize:28,fontWeight:900,color:T.text,marginBottom:6 }}>Spil</h1>
     <p style={{ fontSize:13,color:T.textSec,marginBottom:28,lineHeight:1.6 }}>Спільні покупки від малого бізнесу України.<br/>Економте до 40% купуючи разом!</p>
     <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:15,background:`linear-gradient(135deg,${T.accent},${T.green})`,color:"#fff",borderRadius:14,fontSize:15,marginBottom:10 }}>Створити акаунт</button>
     <button onClick={onStart} style={{ ...S.btn,width:"100%",padding:14,background:"transparent",color:T.green,borderRadius:14,fontSize:13,border:`1px solid ${T.border}`,marginBottom:10 }}>Вже маю акаунт</button>
@@ -327,7 +329,7 @@ function DealCard({ deal, onOpen, joined, onJoin }) {
           <div style={{flex:1}}><ProgressBar value={p} color={col} h={2}/></div>
           <span style={{fontSize:7,color:T.textMuted}}>{deal.joined}/{deal.needed}</span>
           <span style={{fontSize:7,color:T.textMuted}}>{deal.days}д</span>
-          <button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8}}>{isIn?"✓":"+"}</button>
+          {isLoggedIn()&&<button onClick={e=>{e.stopPropagation();onJoin(deal.id);}} style={{...S.btn,background:isIn?T.green:T.accent,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8}}>{isIn?"✓":"+"}</button>}
         </div>
       </div>
       <div style={{flexShrink:0,padding:"6px 8px 6px 0",textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:3}}>
@@ -469,7 +471,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
     <div style={{ padding:"16px 16px 12px" }}>
       <div style={{ ...S.flex,justifyContent:"space-between",marginBottom:12 }}>
         <div>
-          <div style={{ fontSize:22,fontWeight:900,color:T.text }}>СпільноКуп</div>
+          <div style={{ fontSize:22,fontWeight:900,color:T.text }}>Spil</div>
           <div style={{ fontSize:11,color:T.green }}>{user?`${user.name}, вітаємо!`:"Купуй разом — плати менше"}</div>
         </div>
         <button onClick={()=>onTheme(theme==="light"?"ocean":"light")} style={{ ...S.btn,width:40,height:40,borderRadius:12,background:T.cardAlt,color:T.text,fontSize:20,...S.flex,justifyContent:"center" }}>
@@ -693,11 +695,13 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy }) {
       </div>}
     </div>
     <div style={{ position:"fixed",bottom:0,left:0,right:0,padding:"10px 16px 20px",background:"rgba(255,255,255,0.7)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",borderTop:`1px solid ${T.border}22`,zIndex:50 }}>
-      {isIn?<div style={{ ...S.flex,gap:8 }}>
+      {!isLoggedIn()?<div style={{ textAlign:"center",padding:14 }}>
+        <div style={{ fontSize:12,color:T.textSec,marginBottom:8 }}>Увійдіть щоб долучитись</div>
+        <div style={{ fontSize:10,color:T.textMuted }}>Вкладка Гаманець → Увійти або Створити акаунт</div>
+      </div>:isIn?<div style={{ ...S.flex,gap:8 }}>
         <div style={{ flex:1,background:T.greenLight,borderRadius:12,padding:12,textAlign:"center" }}><div style={{ fontSize:13,fontWeight:800,color:T.green }}>В групі!</div></div>
         <button onClick={()=>onBuy(deal,qty)} style={{ ...S.btn,background:"#6366f1",color:"#fff",borderRadius:12,padding:"12px 18px",fontSize:12 }}>QR</button>
       </div>:<button onClick={async()=>{
-        if(!isLoggedIn()){alert("Спочатку створіть акаунт у вкладці Гаманець");return;}
         try{const order=await createOrder(deal.dbId||deal.id,qty);onJoin(deal.id);onBuy(deal,qty,order.id);}catch(e){alert(e.message);}
       }} style={{ ...S.btn,width:"100%",padding:14,background:`linear-gradient(135deg,${T.accent},${T.green})`,borderRadius:14,color:"#fff",fontSize:15 }}>Долучитись · ₴{deal.group*qty}</button>}
     </div>
@@ -982,7 +986,7 @@ function SellerDashboard({ deals, joined, onOpen }) {
     </div>
 
     <div style={{ ...S.card,marginBottom:14 }}>
-      <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:8 }}>Як працює СпільноКуп для бізнесу</div>
+      <div style={{ fontSize:12,fontWeight:800,color:T.text,marginBottom:8 }}>Як працює Spil для бізнесу</div>
       {[["1. Створіть оголошення","Вкажіть товар, ціну, мін. кількість учасників"],["2. Збирайте групу","Покупці приєднуються — ви бачите прогрес"],["3. Підтвердіть оплату","Гроші надходять на баланс після оплати"],["4. Видайте товар","Скануйте QR покупця при видачі"],["5. Отримайте кошти","Виведіть на картку, Apple Pay чи крипто"]].map(([t,d],i)=>
         <div key={i} style={{ ...S.flex,gap:10,padding:"6px 0",borderBottom:i<4?`1px solid ${T.border}22`:"none" }}>
           <div style={{ width:24,height:24,borderRadius:8,background:T.accent+"18",...S.flex,justifyContent:"center",fontSize:11,fontWeight:900,color:T.accent,flexShrink:0 }}>{i+1}</div>
@@ -1187,7 +1191,8 @@ function WalletPage({ user, setUser, theme, onTheme }) {
           {initials}
         </div>
         <div style={{ fontSize:18,fontWeight:900,color:T.text }}>{user?.name||"Гість"}</div>
-        <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>{user?.email||"Не вказано"}</div>
+        {user?.displayId&&<div style={{ fontSize:10,color:T.accent,fontWeight:700,marginTop:2 }}>ID: {user.displayId}</div>}
+        <div style={{ fontSize:11,color:T.textSec,marginTop:2 }}>{user?.city||"Не вказано"}</div>
         <div style={{ ...S.flex,gap:8,justifyContent:"center",marginTop:10 }}>
           {isGuest?<div style={{...S.flex,gap:8}}>
             <button onClick={()=>{setShowAuth(true);setAuthMode("register");}} style={{ ...S.btn,...S.flex,gap:4,padding:"8px 14px",borderRadius:10,background:T.accent,color:"#fff",fontSize:11 }}>{I.user} Створити</button>

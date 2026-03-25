@@ -10,6 +10,7 @@ datasource db {
 
 model User {
   id                   String    @id @default(uuid())
+  displayId            String?   @unique
   phoneEncrypted       String?
   phoneHash            String?   @unique
   emailEncrypted       String?

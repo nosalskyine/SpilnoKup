@@ -7,6 +7,14 @@ import crypto from 'crypto';
 
 const router = Router();
 
+function generateUserDisplayId(): string {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const a = letters[Math.floor(Math.random() * 26)];
+  const b = letters[Math.floor(Math.random() * 26)];
+  const num = String(Math.floor(1000000 + Math.random() * 9000000));
+  return `${a}${b}-${num}`;
+}
+
 // POST /api/auth/send-otp
 router.post('/send-otp', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -122,6 +130,7 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
         data: {
           phoneEncrypted: encrypt(phone),
           phoneHash,
+          displayId: generateUserDisplayId(),
           name: name || null,
           city: city || null,
           isVerified: true,
@@ -172,6 +181,7 @@ router.post('/verify-otp', async (req: Request, res: Response): Promise<void> =>
       refreshToken,
       user: {
         id: user.id,
+        displayId: user.displayId,
         name: user.name,
         city: user.city,
         role: user.role,
@@ -237,7 +247,7 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
     const payload = verifyAccessToken(header.split(' ')[1]);
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, name: true, city: true, role: true, avatarUrl: true, isVerified: true },
+      select: { id: true, displayId: true, name: true, city: true, role: true, avatarUrl: true, isVerified: true },
     });
     if (!user) { res.status(404).json({ error: 'Користувач не знайдений' }); return; }
     res.json(user);
