@@ -1082,10 +1082,12 @@ function SellerDashboard({ deals, joined, onOpen, onBuy }) {
   useEffect(()=>{
     if(!isLoggedIn()){setLoading(false);return;}
     loadAll().finally(()=>setLoading(false));
-    // WebSocket updates instead of polling
+    // WebSocket updates — all changes refresh instantly
     const unsub1=onEvent('deal:update',()=>loadAll());
     const unsub2=onEvent('order:completed',()=>loadAll());
-    return ()=>{unsub1();unsub2();};
+    const unsub3=onEvent('deal:new',()=>loadAll());
+    const unsub4=onEvent('deal:deleted',()=>loadAll());
+    return ()=>{unsub1();unsub2();unsub3();unsub4();};
   },[]);
 
   const actSeller=sellerOrders.filter(o=>o.status==="PAID");
