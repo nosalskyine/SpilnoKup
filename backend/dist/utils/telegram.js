@@ -6,7 +6,7 @@ exports.sendOtpViaTelegram = sendOtpViaTelegram;
 exports.processTelegramUpdate = processTelegramUpdate;
 exports.setupTelegramWebhook = setupTelegramWebhook;
 const logger_1 = require("./logger");
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
+const BOT_TOKEN = "8778237684:AAG81-EM0ZMbdFUd6x6id1xpSvAVN_WagNo";
 // In-memory store for phone -> chatId mapping
 // In production, use the database
 const phoneChats = new Map();
