@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
+import { fetchDeals as apiFetchDeals, sendOtp, verifyOtp, logout as apiLogout, createOrder, createDeal, deleteDeal, fetchMyOrders, fetchSellerOrders, fetchSellerDeals, fetchWallet, generateQR, verifyQR, fetchConversations, createConversation, fetchMessages, sendMessageApi, isLoggedIn, API } from "./api";
 import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, joinConversation } from "./socket";
 import jsQR from "jsqr";
 import QRCodeLib from "qrcode";
