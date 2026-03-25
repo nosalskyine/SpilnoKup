@@ -3,7 +3,7 @@ import Foundation
 class APIService {
     static let shared = APIService()
     let baseURL = "https://iscup-production-25c2.up.railway.app/api"
-    let botUsername = "spil_auth_bot" // Change to your bot's username
+    let botUsername = "spilnokupbot"
 
     private var accessToken: String? {
         get { UserDefaults.standard.string(forKey: "spilnokup_token") }
