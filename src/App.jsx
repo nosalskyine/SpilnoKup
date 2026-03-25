@@ -209,11 +209,11 @@ function Ic({ emoji, size = 36 }) {
   return <div style={{ fontSize:size*0.5,width:size,height:size,background:T.cardAlt,borderRadius:size>40?T.radius:8,...S.flex,justifyContent:"center",border:`1px solid ${T.border}22` }}>{emoji}</div>;
 }
 function Input({ value, onChange, placeholder, icon, type="text", area }) {
-  const common = { width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:icon?"12px 16px 12px 42px":"12px 16px",color:T.text,fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"inherit" };
+  const common = { width:"100%",background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:icon?"12px 16px 12px 42px":"12px 16px",color:T.text,fontSize:14,boxSizing:"border-box",outline:"none",fontFamily:"inherit",WebkitAppearance:"none",position:"relative",zIndex:1 };
   return <div style={{ position:"relative" }}>
-    {icon&&<div style={{ position:"absolute",left:14,top:area?14:"50%",transform:area?"none":"translateY(-50%)",color:T.textMuted }}>{icon}</div>}
+    {icon&&<div style={{ position:"absolute",left:14,top:area?14:"50%",transform:area?"none":"translateY(-50%)",color:T.textMuted,zIndex:2,pointerEvents:"none" }}>{icon}</div>}
     {area ? <textarea value={value} onChange={onChange} placeholder={placeholder} rows={3} style={{ ...common,resize:"vertical" }}/> :
-    <input type={type} value={value} onChange={onChange} placeholder={placeholder} style={common}/>}
+    <input type={type} value={value} onChange={onChange} placeholder={placeholder} autoComplete="off" style={common}/>}
   </div>;
 }
 
