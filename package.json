@@ -11,6 +11,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/camera": "^8.0.2",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/haptics": "^8.0.1",
+    "@capacitor/ios": "^8.3.0",
+    "@capacitor/push-notifications": "^8.0.3",
     "jsqr": "^1.4.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.4",

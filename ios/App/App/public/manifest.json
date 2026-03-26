@@ -1,11 +1,11 @@
 {
-  "name": "СпільноКуп",
-  "short_name": "СпільноКуп",
-  "description": "Спільні покупки від малого бізнесу",
+  "name": "Spil",
+  "short_name": "Spil",
+  "description": "Купуй разом — плати менше",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#faf8f5",
-  "theme_color": "#eab308",
+  "background_color": "#0e1320",
+  "theme_color": "#3d8c5c",
   "orientation": "portrait",
   "icons": [
     {

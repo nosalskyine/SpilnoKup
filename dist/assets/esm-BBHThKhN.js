@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/web-DN3ddEeO.js","assets/definitions-wPo9gmxX.js"])))=>i.map(i=>d[i]);
+import{t as e}from"./index-COYCK0aM.js";import{i as t}from"./definitions-wPo9gmxX.js";var n=t(`Haptics`,{web:()=>e(()=>import(`./web-DN3ddEeO.js`).then(e=>new e.HapticsWeb),__vite__mapDeps([0,1]))});export{n as Haptics};

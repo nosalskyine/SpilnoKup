@@ -1,36 +1,32 @@
 {
-	"appId": "com.spilnokup.app",
-	"appName": "СпільноКуп",
+	"appId": "com.spil.app",
+	"appName": "Spil",
 	"webDir": "dist",
 	"server": {
-		"androidScheme": "https"
+		"url": "https://iscup-production-25c2.up.railway.app",
+		"cleartext": true
 	},
 	"plugins": {
-		"SplashScreen": {
-			"launchShowDuration": 2000,
-			"launchAutoHide": true,
-			"backgroundColor": "#0e1320",
-			"showSpinner": false,
-			"splashFullScreen": true,
-			"splashImmersive": true
+		"Haptics": {},
+		"Camera": {
+			"presentationStyle": "fullScreen"
 		},
-		"StatusBar": {
-			"style": "DARK",
-			"backgroundColor": "#0e1320"
-		},
-		"Keyboard": {
-			"resize": "body",
-			"resizeOnFullScreen": true
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
 		}
 	},
 	"ios": {
-		"contentInset": "automatic",
-		"preferredContentMode": "mobile",
-		"scheme": "SpilnoKup"
+		"scheme": "Spil",
+		"backgroundColor": "#000000"
 	},
 	"packageClassList": [
-		"KeyboardPlugin",
-		"SplashScreenPlugin",
-		"StatusBarPlugin"
+		"CAPBrowserPlugin",
+		"CAPCameraPlugin",
+		"HapticsPlugin",
+		"PushNotificationsPlugin"
 	]
 }
