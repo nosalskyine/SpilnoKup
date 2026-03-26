@@ -678,7 +678,7 @@ function HotSlider({ deals, onOpen }) {
 }
 
 function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh, onSettings, onScan, onChat, unreadCount }) {
-  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState(5000),[discF,setDiscF]=useState(0),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
+  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState(5000),[discF,setDiscF]=useState(0),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all"),[realOnly,setRealOnly]=useState(false);
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
   const activeFilters=[cityF!=="all",priceF<5000,discF>0,ratingF!=="all",daysF!=="all"].filter(Boolean).length;
   let list=cat==="all"?deals:deals.filter(d=>d.cat===cat);
@@ -700,7 +700,6 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:sort==="rating"?(a,b)=>b.rating-a.rating:(a,b)=>pct(b)-pct(a));
 
   const [showMarketSupport,setShowMarketSupport]=useState(false);
-  const [realOnly,setRealOnly]=useState(false);
 
   return <div style={{ position:"relative" }}>
     {/* Top bar: profile + scanner | search | support + chat */}
