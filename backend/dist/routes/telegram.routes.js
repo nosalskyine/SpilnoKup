@@ -59,5 +59,22 @@ router.get('/test-send', async (req, res) => {
     const sent = await sendOtpViaTelegram(phone, otp);
     res.json({ sent, chatId: chatId || null, phone });
 });
+// POST /api/telegram/support - Send support message
+router.post('/support', async (req, res) => {
+    try {
+        const { message, userName, userPhone, userChatId } = req.body;
+        if (!message) {
+            res.status(400).json({ ok: false, error: 'Message required' });
+            return;
+        }
+        const { sendSupportMessage, getChatId } = require('../utils/telegram');
+        const chatId = userChatId || getChatId(userPhone) || null;
+        const sent = await sendSupportMessage(chatId, userName || 'User', userPhone || '', message);
+        res.json({ ok: sent });
+    } catch (err) {
+        logger_1.logger.error('Support error:', err);
+        res.status(500).json({ ok: false });
+    }
+});
 exports.default = router;
 //# sourceMappingURL=telegram.routes.js.map

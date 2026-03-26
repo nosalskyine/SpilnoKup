@@ -1347,6 +1347,10 @@ function WalletPage({ user, setUser, theme, onTheme }) {
   const [authLoading,setAuthLoading]=useState(false),[authError,setAuthError]=useState("");
   const [authTgToken,setAuthTgToken]=useState("");
   const [showSettings,setShowSettings]=useState(false);
+  const [showSupport,setShowSupport]=useState(false);
+  const [supportMsg,setSupportMsg]=useState("");
+  const [supportSent,setSupportSent]=useState(false);
+  const [supportLoading,setSupportLoading]=useState(false);
   const txIcons={income:"↓",withdrawal:"↑",hold:"◷"}, txColors={income:T.green,withdrawal:T.orange,hold:T.yellow};
   const isGuest=!user||user.name==="Гість"||!localStorage.getItem("spilnokup_token");
 
@@ -1535,6 +1539,35 @@ function WalletPage({ user, setUser, theme, onTheme }) {
     </div>;
   }
 
+  if(showSupport) return <div style={S.page}>
+    <BackBtn onClick={()=>{setShowSupport(false);setSupportSent(false);setSupportMsg("");}}/>
+    <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:4 }}>Підтримка</h2>
+    <p style={{ fontSize:12,color:T.textSec,marginBottom:16 }}>Опишіть вашу проблему або запитання</p>
+    {supportSent?<div style={{ ...S.card,textAlign:"center",padding:30 }}>
+      <div style={{ fontSize:48,marginBottom:12 }}>✅</div>
+      <div style={{ fontSize:16,fontWeight:800,color:T.text,marginBottom:6 }}>Повідомлення надіслано!</div>
+      <div style={{ fontSize:12,color:T.textSec }}>Ми відповімо вам у Telegram.</div>
+      <button onClick={()=>{setSupportSent(false);setSupportMsg("");}} style={{ ...S.btn,marginTop:16,padding:"10px 20px",borderRadius:12,background:T.accent,color:"#fff",fontSize:13 }}>Написати ще</button>
+    </div>:<>
+      <textarea value={supportMsg} onChange={e=>setSupportMsg(e.target.value)} placeholder="Напишіть ваше повідомлення..." rows={5}
+        style={{ width:"100%",padding:14,borderRadius:14,border:`1px solid ${T.border}`,background:T.card,color:T.text,fontSize:14,fontFamily:"inherit",resize:"vertical",outline:"none" }}/>
+      <button onClick={async()=>{
+        if(!supportMsg.trim()) return;
+        setSupportLoading(true);
+        try{
+          const token=localStorage.getItem("spilnokup_token");
+          await fetch(`${API}/telegram/support`,{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
+            body:JSON.stringify({message:supportMsg,userName:user?.name||"Гість",userPhone:user?.phone||""})});
+          setSupportSent(true);
+        }catch(e){}
+        setSupportLoading(false);
+      }} disabled={!supportMsg.trim()||supportLoading}
+        style={{ ...S.btn,width:"100%",padding:14,borderRadius:14,background:supportMsg.trim()?T.accent:T.cardAlt,color:supportMsg.trim()?"#fff":T.textMuted,fontSize:14,marginTop:12 }}>
+        {supportLoading?"Надсилаємо...":"Надіслати"}
+      </button>
+    </>}
+  </div>;
+
   if(showSettings) return <div style={S.page}>
     <BackBtn onClick={()=>setShowSettings(false)}/>
     <h2 style={{ fontSize:22,fontWeight:900,color:T.text,marginBottom:16 }}>Налаштування</h2>
@@ -1542,7 +1575,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
       <div style={{ fontSize:13,fontWeight:700,color:T.text,marginBottom:10 }}>Стиль додатку</div>
       <ThemeSwitcher current={theme} onChange={onTheme}/>
     </div>
-    <div onClick={()=>{}} style={{ ...S.card,...S.flex,gap:12,cursor:"pointer",marginBottom:12 }}>
+    <div onClick={()=>setShowSupport(true)} style={{ ...S.card,...S.flex,gap:12,cursor:"pointer",marginBottom:12 }}>
       <div style={{ fontSize:22 }}>💬</div>
       <div>
         <div style={{ fontSize:13,fontWeight:700,color:T.text }}>Підтримка</div>

@@ -76,11 +76,18 @@ async function sendOtpViaTelegram(phone, otp) {
     }
 }
 async function processTelegramUpdate(update) {
+    // Handle support replies from group
+    if (update.message?.reply_to_message && update.message.chat.id === SUPPORT_GROUP_ID) {
+        await handleSupportReply(update);
+        return;
+    }
     const message = update.message;
     if (!message?.text)
         return;
     const chatId = message.chat.id;
     const text = message.text.trim();
+    // Ignore group messages that aren't replies
+    if (chatId === SUPPORT_GROUP_ID) return;
     if (text.startsWith('/start')) {
         const parts = text.split(' ');
         const token = parts[1];
@@ -141,6 +148,48 @@ async function sendTelegramMessage(chatId, text) {
         logger_1.logger.error('Telegram message error:', err);
     }
 }
+// ── Support system ──
+const SUPPORT_GROUP_ID = -5110200458;
+const supportTickets = new Map(); // messageId -> { userChatId, userName, userPhone }
+exports.sendSupportMessage = sendSupportMessage;
+exports.handleSupportReply = handleSupportReply;
+
+async function sendSupportMessage(userChatId, userName, userPhone, message) {
+    try {
+        const text = `📩 *Звернення в підтримку*\n\n👤 ${userName}\n📱 ${userPhone}\n\n💬 ${message}\n\n_Відповідайте reply на це повідомлення_`;
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: SUPPORT_GROUP_ID, text, parse_mode: 'Markdown' }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+            supportTickets.set(data.result.message_id, { userChatId, userName, userPhone });
+            logger_1.logger.info(`Support message sent to group, msgId: ${data.result.message_id}`);
+            return true;
+        }
+        return false;
+    } catch (err) {
+        logger_1.logger.error('Support send error:', err);
+        return false;
+    }
+}
+
+async function handleSupportReply(update) {
+    const msg = update.message;
+    if (!msg || !msg.reply_to_message || msg.chat.id !== SUPPORT_GROUP_ID) return false;
+    if (msg.from.is_bot) return false;
+
+    const replyToId = msg.reply_to_message.message_id;
+    const ticket = supportTickets.get(replyToId);
+    if (!ticket) return false;
+
+    const replyText = `📬 *Відповідь від підтримки:*\n\n${msg.text}\n\n_Якщо маєте ще питання — напишіть в підтримку в додатку._`;
+    await sendTelegramMessage(ticket.userChatId, replyText);
+    logger_1.logger.info(`Support reply sent to ${ticket.userChatId}`);
+    return true;
+}
+
 async function setupTelegramWebhook(serverUrl) {
     const url = serverUrl || SERVER_URL;
     const webhookUrl = `${url}/api/telegram/webhook`;
