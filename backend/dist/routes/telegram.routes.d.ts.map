@@ -1,1 +1,1 @@
-{"version":3,"file":"telegram.routes.d.ts","sourceRoot":"","sources":["../../src/routes/telegram.routes.ts"],"names":[],"mappings":"AAIA,QAAA,MAAM,MAAM,4CAAW,CAAC;AAyBxB,eAAe,MAAM,CAAC"}
+{"version":3,"file":"telegram.routes.d.ts","sourceRoot":"","sources":["../../src/routes/telegram.routes.ts"],"names":[],"mappings":"AAIA,QAAA,MAAM,MAAM,4CAAW,CAAC;AAgExB,wBAAgB,eAAe,CAAC,KAAK,EAAE,MAAM,EAAE,IAAI,EAAE,MAAM,QAc1D;AAED,eAAe,MAAM,CAAC"}

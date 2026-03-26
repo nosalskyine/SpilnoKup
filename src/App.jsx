@@ -678,12 +678,21 @@ function HotSlider({ deals, onOpen }) {
 }
 
 function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh, onSettings, onScan, onChat, unreadCount }) {
-  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState(5000),[discF,setDiscF]=useState(0),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
-  const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
-  const activeFilters=[cityF!=="all",priceF<5000,discF>0,ratingF!=="all",daysF!=="all"].filter(Boolean).length;
+  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState(5000),[discF,setDiscF]=useState(0),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all"),[realOnly,setRealOnly]=useState(false);
+  const [mapRadius,setMapRadius]=useState(0); // 0 = off, >0 = km filter
+  const [mapCenter,setMapCenter]=useState({lat:49.2328,lng:28.4687}); // Vinnytsia default
+  const [detectedCity,setDetectedCity]=useState("");
+  const activeFilters=[cityF!=="all"||mapRadius>0,priceF<5000,discF>0,ratingF!=="all",daysF!=="all"].filter(Boolean).length;
   let list=cat==="all"?deals:deals.filter(d=>d.cat===cat);
   if(search) list=list.filter(d=>(d.title+d.seller).toLowerCase().includes(search.toLowerCase()));
-  if(cityF!=="all") list=list.filter(d=>d.city.includes(cityF));
+  if(mapRadius>0) {
+    list=list.filter(d=>{
+      if(!d.photo?.startsWith("geo:")) return cityF!=="all"?d.city.includes(cityF):false;
+      const [lat,lng]=d.photo.replace("geo:","").split(",").map(Number);
+      const dist=Math.sqrt(Math.pow((lat-mapCenter.lat)*111,2)+Math.pow((lng-mapCenter.lng)*73,2));
+      return dist<=mapRadius;
+    });
+  } else if(cityF!=="all") list=list.filter(d=>d.city.includes(cityF));
   if(priceF<5000) list=list.filter(d=>d.group<=priceF);
   if(discF>0) list=list.filter(d=>disc(d)>=discF);
   if(ratingF==="top") list=list.filter(d=>d.rating>=4.9);
@@ -700,7 +709,6 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:sort==="rating"?(a,b)=>b.rating-a.rating:(a,b)=>pct(b)-pct(a));
 
   const [showMarketSupport,setShowMarketSupport]=useState(false);
-  const [realOnly,setRealOnly]=useState(false);
 
   return <div style={{ position:"relative" }}>
     {/* Top bar: profile + scanner | search | support + chat */}
@@ -741,12 +749,31 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
     {showF&&<div style={{ ...S.card,margin:"0 16px 12px",padding:12 }}>
       <div style={{...S.flex,justifyContent:"space-between",marginBottom:10}}>
         <span style={{fontSize:12,fontWeight:800,color:T.text}}>Фільтри</span>
-        {activeFilters>0&&<button onClick={()=>{setCityF("all");setPriceF(5000);setDiscF(0);setRatingF("all");setDaysF("all");}} style={{...S.btn,fontSize:9,color:T.accent,background:"transparent",padding:0}}>Скинути все</button>}
+        {activeFilters>0&&<button onClick={()=>{setCityF("all");setPriceF(5000);setDiscF(0);setRatingF("all");setDaysF("all");setMapRadius(0);setDetectedCity("");}} style={{...S.btn,fontSize:9,color:T.accent,background:"transparent",padding:0}}>Скинути все</button>}
       </div>
-      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Місто</div>
-      <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:10}}>
-        {[...cities,...["Київ","Харків","Одеса","Дніпро","Львів","Запоріжжя","Вінниця","Полтава","Чернігів","Черкаси","Суми","Житомир","Хмельницький","Рівне","Тернопіль","Івано-Франківськ","Луцьк","Ужгород","Кропивницький","Миколаїв","Херсон","Чернівці","Бориспіль","Бровари"].filter(c=>!cities.includes(c))].map(c=><button key={c} onClick={()=>{vibrateLight();setCityF(c);}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:cityF===c?T.accent:T.cardAlt,color:cityF===c?"#fff":T.textSec}}>{c==="all"?"Всі":c}</button>)}
+      <div style={{...S.flex,justifyContent:"space-between",marginBottom:4}}>
+        <span style={{fontSize:10,fontWeight:700,color:T.textSec}}>Розташування{detectedCity?` — ${detectedCity}`:mapRadius>0?` — до ${mapRadius}км`:""}</span>
+        {mapRadius>0&&<button onClick={()=>{setMapRadius(0);setCityF("all");setDetectedCity("");}} style={{...S.btn,fontSize:8,color:T.accent,background:"transparent",padding:0}}>Скинути</button>}
       </div>
+      <div style={{...S.flex,gap:4,marginBottom:6}}>
+        <button onClick={()=>{vibrateLight();setMapRadius(0);setCityF("all");setDetectedCity("");}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:mapRadius===0?T.accent:T.cardAlt,color:mapRadius===0?"#fff":T.textSec}}>Всі</button>
+        <button onClick={()=>{vibrateLight();
+          if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{
+            setMapCenter({lat:p.coords.latitude,lng:p.coords.longitude});setMapRadius(5);
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`).then(r=>r.json()).then(d=>{
+              const city=d.address?.city||d.address?.town||d.address?.village||"";
+              if(city){setDetectedCity(city);setCityF(city);}
+            }).catch(()=>{});
+          },()=>{setMapRadius(5);});}else{setMapRadius(5);}
+        }} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:mapRadius>0?T.accent:T.cardAlt,color:mapRadius>0?"#fff":T.textSec,...S.flex,gap:3}}>
+          <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Моє місто
+        </button>
+      </div>
+      {mapRadius>0&&<>
+        <input type="range" min="0.1" max="10" step="0.1" value={mapRadius} onInput={e=>{vibrateLight();setMapRadius(Number(e.target.value));}} style={{width:"100%",marginBottom:4,accentColor:T.accent}}/>
+        <div style={{...S.flex,justifyContent:"space-between",fontSize:8,color:T.textMuted,marginBottom:6}}><span>100м</span><span>1км</span><span>5км</span><span>10км</span></div>
+        <DealsMap deals={deals} onOpen={onOpen} radius={mapRadius} center={mapCenter}/>
+      </>}
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Ціна — до ₴{priceF>=5000?"∞":priceF}</div>
       <input type="range" min="50" max="5000" step="50" value={priceF} onInput={e=>{vibrateLight();setPriceF(Number(e.target.value));}} style={{width:"100%",marginBottom:10,accentColor:T.accent,height:6}}/>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Знижка — від {discF}%</div>
@@ -768,7 +795,12 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
       </div>
     </div>}
 
-    <div style={{padding:"0 16px 4px",fontSize:10,color:T.textMuted}}>{list.length} оголошень</div>
+    <div style={{...S.flex,gap:8,padding:"0 16px 8px"}}>
+      <button onClick={()=>{vibrateLight();setRealOnly(false);}} style={{...S.btn,padding:"5px 14px",borderRadius:8,fontSize:11,fontWeight:realOnly?500:700,background:!realOnly?T.accent+"18":"transparent",color:!realOnly?T.accent:T.textMuted,border:`1px solid ${!realOnly?T.accent+"44":T.border+"22"}`}}>Всі ({deals.length})</button>
+      <button onClick={()=>{vibrateLight();setRealOnly(true);}} style={{...S.btn,padding:"5px 14px",borderRadius:8,fontSize:11,fontWeight:realOnly?700:500,background:realOnly?T.accent+"18":"transparent",color:realOnly?T.accent:T.textMuted,border:`1px solid ${realOnly?T.accent+"44":T.border+"22"}`}}>Реальні ({deals.filter(d=>d.photo).length})</button>
+      <div style={{flex:1}}/>
+      <span style={{fontSize:10,color:T.textMuted}}>{list.length}</span>
+    </div>
     <div style={{ padding:"0 16px 90px",display:"flex",flexDirection:"column",gap:10 }}>
       {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin} onRefresh={onRefresh}/>)}
       {list.length===0&&<div style={{ textAlign:"center",padding:60,color:T.textMuted }}>Нічого не знайдено</div>}
@@ -831,6 +863,43 @@ const SHOPS=[
   {name:"Сироварня Карпат",lat:49.2260,lng:28.4830,type:"dairy"},
   {name:"Ринок Урожай",lat:49.2340,lng:28.4710,type:"farm"},
 ];
+
+function DealsMap({ deals, onOpen, radius: propRadius, center: propCenter }) {
+  const radius=propRadius||5;
+  const center=propCenter||{lat:49.2328,lng:28.4687};
+  const geoDeals=deals.filter(d=>{
+    const img=d.photo||"";
+    if(!img.startsWith("geo:")) return false;
+    const [lat,lng]=img.replace("geo:","").split(",").map(Number);
+    const dist=Math.sqrt(Math.pow((lat-center.lat)*111,2)+Math.pow((lng-center.lng)*73,2));
+    return dist<=radius;
+  }).map(d=>{
+    const [lat,lng]=d.photo.replace("geo:","").split(",").map(Number);
+    return {...d,lat,lng};
+  });
+  const zoom=radius<=1?16:radius<=3?15:radius<=5?14:13;
+  const span=radius<=1?0.008:radius<=3?0.02:radius<=5?0.03:0.06;
+  return <div style={{marginTop:6}}>
+    <div style={{...S.flex,justifyContent:"space-between",marginBottom:4}}>
+      <span style={{fontSize:10,fontWeight:600,color:T.textSec}}>Знайдено: {geoDeals.length}</span>
+    </div>
+    <div style={{position:"relative",borderRadius:10,overflow:"hidden",height:180,border:`1px solid ${T.border}33`}}>
+      <iframe title="map" width="100%" height="100%" style={{border:0,filter:"brightness(0.85) contrast(1.1)"}} loading="lazy"
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=${center.lng-span},${center.lat-span*0.6},${center.lng+span},${center.lat+span*0.6}&layer=mapnik`}/>
+      <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,pointerEvents:"none"}}>
+        {geoDeals.map((d,i)=>{
+          const x=((d.lng-(center.lng-span))/(span*2))*100;
+          const y=(((center.lat+span*0.6)-d.lat)/(span*1.2))*100;
+          if(x<0||x>100||y<0||y>100) return null;
+          return <div key={i} onClick={()=>onOpen(d)} style={{position:"absolute",left:`${x}%`,top:`${y}%`,transform:"translate(-50%,-100%)",pointerEvents:"auto",cursor:"pointer"}}>
+            <div style={{background:T.accent,color:"#fff",fontSize:8,fontWeight:700,padding:"2px 5px",borderRadius:4,whiteSpace:"nowrap",maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",boxShadow:"0 1px 4px rgba(0,0,0,0.5)"}}>₴{d.group}</div>
+            <div style={{width:6,height:6,borderRadius:"50%",background:T.accent,margin:"-1px auto 0",border:"1px solid #fff"}}/>
+          </div>;
+        })}
+      </div>
+    </div>
+  </div>;
+}
 
 function MapView({ label, height=200, shops=true, route }) {
   const center={lat:49.2328,lng:28.4687};
@@ -1068,8 +1137,14 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy, onChat, onRefresh }) 
         <div style={{ fontSize:12,fontWeight:700,color:T.text,marginBottom:6 }}>Опис</div>
         <div style={{ fontSize:12,color:T.textSec,lineHeight:1.6 }}>{deal.desc}</div>
       </div>
-      <button onClick={()=>{const text=`${deal.title} — ₴${deal.group} замість ₴${deal.retail}! -${d}%`;if(navigator.share)navigator.share({title:deal.title,text});else{navigator.clipboard.writeText(text);alert("Скопійовано!");}}}
-        style={{ ...S.btn,...S.flex,justifyContent:"center",gap:6,width:"100%",padding:12,background:T.cardAlt,borderRadius:12,color:T.text,fontSize:12 }}>{I.share} Поділитись</button>
+      <button onClick={()=>{
+        const geo=deal.photo?.startsWith("geo:")?deal.photo.replace("geo:","").split(","):null;
+        const mapLink=geo?`https://www.google.com/maps?q=${geo[0]},${geo[1]}`:"";
+        const text=`${deal.title} — ₴${deal.group} замість ₴${deal.retail} (-${d}%)\n📍 ${deal.city}${mapLink?"\n🗺 "+mapLink:""}`;
+        if(navigator.share)navigator.share({title:deal.title,text,url:mapLink||window.location.href});else{navigator.clipboard.writeText(text);alert("Скопійовано!");}
+      }} style={{ ...S.btn,...S.flex,justifyContent:"center",gap:6,width:"100%",padding:14,background:`linear-gradient(135deg,${T.accent}22,${T.accent}08)`,borderRadius:12,color:T.text,fontSize:13,border:`1px solid ${T.accent}22` }}>
+        {I.share} Поділитись оголошенням
+      </button>
       {!isIn&&<div style={S.card}>
         <div style={{ fontSize:12,fontWeight:700,color:T.text,marginBottom:10 }}>Кількість ({deal.unit})</div>
         <div style={{ ...S.flex,gap:14,justifyContent:"center" }}>

@@ -54,7 +54,8 @@
       "Bash(sed -i 's/<Ic emoji={d\\\\.avatar} size={40}\\\\/>/<Ic emoji={d.avatar} size={40} name={d.seller}\\\\/>/g' src/App.jsx)",
       "Bash(sed -i 's/<Ic emoji={d\\\\.avatar} size={36}\\\\/>/<Ic emoji={d.avatar} size={36} name={d.seller||d.title}\\\\/>/g' src/App.jsx)",
       "Bash(sed -i 's/<Ic emoji={ch\\\\.other?\\\\.avatarUrl||\"\"💬\"\"} size={42}\\\\/>/<Ic emoji={ch.other?.avatarUrl} size={42} name={ch.other?.name||\"\"Чат\"\"}\\\\/>/g' src/App.jsx)",
-      "Bash(sed -i 's/<Ic emoji={ch?\\\\.other?\\\\.avatarUrl||\"\"💬\"\"} size={36}\\\\/>/<Ic emoji={ch?.other?.avatarUrl} size={36} name={ch?.other?.name||\"\"Чат\"\"}\\\\/>/g' src/App.jsx)"
+      "Bash(sed -i 's/<Ic emoji={ch?\\\\.other?\\\\.avatarUrl||\"\"💬\"\"} size={36}\\\\/>/<Ic emoji={ch?.other?.avatarUrl} size={36} name={ch?.other?.name||\"\"Чат\"\"}\\\\/>/g' src/App.jsx)",
+      "Bash(md5 \"E:/Users/Roma/Desktop/СпільноКуп/ios/SpilnoKup/Views/DealDetailView.swift\")"
     ]
   }
 }
