@@ -1175,14 +1175,6 @@ function QRHub({ autoScan }) {
     return ()=>unsub();
   },[]);
 
-  // Auto-start camera when opened from market scan button
-  useEffect(()=>{
-    if(autoScan&&!autoScanDone.current&&!scanning&&!scanned){
-      autoScanDone.current=true;
-      setTimeout(()=>startCamera(),300);
-    }
-  },[autoScan]);
-
   const doVerify=async(token)=>{
     setVerifying(true);setVerifyError("");
     try{
@@ -1222,6 +1214,15 @@ function QRHub({ autoScan }) {
     if(videoRef.current?.srcObject){videoRef.current.srcObject.getTracks().forEach(t=>t.stop());videoRef.current.srcObject=null;}
     setScanning(false);
   };
+
+  // Auto-start camera when opened from market scan button
+  useEffect(()=>{
+    if(autoScan&&!autoScanDone.current&&!scanning&&!scanned){
+      autoScanDone.current=true;
+      startCamera();
+    }
+    return ()=>{if(autoScan) stopCamera();};
+  },[]);
 
   // Success screen
   if(confirmed&&scanned) return <div style={S.page}>
