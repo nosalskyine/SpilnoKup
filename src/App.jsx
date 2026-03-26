@@ -348,28 +348,30 @@ function DealPhoto({ deal, h=90 }) {
 function DealCard({ deal, onOpen, joined, onJoin, onRefresh }) {
   const p=pct(deal),d=disc(deal),isIn=joined[deal.id],col=pCol(p);
   const bc=discBorder(deal);
-  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:10,overflow:"hidden",cursor:"pointer",padding:0,border:`1px solid ${bc}44` }}>
+  return <div onClick={()=>onOpen(deal)} style={{ ...S.card,borderRadius:12,overflow:"hidden",cursor:"pointer",padding:0,border:`1px solid ${bc}44` }}>
     <div style={{...S.flex,gap:0}}>
-      <div style={{width:72,flexShrink:0,padding:"6px 0 6px 6px"}}><DealPhoto deal={deal} h={62}/></div>
-      <div style={{flex:1,padding:"6px 8px",minWidth:0}}>
-        <div style={{fontSize:13,fontWeight:700,color:T.text,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{deal.title}</div>
-        <div style={{fontSize:10,color:T.textMuted,marginTop:1}}>{deal.seller} · {deal.city}</div>
-        <div style={{...S.flex,gap:4,marginTop:4}}>
-          <div style={{flex:1}}><ProgressBar value={p} color={col} h={2}/></div>
-          <span style={{fontSize:7,color:T.textMuted}}>{deal.joined}/{deal.needed}</span>
-          <span style={{fontSize:7,color:T.textMuted}}>{deal.days}д</span>
+      <div style={{width:80,flexShrink:0,padding:"8px 0 8px 8px"}}><DealPhoto deal={deal} h={70}/></div>
+      <div style={{flex:1,padding:"8px 10px",minWidth:0}}>
+        <div style={{fontSize:15,fontWeight:800,color:T.text,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{deal.title}</div>
+        <div style={{fontSize:11,color:T.textMuted,marginTop:2}}>{deal.seller} · {deal.city}</div>
+        <div style={{...S.flex,gap:6,marginTop:6}}>
+          <div style={{flex:1}}><ProgressBar value={p} color={col} h={4}/></div>
+          <span style={{fontSize:10,fontWeight:600,color:T.textSec}}>{deal.joined}/{deal.needed}</span>
+          <span style={{fontSize:10,color:T.textMuted}}>{deal.days}д</span>
+        </div>
+        <div style={{...S.flex,gap:6,marginTop:4}}>
           {isLoggedIn()&&!isIn&&<button onClick={async e=>{e.stopPropagation();
             try{await createOrder(deal.dbId||deal.id,deal.min);onJoin(deal.id);if(onRefresh)onRefresh();}catch(ex){alert(ex.message);}
-          }} style={{...S.btn,background:T.accent,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8}}>+</button>}
-          {isIn&&<span style={{background:T.green,color:"#fff",borderRadius:4,padding:"1px 6px",fontSize:8,fontWeight:700}}>✓</span>}
+          }} style={{...S.btn,background:T.accent,color:"#fff",borderRadius:6,padding:"3px 12px",fontSize:11,fontWeight:700}}>+</button>}
+          {isIn&&<span style={{background:T.green,color:"#fff",borderRadius:6,padding:"3px 10px",fontSize:10,fontWeight:700}}>Joined</span>}
         </div>
       </div>
-      <div style={{flexShrink:0,padding:"6px 8px 6px 0",textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:3}}>
-        <div style={{fontSize:16,fontWeight:800,color:T.green}}>₴{deal.group}</div>
-        <div style={{fontSize:10,color:T.textMuted,textDecoration:"line-through"}}>₴{deal.retail}</div>
-        <div style={{...S.flex,gap:3}}>
-          {deal.hot&&<span style={{fontSize:8,fontWeight:800,color:T.orange,background:T.orange+"18",padding:"2px 5px",borderRadius:3}}>HOT</span>}
-          <span style={{fontSize:8,fontWeight:800,color:bc,background:bc+"18",padding:"2px 5px",borderRadius:3}}>-{d}%</span>
+      <div style={{flexShrink:0,padding:"8px 10px 8px 0",textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:4}}>
+        <div style={{fontSize:18,fontWeight:900,color:T.green,letterSpacing:"-0.5px"}}>₴{deal.group}</div>
+        <div style={{fontSize:11,color:T.textMuted,textDecoration:"line-through"}}>₴{deal.retail}</div>
+        <div style={{...S.flex,gap:4}}>
+          {deal.hot&&<span style={{fontSize:10,fontWeight:800,color:T.orange,background:T.orange+"18",padding:"2px 8px",borderRadius:4}}>HOT</span>}
+          <span style={{fontSize:11,fontWeight:900,color:bc,background:bc+"18",padding:"2px 8px",borderRadius:4}}>-{d}%</span>
         </div>
       </div>
     </div>
