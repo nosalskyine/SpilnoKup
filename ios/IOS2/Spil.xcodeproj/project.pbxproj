@@ -1,0 +1,281 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001 /* SpilApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000001; };
+		A1000002 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000002; };
+		A1000003 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000003; };
+		A1000004 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000004; };
+		A1000005 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000005; };
+		A1000006 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000006; };
+		A1000007 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000007; };
+		A1000008 /* MarketView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000008; };
+		A1000009 /* DealDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000009; };
+		A1000010 /* CreateDealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000010; };
+		A1000011 /* QRView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000011; };
+		A1000012 /* BusinessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000012; };
+		A1000013 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000013; };
+		A1000014 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1000014; };
+		A1000015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B1000015; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		C1000000 /* Spil.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spil.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1000001 /* SpilApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpilApp.swift; sourceTree = "<group>"; };
+		B1000002 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		B1000003 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		B1000004 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		B1000005 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		B1000006 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		B1000007 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		B1000008 /* MarketView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketView.swift; sourceTree = "<group>"; };
+		B1000009 /* DealDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealDetailView.swift; sourceTree = "<group>"; };
+		B1000010 /* CreateDealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateDealView.swift; sourceTree = "<group>"; };
+		B1000011 /* QRView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRView.swift; sourceTree = "<group>"; };
+		B1000012 /* BusinessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusinessView.swift; sourceTree = "<group>"; };
+		B1000013 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
+		B1000014 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B1000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		D1000000 = {
+			isa = PBXGroup;
+			children = (
+				D1000001 /* Spil */,
+				D1000099 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D1000099 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C1000000 /* Spil.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D1000001 /* Spil */ = {
+			isa = PBXGroup;
+			children = (
+				B1000001 /* SpilApp.swift */,
+				D1000002 /* Models */,
+				D1000003 /* Services */,
+				D1000004 /* Views */,
+				B1000015 /* Assets.xcassets */,
+			);
+			path = Spil;
+			sourceTree = "<group>";
+		};
+		D1000002 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B1000004 /* Models.swift */,
+				B1000005 /* Theme.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		D1000003 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B1000002 /* APIService.swift */,
+				B1000003 /* AuthManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		D1000004 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B1000006 /* AuthView.swift */,
+				B1000007 /* MainTabView.swift */,
+				B1000008 /* MarketView.swift */,
+				B1000009 /* DealDetailView.swift */,
+				B1000010 /* CreateDealView.swift */,
+				B1000011 /* QRView.swift */,
+				B1000012 /* BusinessView.swift */,
+				B1000013 /* WalletView.swift */,
+				B1000014 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E1000000 /* Spil */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1000002;
+			buildPhases = (
+				E1000001 /* Sources */,
+				E1000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Spil;
+			productName = Spil;
+			productReference = C1000000 /* Spil.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		P1000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1430;
+				LastUpgradeCheck = 1430;
+			};
+			buildConfigurationList = F1000000;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = uk;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				uk,
+				en,
+				Base,
+			);
+			mainGroup = D1000000;
+			productRefGroup = D1000099 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E1000000 /* Spil */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E1000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000015 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E1000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001 /* SpilApp.swift in Sources */,
+				A1000002 /* APIService.swift in Sources */,
+				A1000003 /* AuthManager.swift in Sources */,
+				A1000004 /* Models.swift in Sources */,
+				A1000005 /* Theme.swift in Sources */,
+				A1000006 /* AuthView.swift in Sources */,
+				A1000007 /* MainTabView.swift in Sources */,
+				A1000008 /* MarketView.swift in Sources */,
+				A1000009 /* DealDetailView.swift in Sources */,
+				A1000010 /* CreateDealView.swift in Sources */,
+				A1000011 /* QRView.swift in Sources */,
+				A1000012 /* BusinessView.swift in Sources */,
+				A1000013 /* WalletView.swift in Sources */,
+				A1000014 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		G1000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Spil;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera for QR scanning";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Find deals near you";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Upload product photos";
+				SWIFT_VERSION = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		G1000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Spil;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera for QR scanning";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Find deals near you";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Upload product photos";
+				SWIFT_VERSION = 5.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		G1000002 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.spil.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		G1000003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.spil.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F1000000 /* Build configuration list for PBXProject */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				G1000000 /* Debug */,
+				G1000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1000002 /* Build configuration list for PBXNativeTarget */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				G1000002 /* Debug */,
+				G1000003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = P1000000 /* Project object */;
+}
