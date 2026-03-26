@@ -723,6 +723,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
     <ProductSlider/>
 
     <HotSlider deals={deals} onOpen={onOpen}/>
+    <DealsMap deals={deals} onOpen={onOpen}/>
 
     <div style={{ display:"flex",gap:6,padding:"0 16px 10px",overflowX:"auto",overflowY:"hidden",scrollbarWidth:"none",WebkitOverflowScrolling:"touch" }}>
       {CATEGORIES.map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,whiteSpace:"nowrap",padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:cat===c.id?600:400,background:cat===c.id?T.accent:"transparent",color:cat===c.id?"#fff":T.text,border:`1px solid ${cat===c.id?T.accent:T.border}`,letterSpacing:"0.01em" }}>{c.label}</button>)}
@@ -835,6 +836,46 @@ const SHOPS=[
   {name:"Сироварня Карпат",lat:49.2260,lng:28.4830,type:"dairy"},
   {name:"Ринок Урожай",lat:49.2340,lng:28.4710,type:"farm"},
 ];
+
+function DealsMap({ deals, onOpen }) {
+  const [radius,setRadius]=useState(5);
+  const center={lat:49.2328,lng:28.4687};
+  const geoDeals=deals.filter(d=>{
+    const img=d.photo||"";
+    if(!img.startsWith("geo:")) return false;
+    const [lat,lng]=img.replace("geo:","").split(",").map(Number);
+    const dist=Math.sqrt(Math.pow((lat-center.lat)*111,2)+Math.pow((lng-center.lng)*73,2));
+    return dist<=radius;
+  }).map(d=>{
+    const [lat,lng]=d.photo.replace("geo:","").split(",").map(Number);
+    return {...d,lat,lng};
+  });
+  const zoom=radius<=1?16:radius<=3?15:radius<=5?14:13;
+  const span=radius<=1?0.008:radius<=3?0.02:radius<=5?0.03:0.06;
+  return <div style={{padding:"0 12px 10px"}}>
+    <div style={{...S.flex,justifyContent:"space-between",marginBottom:6}}>
+      <span style={{fontSize:12,fontWeight:700,color:T.text}}>Карта ({geoDeals.length})</span>
+      <span style={{fontSize:10,color:T.accent}}>до {radius} км</span>
+    </div>
+    <input type="range" min="0.1" max="10" step="0.1" value={radius} onInput={e=>{vibrateLight();setRadius(Number(e.target.value));}} style={{width:"100%",marginBottom:6,accentColor:T.accent}}/>
+    <div style={{...S.flex,justifyContent:"space-between",fontSize:9,color:T.textMuted,marginBottom:8}}><span>100м</span><span>1км</span><span>5км</span><span>10км</span></div>
+    <div style={{position:"relative",borderRadius:12,overflow:"hidden",height:220,border:`1px solid ${T.border}33`}}>
+      <iframe title="map" width="100%" height="100%" style={{border:0,filter:"brightness(0.85) contrast(1.1)"}} loading="lazy"
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=${center.lng-span},${center.lat-span*0.6},${center.lng+span},${center.lat+span*0.6}&layer=mapnik`}/>
+      <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,pointerEvents:"none"}}>
+        {geoDeals.map((d,i)=>{
+          const x=((d.lng-(center.lng-span))/(span*2))*100;
+          const y=(((center.lat+span*0.6)-d.lat)/(span*1.2))*100;
+          if(x<0||x>100||y<0||y>100) return null;
+          return <div key={i} onClick={()=>onOpen(d)} style={{position:"absolute",left:`${x}%`,top:`${y}%`,transform:"translate(-50%,-100%)",pointerEvents:"auto",cursor:"pointer"}}>
+            <div style={{background:T.accent,color:"#fff",fontSize:8,fontWeight:700,padding:"2px 5px",borderRadius:4,whiteSpace:"nowrap",maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",boxShadow:"0 1px 4px rgba(0,0,0,0.5)"}}>₴{d.group}</div>
+            <div style={{width:6,height:6,borderRadius:"50%",background:T.accent,margin:"-1px auto 0",border:"1px solid #fff"}}/>
+          </div>;
+        })}
+      </div>
+    </div>
+  </div>;
+}
 
 function MapView({ label, height=200, shops=true, route }) {
   const center={lat:49.2328,lng:28.4687};
@@ -1072,8 +1113,14 @@ function DealDetail({ deal, onBack, joined, onJoin, onBuy, onChat, onRefresh }) 
         <div style={{ fontSize:12,fontWeight:700,color:T.text,marginBottom:6 }}>Опис</div>
         <div style={{ fontSize:12,color:T.textSec,lineHeight:1.6 }}>{deal.desc}</div>
       </div>
-      <button onClick={()=>{const text=`${deal.title} — ₴${deal.group} замість ₴${deal.retail}! -${d}%`;if(navigator.share)navigator.share({title:deal.title,text});else{navigator.clipboard.writeText(text);alert("Скопійовано!");}}}
-        style={{ ...S.btn,...S.flex,justifyContent:"center",gap:6,width:"100%",padding:12,background:T.cardAlt,borderRadius:12,color:T.text,fontSize:12 }}>{I.share} Поділитись</button>
+      <button onClick={()=>{
+        const geo=deal.photo?.startsWith("geo:")?deal.photo.replace("geo:","").split(","):null;
+        const mapLink=geo?`https://www.google.com/maps?q=${geo[0]},${geo[1]}`:"";
+        const text=`${deal.title} — ₴${deal.group} замість ₴${deal.retail} (-${d}%)\n📍 ${deal.city}${mapLink?"\n🗺 "+mapLink:""}`;
+        if(navigator.share)navigator.share({title:deal.title,text,url:mapLink||window.location.href});else{navigator.clipboard.writeText(text);alert("Скопійовано!");}
+      }} style={{ ...S.btn,...S.flex,justifyContent:"center",gap:6,width:"100%",padding:14,background:`linear-gradient(135deg,${T.accent}22,${T.accent}08)`,borderRadius:12,color:T.text,fontSize:13,border:`1px solid ${T.accent}22` }}>
+        {I.share} Поділитись оголошенням
+      </button>
       {!isIn&&<div style={S.card}>
         <div style={{ fontSize:12,fontWeight:700,color:T.text,marginBottom:10 }}>Кількість ({deal.unit})</div>
         <div style={{ ...S.flex,gap:14,justifyContent:"center" }}>
