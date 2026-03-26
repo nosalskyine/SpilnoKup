@@ -228,6 +228,112 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 // ── Навігація (напівпрозора + анімація) ─────────────────────────────────────
 const NAV = [["market",I.home,"Маркет"],["qr",I.qr,"QR"],["chat",I.msg,"Чат"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
+function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
+  const [subPage,setSubPage]=useState(null);
+  const initials=(user?.name||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+
+  const MenuItem=({icon,label,desc,onClick,color})=><div onClick={onClick} style={{...S.flex,gap:12,padding:"14px 0",borderBottom:`1px solid ${T.border}11`,cursor:"pointer"}}>
+    <div style={{width:40,height:40,borderRadius:12,background:(color||T.accent)+"14",...S.flex,justifyContent:"center",flexShrink:0}}>
+      {icon}
+    </div>
+    <div style={{flex:1}}>
+      <div style={{fontSize:14,fontWeight:600,color:color||T.text}}>{label}</div>
+      {desc&&<div style={{fontSize:11,color:T.textSec}}>{desc}</div>}
+    </div>
+    <svg width="16" height="16" fill="none" stroke={T.textMuted} strokeWidth="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+  </div>;
+
+  // Sub pages
+  if(subPage) return <div style={{...S.page,paddingBottom:20}}>
+    <div style={{...S.flex,gap:10,marginBottom:20}}>
+      <button onClick={()=>setSubPage(null)} style={{...S.btn,background:"none",color:T.accent,padding:0}}>{I.back}</button>
+      <h2 style={{fontSize:20,fontWeight:800,color:T.text}}>{subPage}</h2>
+    </div>
+    {subPage==="Центр подій"&&<div>
+      <div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:36,marginBottom:8}}>
+        <svg width="36" height="36" fill="none" stroke={T.textMuted} strokeWidth="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div><div style={{fontSize:13,color:T.textMuted}}>Поки немає подій</div><div style={{fontSize:11,color:T.textSec,marginTop:4}}>Тут з'являться сповіщення про ваші покупки та продажі</div></div>
+    </div>}
+    {subPage==="Транзакції"&&<div>
+      <div style={{...S.card,textAlign:"center",padding:30}}><div style={{fontSize:36,marginBottom:8}}>
+        <svg width="36" height="36" fill="none" stroke={T.textMuted} strokeWidth="1.5" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      </div><div style={{fontSize:13,color:T.textMuted}}>Історія транзакцій</div><div style={{fontSize:11,color:T.textSec,marginTop:4}}>Перейдіть до Гаманця щоб переглянути транзакції</div></div>
+    </div>}
+    {subPage==="Реферальна програма"&&<div>
+      <div style={{...S.card,padding:20}}>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:36,marginBottom:8}}>
+            <svg width="36" height="36" fill="none" stroke={T.accent} strokeWidth="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          </div>
+          <div style={{fontSize:15,fontWeight:700,color:T.text}}>Запросіть друзів</div>
+          <div style={{fontSize:11,color:T.textSec,marginTop:4}}>Отримайте бонус за кожного запрошеного друга</div>
+        </div>
+        <div style={{background:T.cardAlt,borderRadius:10,padding:12,textAlign:"center",marginBottom:12}}>
+          <div style={{fontSize:10,color:T.textSec}}>Ваш код запрошення</div>
+          <div style={{fontSize:18,fontWeight:900,color:T.accent,letterSpacing:2,marginTop:4}}>{user?.displayId||"---"}</div>
+        </div>
+        <button onClick={()=>{const t=`Приєднуйся до Spil! Мій код: ${user?.displayId||""}`;if(navigator.share)navigator.share({title:"Spil",text:t});else{navigator.clipboard.writeText(t);alert("Скопійовано!");}}} style={{...S.btn,width:"100%",padding:12,borderRadius:12,background:T.accent,color:"#fff",fontSize:13}}>Поділитись кодом</button>
+      </div>
+    </div>}
+    {subPage==="Безпека"&&<div>
+      <div style={{...S.card,padding:16,display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{...S.flex,justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:600,color:T.text}}>Двофакторна автентифікація</div><div style={{fontSize:11,color:T.textSec}}>Через Telegram бот</div></div><div style={{width:40,height:22,borderRadius:11,background:T.green,padding:2,...S.flex,justifyContent:"flex-end"}}><div style={{width:18,height:18,borderRadius:9,background:"#fff"}}/></div></div>
+        <div style={{...S.flex,justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:600,color:T.text}}>Активні сесії</div><div style={{fontSize:11,color:T.textSec}}>1 пристрій</div></div><svg width="16" height="16" fill="none" stroke={T.textMuted} strokeWidth="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+        <div style={{...S.flex,justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:600,color:T.text}}>ID акаунта</div><div style={{fontSize:11,color:T.accent,fontWeight:700}}>{user?.displayId||"---"}</div></div></div>
+      </div>
+    </div>}
+    {subPage==="Налаштування"&&<div>
+      <div style={{...S.card,padding:16,display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{fontSize:13,fontWeight:700,color:T.text,marginBottom:4}}>Тема оформлення</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {Object.entries(THEMES).map(([id,t])=><button key={id} onClick={()=>onTheme(id)} style={{...S.btn,padding:"8px 14px",borderRadius:10,fontSize:12,background:theme===id?T.accent:T.cardAlt,color:theme===id?"#fff":T.textSec,border:`1px solid ${theme===id?T.accent:T.border}`}}>{t.name}</button>)}
+        </div>
+      </div>
+    </div>}
+    {subPage==="Спільнота"&&<div>
+      <div style={{...S.card,textAlign:"center",padding:20}}>
+        <div style={{fontSize:36,marginBottom:8}}>
+          <svg width="36" height="36" fill="none" stroke={T.accent} strokeWidth="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div style={{fontSize:15,fontWeight:700,color:T.text,marginBottom:8}}>Приєднуйтесь до спільноти</div>
+        <a href="https://t.me/spilnokupbot" target="_blank" rel="noopener noreferrer" style={{...S.btn,display:"inline-flex",gap:6,padding:"10px 20px",borderRadius:12,background:"#0088cc",color:"#fff",fontSize:13,textDecoration:"none"}}>Telegram канал</a>
+      </div>
+    </div>}
+  </div>;
+
+  return <div style={{...S.page,paddingBottom:20}}>
+    <div style={{...S.flex,justifyContent:"space-between",marginBottom:20}}>
+      <h2 style={{fontSize:22,fontWeight:900,color:T.text}}>Меню</h2>
+      <button onClick={onBack} style={{...S.btn,width:36,height:36,borderRadius:10,background:T.cardAlt,...S.flex,justifyContent:"center"}}>
+        <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    {/* Profile card */}
+    <div style={{...S.card,marginBottom:20,...S.flex,gap:14,padding:16}}>
+      <div style={{width:52,height:52,borderRadius:14,background:`linear-gradient(135deg,${T.accent},${T.green})`,...S.flex,justifyContent:"center",fontSize:20,fontWeight:900,color:"#fff",flexShrink:0}}>{initials}</div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:16,fontWeight:800,color:T.text}}>{user?.name||"Гість"}</div>
+        <div style={{fontSize:11,color:T.accent,fontWeight:600}}>{user?.displayId||""}</div>
+        <div style={{fontSize:11,color:T.textSec}}>{user?.city||""}</div>
+      </div>
+    </div>
+
+    {/* Menu items */}
+    <div style={{...S.card,padding:"0 16px"}}>
+      <MenuItem onClick={()=>setSubPage("Центр подій")} label="Центр подій" desc="Сповіщення та активність" icon={<svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>}/>
+      <MenuItem onClick={()=>setSubPage("Транзакції")} label="Транзакції" desc="Історія платежів" icon={<svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>}/>
+      <MenuItem onClick={()=>setSubPage("Реферальна програма")} label="Реферальна програма" desc="Запросіть друзів" icon={<svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>}/>
+      <MenuItem onClick={()=>setSubPage("Безпека")} label="Безпека" desc="2FA, сесії, ID" icon={<svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}/>
+      <MenuItem onClick={()=>setSubPage("Налаштування")} label="Налаштування" desc="Тема та зовнішній вигляд" icon={<svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>}/>
+      <MenuItem onClick={()=>setSubPage("Спільнота")} label="Приєднатись до Спільноти" desc="Telegram канал" icon={<svg width="20" height="20" fill="none" stroke={T.accent} strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>}/>
+    </div>
+
+    {/* Logout */}
+    <button onClick={onLogout} style={{...S.btn,width:"100%",marginTop:20,padding:16,borderRadius:14,background:"#ef444418",color:"#ef4444",fontSize:15,fontWeight:700,border:"1px solid #ef444433"}}>Вийти з акаунта</button>
+  </div>;
+}
+
 function Nav({ tab, setTab, unread }) {
   const isCenter=(t)=>t==="chat";
   const logged=isLoggedIn();
@@ -1904,8 +2010,9 @@ function AppInner() {
     }}/>;
     if(page==="qr"&&buyData) return <BuyerQRPage deal={buyData.deal} qty={buyData.qty} orderId={buyData.orderId} onBack={()=>setPage(null)}/>;
     if(page==="createDeal") return <CreateDealPage onBack={()=>setPage(null)} onSave={()=>{loadDeals();setPage(null);}}/>;
+    if(page==="settings") return <SettingsMenu user={user} theme={theme} onTheme={changeTheme} onBack={()=>setPage(null)} onLogout={()=>{disconnectSocket();apiLogout();const g={name:"Гість",email:"",phone:"",city:""};localStorage.setItem("spilnokup_user",JSON.stringify(g));setUser(g);setPage(null);setTab("market");setAuthStep("welcome");}}/>;
     switch(tab){
-      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setTab("wallet")} onQR={()=>setTab("qr")} onChat={()=>setTab("chat")}/>;
+      case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setPage("settings")} onQR={()=>setTab("qr")} onChat={()=>setTab("chat")}/>;
       case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
       case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen} onBuy={onBuy}/>;
