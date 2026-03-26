@@ -30,54 +30,45 @@ const vibrateSuccess=()=>{hapticPulse(25,35);setTimeout(()=>hapticPulse(25,45),1
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
-  light: {
-    name: "Світла", emoji: "☀️",
-    bg:"#f8f9fa",card:"#ffffff",cardAlt:"#f1f3f5",border:"#dee2e6",
-    text:"#212529",textSec:"#495057",textMuted:"#adb5bd",
-    accent:"#1a73e8",green:"#1a8754",greenLight:"#e8f5e9",greenBorder:"#a5d6a7",
-    orange:"#e65100",yellow:"#f57f17",purple:"#5e35b1",blue:"#1a73e8",
-    navBg:"rgba(255,255,255,0.97)",navText:"#6c757d",
-    gradA:"#1a73e8",gradB:"#5e35b1",gradC:"#1a8754",
+  midnight: {
+    name: "Midnight",
+    bg:"#000000",card:"#0a0a0f",cardAlt:"#111118",border:"#222230",
+    text:"#ffffff",textSec:"#a0a0b0",textMuted:"#555566",
+    accent:"#4ade80",green:"#4ade80",greenLight:"#0a1a10",greenBorder:"#1a3020",
+    orange:"#fb923c",yellow:"#facc15",purple:"#a78bfa",blue:"#60a5fa",
+    navBg:"rgba(0,0,0,0.92)",navText:"#888898",
+    gradA:"#4ade80",gradB:"#facc15",gradC:"#fb923c",
   },
-  cream: {
-    name: "Кремова", emoji: "🍦",
-    bg:"#faf8f2",card:"#ffffff",cardAlt:"#f0ece2",border:"#d6ceb8",
-    text:"#2c2416",textSec:"#8a7e6a",textMuted:"#b0a690",
-    accent:"#8b6e3e",green:"#5a7a4a",greenLight:"#f0f4e8",greenBorder:"#c8d4b0",
-    orange:"#c46a20",yellow:"#b8960a",purple:"#7a6890",blue:"#5a7090",
-    navBg:"rgba(250,248,242,0.85)",navText:"#8a7e6a",
-    gradA:"#8b6e3e",gradB:"#b8960a",gradC:"#5a7a4a",
+  cosmos: {
+    name: "Cosmos",
+    bg:"#000008",card:"#08081a",cardAlt:"#101028",border:"#1a1a3a",
+    text:"#f0f0ff",textSec:"#9090b0",textMuted:"#505070",
+    accent:"#6366f1",green:"#34d399",greenLight:"#081818",greenBorder:"#103030",
+    orange:"#f97316",yellow:"#eab308",purple:"#a78bfa",blue:"#6366f1",
+    navBg:"rgba(0,0,8,0.92)",navText:"#7070a0",
+    gradA:"#6366f1",gradB:"#a78bfa",gradC:"#34d399",
   },
-  dark: {
-    name: "Графіт", emoji: "🌑",
-    bg:"#111116",card:"#1a1a22",cardAlt:"#22222c",border:"#b8960a",
-    text:"#d4d4d8",textSec:"#85858f",textMuted:"#555560",
-    accent:"#3d8c5c",green:"#5a9e74",greenLight:"#141f18",greenBorder:"#243328",
-    orange:"#c46a20",yellow:"#b8960a",purple:"#7a72a8",blue:"#5878a0",
-    navBg:"rgba(17,17,22,0.50)",navText:"#b0b0b8",
-    gradA:"#3d8c5c",gradB:"#b8960a",gradC:"#c46a20",
+  emerald: {
+    name: "Emerald",
+    bg:"#000000",card:"#061008",cardAlt:"#0c1a10",border:"#183020",
+    text:"#f0fff4",textSec:"#88b098",textMuted:"#446654",
+    accent:"#10b981",green:"#10b981",greenLight:"#061a10",greenBorder:"#0c3020",
+    orange:"#f59e0b",yellow:"#eab308",purple:"#8b5cf6",blue:"#3b82f6",
+    navBg:"rgba(0,0,0,0.92)",navText:"#608878",
+    gradA:"#10b981",gradB:"#eab308",gradC:"#f59e0b",
   },
-  ocean: {
-    name: "Океан", emoji: "🌊",
-    bg:"#0e1320",card:"#151c2c",cardAlt:"#1c2438",border:"#b8960a",
-    text:"#c8cdd6",textSec:"#7888a0",textMuted:"#4a5568",
-    accent:"#3068b8",green:"#3a8fb0",greenLight:"#101c2c",greenBorder:"#1a3050",
-    orange:"#c46a20",yellow:"#b8960a",purple:"#6870a8",blue:"#5078a0",
-    navBg:"rgba(14,19,32,0.50)",navText:"#a0a8b8",
-    gradA:"#3068b8",gradB:"#6870a8",gradC:"#2a7888",
-  },
-  berry: {
-    name: "Слива", emoji: "🫐",
-    bg:"#14101a",card:"#1c1624",cardAlt:"#261e30",border:"#b8960a",
-    text:"#d0c8d4",textSec:"#8878a0",textMuted:"#5a4870",
-    accent:"#9050b0",green:"#a068c0",greenLight:"#1a1224",greenBorder:"#2e1e40",
-    orange:"#c46a20",yellow:"#b8960a",purple:"#8870a8",blue:"#7060a0",
-    navBg:"rgba(20,16,26,0.50)",navText:"#b0a8b8",
-    gradA:"#9050b0",gradB:"#8870a8",gradC:"#a04878",
+  noir: {
+    name: "Noir",
+    bg:"#000000",card:"#0c0c0c",cardAlt:"#161616",border:"#2a2a2a",
+    text:"#ffffff",textSec:"#999999",textMuted:"#555555",
+    accent:"#ffffff",green:"#00d084",greenLight:"#0a1a10",greenBorder:"#1a3020",
+    orange:"#ff6b35",yellow:"#ffd700",purple:"#b388ff",blue:"#448aff",
+    navBg:"rgba(0,0,0,0.95)",navText:"#777777",
+    gradA:"#ffffff",gradB:"#999999",gradC:"#00d084",
   },
 };
 
-let T = { ...THEMES.ocean, radius:10, radiusSm:8 };
+let T = { ...THEMES.midnight, radius:10, radiusSm:8 };
 function applyTheme(id) { Object.assign(T, THEMES[id], { radius:10, radiusSm:8 }); }
 
 function getS() {
@@ -189,25 +180,33 @@ const pCol = p => p >= 90 ? T.orange : p >= 60 ? T.yellow : T.accent;
 const discBorder = d => { const dd=disc(d); return dd>30?"#ef4444":dd>=20?"#22c55e":"#1a1a2e"; };
 
 // ── Декоративний фон ────────────────────────────────────────────────────────
+function ProductSlider() {
+  const [idx,setIdx]=useState(0);
+  const slides=[
+    {title:"Обирай",desc:"Знайди вигідну пропозицію",icon:<svg width="28" height="28" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>},
+    {title:"Долучайся",desc:"Приєднуйся до групи покупців",icon:<svg width="28" height="28" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>},
+    {title:"Економ до 40%",desc:"Групова ціна нижче роздрібної",icon:<svg width="28" height="28" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>},
+    {title:"Отримай товар",desc:"QR код для отримання покупки",icon:<svg width="28" height="28" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>},
+  ];
+  useEffect(()=>{const t=setInterval(()=>setIdx(i=>(i+1)%slides.length),3000);return()=>clearInterval(t);},[]);
+  const s=slides[idx];
+  return <div style={{padding:"0 12px 10px"}}>
+    <div style={{background:`linear-gradient(135deg,${T.accent}22,${T.accent}08)`,borderRadius:T.radius,padding:"14px 16px",border:`1px solid ${T.accent}22`,...S.flex,gap:14}}>
+      <div style={{width:44,height:44,borderRadius:12,background:T.accent,...S.flex,justifyContent:"center",flexShrink:0}}>{s.icon}</div>
+      <div style={{flex:1}}>
+        <div style={{fontSize:14,fontWeight:800,color:T.text}}>{s.title}</div>
+        <div style={{fontSize:11,color:T.textSec}}>{s.desc}</div>
+      </div>
+      <div style={{...S.flex,gap:3}}>{slides.map((_,i)=><div key={i} style={{width:i===idx?12:4,height:4,borderRadius:2,background:i===idx?T.accent:T.textMuted+"44"}}/>)}</div>
+    </div>
+  </div>;
+}
+
 function BgDecor() {
-  return <div style={{ position:"absolute",top:0,left:0,right:0,bottom:0,overflow:"hidden",pointerEvents:"none",zIndex:0 }}>
-    <div style={{ position:"absolute",top:-40,right:-30,width:260,height:260,borderRadius:"50%",background:`radial-gradient(circle,${T.gradA}0e,transparent 70%)` }}/>
-    <div style={{ position:"absolute",top:"35%",left:-50,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle,${T.gradB}0c,transparent 70%)` }}/>
-    <div style={{ position:"absolute",bottom:80,right:-20,width:220,height:220,borderRadius:"50%",background:`radial-gradient(circle,${T.gradC}0a,transparent 70%)` }}/>
-    <svg style={{ position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.08 }}>
-      <defs>
-        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={T.gradA}/><stop offset="50%" stopColor={T.gradB}/><stop offset="100%" stopColor={T.gradC}/></linearGradient>
-        <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.gradC}/><stop offset="50%" stopColor={T.gradA}/><stop offset="100%" stopColor={T.gradB}/></linearGradient>
-      </defs>
-      <path d="M-20 120Q60 60 150 140T300 80Q350 60 420 130" fill="none" stroke="url(#g1)" strokeWidth="2.5" opacity="0.7"/>
-      <path d="M420 220Q340 180 250 260T100 200Q40 170 -20 240" fill="none" stroke="url(#g2)" strokeWidth="2" opacity="0.5"/>
-      <path d="M-20 350Q80 290 170 370T320 310Q380 280 420 360" fill="none" stroke="url(#g1)" strokeWidth="3" opacity="0.6"/>
-      <path d="M420 460Q330 420 240 500T90 440Q20 410 -20 480" fill="none" stroke="url(#g2)" strokeWidth="2" opacity="0.4"/>
-      <path d="M-20 560Q100 500 200 580T360 520Q400 500 420 570" fill="none" stroke="url(#g1)" strokeWidth="2.5" opacity="0.55"/>
-      <path d="M420 660Q300 620 200 700T50 640Q-10 620 -20 680" fill="none" stroke="url(#g2)" strokeWidth="1.5" opacity="0.45"/>
-      <path d="M60 50Q120 20 200 70T340 30" fill="none" stroke="url(#g1)" strokeWidth="1.5" opacity="0.35"/>
-      <path d="M350 150Q280 130 200 170T80 140" fill="none" stroke="url(#g2)" strokeWidth="1" opacity="0.3"/>
-    </svg>
+  // Starry night — subtle random dots
+  const stars=useRef(Array.from({length:40},()=>({x:Math.random()*100,y:Math.random()*100,s:Math.random()*1.5+0.5,o:Math.random()*0.4+0.1})));
+  return <div style={{ position:"absolute",top:0,left:0,right:0,bottom:0,overflow:"hidden",pointerEvents:"none",zIndex:0,background:"#000" }}>
+    {stars.current.map((st,i)=><div key={i} style={{position:"absolute",left:`${st.x}%`,top:`${st.y}%`,width:st.s,height:st.s,borderRadius:"50%",background:"#fff",opacity:st.o}}/>)}
   </div>;
 }
 
@@ -721,14 +720,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
       </button>}
     </div>
 
-    <div style={{ padding:"0 16px 12px" }}>
-      <div style={{background:T.card,borderRadius:T.radius,padding:"12px 16px",border:`1px solid ${T.border}44`,...S.flex,gap:12}}>
-        <div style={{width:36,height:36,borderRadius:8,background:T.accent,...S.flex,justifyContent:"center",flexShrink:0}}>
-          <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-        </div>
-        <div><div style={{fontSize:13,fontWeight:700,color:T.text}}>Спільні покупки</div><div style={{fontSize:11,color:T.textSec}}>Об'єднуйтесь та купуйте вигідніше</div></div>
-      </div>
-    </div>
+    <ProductSlider/>
 
     <HotSlider deals={deals} onOpen={onOpen}/>
 
@@ -2065,7 +2057,7 @@ function AppInner() {
   const [deals,setDeals]=useState([]);
   const [unreadCount,setUnreadCount]=useState(0);
   const [scanToast,setScanToast]=useState(false);
-  const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"ocean");
+  const [theme,setTheme]=useState(()=>localStorage.getItem("spilnokup_theme")||"midnight");
   applyTheme(theme); S=getS();
   const changeTheme=(id)=>{setTheme(id);localStorage.setItem("spilnokup_theme",id);};
 
@@ -2138,7 +2130,7 @@ function AppInner() {
     }
   }
 
-  return <div style={{ minHeight:"100vh",background:T.bg,display:"flex",justifyContent:"center",alignItems:isMobile?"stretch":"flex-start",padding:isMobile?0:"20px 0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden" }}>
+  return <div style={{ minHeight:"100vh",background:"#000",display:"flex",justifyContent:"center",alignItems:isMobile?"stretch":"flex-start",padding:isMobile?0:"20px 0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden" }}>
     <div style={{ width:isMobile?"100%":390,height:isMobile?"100vh":820,background:T.card,borderRadius:isMobile?0:44,overflow:"hidden",boxShadow:isMobile?"none":"0 20px 60px rgba(0,0,0,0.08)",position:"relative" }}>
       <BgDecor/>
       <div style={{ position:"relative",zIndex:1,height:showNav?"calc(100% - 60px)":"100%",overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch" }}>{render()}</div>
