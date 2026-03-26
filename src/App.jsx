@@ -1089,10 +1089,14 @@ function ChatPage() {
   useEffect(()=>{
     const ph=getNormalizedPhone();
     if(!ph) return;
+    console.log('[Support] Polling started for phone:', ph);
     const poll=setInterval(async()=>{
       try{
-        const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(ph)}`);
+        const url=`${API}/telegram/support/replies?phone=${encodeURIComponent(ph)}`;
+        console.log('[Support] Polling:', url);
+        const res=await fetch(url);
         const data=await res.json();
+        console.log('[Support] Response:', data);
         if(data.replies&&data.replies.length>0){
           setSupportMessages(prev=>{
             const newMsgs=data.replies.map(r=>({id:Date.now()+Math.random(),text:r.text,from:"support",time:r.time}));
