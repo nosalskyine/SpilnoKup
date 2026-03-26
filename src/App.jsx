@@ -4,21 +4,29 @@ import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, 
 import jsQR from "jsqr";
 import QRCodeLib from "qrcode";
 
-// Haptic feedback (Android vibrate + iOS workaround)
-const vibrate=(ms=10)=>{
+// Haptic feedback — works on Android + iOS (sub-bass pulse)
+let _hapticCtx=null;
+const hapticPulse=(ms=15,freq=28)=>{
   try{
     if(navigator.vibrate) navigator.vibrate(ms);
-    // iOS doesn't support vibrate API, use AudioContext trick
-    if(/iPhone|iPad/.test(navigator.userAgent)){
-      const ctx=new (window.AudioContext||window.webkitAudioContext)();
-      const osc=ctx.createOscillator();osc.frequency.value=1;osc.connect(ctx.destination);
-      osc.start();osc.stop(ctx.currentTime+ms/1000);
-    }
+    if(!_hapticCtx) _hapticCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const ctx=_hapticCtx;
+    if(ctx.state==="suspended") ctx.resume();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type="sine";
+    osc.frequency.value=freq;
+    gain.gain.setValueAtTime(0.2,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+ms/1000);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime+ms/1000+0.02);
   }catch{}
 };
-const vibrateLight=()=>vibrate(8);
-const vibrateMedium=()=>vibrate(25);
-const vibrateSuccess=()=>{try{navigator.vibrate&&navigator.vibrate([20,60,20]);}catch{}};
+const vibrateLight=()=>hapticPulse(12,25);
+const vibrateMedium=()=>hapticPulse(30,20);
+const vibrateSuccess=()=>{hapticPulse(25,35);setTimeout(()=>hapticPulse(25,45),100);};
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
