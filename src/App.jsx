@@ -1237,22 +1237,27 @@ function QRHub({ autoScan, onBack }) {
     </div>
   </div>;
 
-  // Scanner screen
-  if(scanning) return <div style={S.page}>
-    <BackBtn onClick={()=>{stopCamera();if(autoScan&&onBack) onBack();}}/>
-    <div style={{ ...S.card,textAlign:"center",padding:16 }}>
-      <div style={{ fontSize:14,fontWeight:800,color:T.text,marginBottom:10 }}>Наведіть камеру на QR код</div>
-      <canvas ref={canvasRef} style={{display:"none"}}/>
-      <div style={{ width:"100%",height:280,background:"#000",borderRadius:T.radius,marginBottom:14,overflow:"hidden",position:"relative" }}>
-        <video ref={videoRef} autoPlay playsInline muted style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-        <div style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:160,height:160,border:`3px solid ${T.accent}`,borderRadius:14 }}/>
+  // Scanner screen - fullscreen camera
+  if(scanning) return <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#000",zIndex:200}}>
+    <canvas ref={canvasRef} style={{display:"none"}}/>
+    <video ref={videoRef} autoPlay playsInline muted style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+    {/* Overlay */}
+    <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column"}}>
+      {/* Top bar */}
+      <div style={{...S.flex,justifyContent:"space-between",padding:"16px 20px",paddingTop:"env(safe-area-inset-top, 16px)"}}>
+        <button onClick={()=>{stopCamera();if(autoScan&&onBack) onBack();}} style={{...S.btn,background:"none",padding:0,...S.flex,gap:6}}>
+          <svg width="24" height="24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
       </div>
-      <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:8}}>Або введіть код вручну</div>
-      <div style={{...S.flex,gap:8}}>
-        <Input value={manualCode} onChange={e=>setManualCode(e.target.value)} placeholder="Вставте QR код покупця"/>
-        <button disabled={!manualCode||verifying} onClick={()=>doVerify(manualCode)} style={{...S.btn,padding:"12px 16px",borderRadius:12,background:manualCode?T.accent:T.cardAlt,color:manualCode?"#fff":T.textMuted,fontSize:12,whiteSpace:"nowrap"}}>{verifying?"...":"OK"}</button>
+      {/* Center frame */}
+      <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{width:250,height:250,border:"3px solid rgba(59,130,246,0.8)",borderRadius:16,boxShadow:"0 0 0 9999px rgba(0,0,0,0.4)"}}/>
       </div>
-      {verifyError&&<div style={{color:"#ef4444",fontSize:11,marginTop:8}}>{verifyError}</div>}
+      {/* Bottom text */}
+      <div style={{padding:"20px",paddingBottom:"env(safe-area-inset-bottom, 20px)",textAlign:"center"}}>
+        <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:6}}>Наведіть камеру на QR код</div>
+        {verifyError&&<div style={{color:"#ef4444",fontSize:12,marginTop:8,background:"rgba(0,0,0,0.6)",padding:"8px 16px",borderRadius:8,display:"inline-block"}}>{verifyError}</div>}
+      </div>
     </div>
   </div>;
 
