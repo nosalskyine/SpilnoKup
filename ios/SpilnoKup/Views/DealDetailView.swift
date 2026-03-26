@@ -211,7 +211,7 @@ struct DealDetailView: View {
                         }
 
                         // Share
-                        Button(action: share) {
+                        Button(action: shareDeal) {
                             HStack {
                                 Image(systemName: "square.and.arrow.up")
                                 Text("Подiлитись")
@@ -281,7 +281,7 @@ struct DealDetailView: View {
         return "\(first)\(last)".uppercased()
     }
 
-    func share() {
+    func shareDeal() {
         let text = "\(deal.title) -- \(deal.group) грн замiсть \(deal.retail) грн! -\(deal.disc)%"
         let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
