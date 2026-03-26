@@ -1074,13 +1074,25 @@ function ChatPage() {
 
   const saveSupportMsgs=(msgs)=>{setSupportMessages(msgs);localStorage.setItem("spilnokup_support_msgs",JSON.stringify(msgs));};
 
-  // Listen for support replies via WebSocket or polling
+  // Poll for support replies every 5 seconds
   useEffect(()=>{
-    const unsub=onEvent('support:reply',(data)=>{
-      const newMsg={id:Date.now(),text:data.text||data.message,from:"support",time:new Date().toISOString()};
-      setSupportMessages(prev=>{const u=[...prev,newMsg];localStorage.setItem("spilnokup_support_msgs",JSON.stringify(u));return u;});
-    });
-    return ()=>unsub();
+    const user=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
+    if(!user?.phone) return;
+    const poll=setInterval(async()=>{
+      try{
+        const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(user.phone)}`);
+        const data=await res.json();
+        if(data.replies&&data.replies.length>0){
+          setSupportMessages(prev=>{
+            const newMsgs=data.replies.map(r=>({id:Date.now()+Math.random(),text:r.text,from:"support",time:r.time}));
+            const updated=[...prev,...newMsgs];
+            localStorage.setItem("spilnokup_support_msgs",JSON.stringify(updated));
+            return updated;
+          });
+        }
+      }catch{}
+    },5000);
+    return ()=>clearInterval(poll);
   },[]);
 
   useEffect(()=>{

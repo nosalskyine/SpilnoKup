@@ -150,9 +150,18 @@ async function sendTelegramMessage(chatId, text) {
 }
 // ── Support system ──
 const SUPPORT_GROUP_ID = -5110200458;
-const supportTickets = new Map(); // messageId -> { userChatId, userName, userPhone }
+const supportTickets = new Map();
+const supportReplies = new Map(); // phoneKey -> [{text, time, from}]
 exports.sendSupportMessage = sendSupportMessage;
 exports.handleSupportReply = handleSupportReply;
+exports.getSupportReplies = getSupportReplies;
+
+function getSupportReplies(phone) {
+    const key = phone.replace(/\D/g, '');
+    const replies = supportReplies.get(key) || [];
+    supportReplies.delete(key); // Clear after reading
+    return replies;
+}
 
 async function sendSupportMessage(userChatId, userName, userPhone, message) {
     try {
@@ -204,8 +213,11 @@ async function handleSupportReply(update) {
         return false;
     }
 
-    const replyText = `📬 *Відповідь від підтримки:*\n\n${msg.text}`;
-    await sendTelegramMessage(ticket.userChatId, replyText);
+    // Save reply to in-app support chat (not Telegram)
+    const phone = ticket.userPhone || '';
+    const phoneKey = phone.replace(/\D/g, '') || String(ticket.userChatId);
+    if (!supportReplies.has(phoneKey)) supportReplies.set(phoneKey, []);
+    supportReplies.get(phoneKey).push({ text: msg.text, time: new Date().toISOString(), from: msg.from.first_name || 'Підтримка' });
     logger_1.logger.info(`Support reply sent to ${ticket.userChatId}`);
     return true;
 }

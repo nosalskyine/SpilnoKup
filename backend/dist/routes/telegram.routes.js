@@ -59,6 +59,19 @@ router.get('/test-send', async (req, res) => {
     const sent = await sendOtpViaTelegram(phone, otp);
     res.json({ sent, chatId: chatId || null, phone });
 });
+// GET /api/telegram/support/replies - Get support replies for user
+router.get('/support/replies', async (req, res) => {
+    try {
+        const phone = req.query.phone;
+        if (!phone) { res.json({ replies: [] }); return; }
+        const { getSupportReplies } = require('../utils/telegram');
+        const replies = getSupportReplies(phone);
+        res.json({ replies });
+    } catch (err) {
+        res.json({ replies: [] });
+    }
+});
+
 // POST /api/telegram/support - Send support message
 router.post('/support', async (req, res) => {
     try {
