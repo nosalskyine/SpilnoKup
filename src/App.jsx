@@ -696,9 +696,11 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   else if(daysF==="5d") list=list.filter(d=>d.days<=5);
   else if(daysF==="long") list=list.filter(d=>d.days<=7);
   else if(daysF==="later") list=list.filter(d=>d.days>7);
+  if(realOnly) list=list.filter(d=>d.photo);
   list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:sort==="rating"?(a,b)=>b.rating-a.rating:(a,b)=>pct(b)-pct(a));
 
   const [showMarketSupport,setShowMarketSupport]=useState(false);
+  const [realOnly,setRealOnly]=useState(false);
 
   return <div style={{ position:"relative" }}>
     {/* Top bar: profile + scanner | search | support + chat */}
@@ -760,6 +762,9 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
         {[["all","Всі"],["today","Сьогодні"],["2d","До 2 днів"],["week","До 3 днів"],["5d","До 5 днів"],["long","Тиждень+"],["later","Пізніше"]].map(([v,l])=>
           <button key={v} onClick={()=>{vibrateLight();setDaysF(v);}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:daysF===v?T.accent:T.cardAlt,color:daysF===v?"#fff":T.textSec}}>{l}</button>
         )}
+      </div>
+      <div style={{marginTop:8}}>
+        <button onClick={()=>{vibrateLight();setRealOnly(!realOnly);}} style={{...S.btn,padding:"6px 12px",borderRadius:6,fontSize:10,background:realOnly?T.accent:T.cardAlt,color:realOnly?"#fff":T.textSec,border:`1px solid ${realOnly?T.accent:T.border}`}}>Тільки реальні</button>
       </div>
     </div>}
 
