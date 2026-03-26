@@ -1093,15 +1093,23 @@ function ChatPage() {
   useEffect(()=>{
     const sid=getSupportId();
     if(!sid) return;
-    console.log('[Support] Polling started, id:', sid);
+    const u2=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
+    const pollIds=[sid];
+    if(u2?.name && u2.name!==sid) pollIds.push(u2.name);
+    if(u2?.displayId && u2.displayId!==sid) pollIds.push(u2.displayId);
+    console.log('[Support] Polling started, ids:', pollIds);
     const poll=setInterval(async()=>{
       try{
-        const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(sid)}`);
-        const data=await res.json();
-        if(data.replies&&data.replies.length>0){
-          console.log('[Support] Got replies:', data.replies);
+        let allReplies=[];
+        for(const pid of pollIds){
+          const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(pid)}`);
+          const data=await res.json();
+          if(data.replies&&data.replies.length>0) allReplies=allReplies.concat(data.replies);
+        }
+        if(allReplies.length>0){
+          console.log('[Support] Got replies:', allReplies);
           setSupportMessages(prev=>{
-            const newMsgs=data.replies.map(r=>({id:Date.now()+Math.random(),text:r.text,from:"support",time:r.time}));
+            const newMsgs=allReplies.map(r=>({id:Date.now()+Math.random(),text:r.text,from:"support",time:r.time}));
             const updated=[...prev,...newMsgs];
             localStorage.setItem("spilnokup_support_msgs",JSON.stringify(updated));
             return updated;
@@ -1652,7 +1660,7 @@ function WalletPage({ user, setUser, theme, onTheme }) {
         try{
           const token=localStorage.getItem("spilnokup_token");
           await fetch(`${API}/telegram/support`,{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
-            body:JSON.stringify({message:supportMsg,userName:user?.name||"Гість",userPhone:user?.phone||"",userDisplayId:user?.displayId||""})});
+            body:JSON.stringify({message:supportMsg,userName:user?.name||"Гість",userPhone:user?.phone||"",userDisplayId:user?.displayId||(()=>{try{return JSON.parse(localStorage.getItem("spilnokup_user"))?.displayId||""}catch{return ""}})()})});
           // Save to support chat
           const newMsg={id:Date.now(),text:supportMsg.trim(),from:"me",time:new Date().toISOString()};
           const prev=JSON.parse(localStorage.getItem("spilnokup_support_msgs")||"[]");
