@@ -226,7 +226,7 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 }
 
 // ── Навігація (напівпрозора + анімація) ─────────────────────────────────────
-const NAV = [["market",I.home,"Головна"],["create",I.plus,"Оголошення"],["qr",I.qr,"QR"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
+const NAV = [["market",I.home,"Головна"],["qr",I.qr,"QR"],["create",I.plus,"Оголошення"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
 function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
   const [subPage,setSubPage]=useState(null);
