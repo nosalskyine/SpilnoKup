@@ -5,10 +5,6 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var showCreateDeal = false
 
-    var isLightTheme: Bool {
-        state.themeType == .light || state.themeType == .cream
-    }
-
     var body: some View {
         Group {
             if state.isLoggedIn {
@@ -18,11 +14,10 @@ struct ContentView: View {
             }
         }
         .environmentObject(state)
-        .preferredColorScheme(isLightTheme ? .light : .dark)
+        .preferredColorScheme(.dark)
         .onAppear {
             state.loadUser()
             state.loadTheme()
-            // Load deals on startup (even before login, for guest mode)
             if state.deals.isEmpty {
                 state.loadDeals()
             }
@@ -30,60 +25,110 @@ struct ContentView: View {
     }
 
     var mainTabView: some View {
-        ZStack {
-            TabView(selection: $selectedTab) {
-                MarketView()
-                    .tabItem {
-                        Image(systemName: "house.fill")
-                        Text("Головна")
+        ZStack(alignment: .bottom) {
+            // Content area
+            Group {
+                switch selectedTab {
+                case 0:
+                    MarketView()
+                case 1:
+                    if state.user != nil {
+                        QRHubView()
+                    } else {
+                        MarketView()
                     }
-                    .tag(0)
-
-                if state.user != nil {
-                    QRHubView()
-                        .tabItem {
-                            Image(systemName: "qrcode")
-                            Text("QR")
-                        }
-                        .tag(1)
-
-                    // Placeholder view for the "+" tab -- triggers sheet
-                    Color.clear
-                        .tabItem {
-                            Image(systemName: "plus.circle.fill")
-                            Text("+Оголошення")
-                        }
-                        .tag(2)
-
-                    SellerDashboardView()
-                        .tabItem {
-                            Image(systemName: "briefcase.fill")
-                            Text("Бiзнес")
-                        }
-                        .tag(3)
-                }
-
-                WalletView()
-                    .tabItem {
-                        Image(systemName: "wallet.pass.fill")
-                        Text("Гаманець")
+                case 2:
+                    // Handled by sheet
+                    MarketView()
+                case 3:
+                    if state.user != nil {
+                        SellerDashboardView()
+                    } else {
+                        MarketView()
                     }
-                    .tag(4)
-            }
-            .tint(state.theme.accent)
-            .onChange(of: selectedTab) { newValue in
-                if newValue == 2 {
-                    showCreateDeal = true
-                    // Reset to previous tab so the empty view is not displayed
-                    DispatchQueue.main.async {
-                        selectedTab = 0
-                    }
+                case 4:
+                    WalletView()
+                default:
+                    MarketView()
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.bottom, 60)
+
+            // Custom bottom nav bar
+            customTabBar
         }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .sheet(isPresented: $showCreateDeal) {
             CreateDealView()
                 .environmentObject(state)
+        }
+    }
+
+    var customTabBar: some View {
+        HStack(spacing: 0) {
+            tabBarItem(icon: "house.fill", label: "Головна", index: 0)
+
+            if state.user != nil {
+                tabBarItem(icon: "qrcode", label: "QR", index: 1)
+            }
+
+            // Center "+" button with accent bg
+            createButton
+
+            if state.user != nil {
+                tabBarItem(icon: "chart.bar.fill", label: "Бiзнес", index: 3)
+            }
+
+            tabBarItem(icon: "wallet.pass.fill", label: "Гаманець", index: 4)
+        }
+        .frame(height: 60)
+        .background(
+            state.theme.card
+                .opacity(0.95)
+                .background(.ultraThinMaterial)
+                .ignoresSafeArea(edges: .bottom)
+        )
+        .overlay(
+            Rectangle()
+                .fill(state.theme.border)
+                .frame(height: 0.5),
+            alignment: .top
+        )
+    }
+
+    func tabBarItem(icon: String, label: String, index: Int) -> some View {
+        Button(action: { selectedTab = index }) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                Text(label)
+                    .font(.system(size: 10))
+            }
+            .foregroundColor(selectedTab == index ? state.theme.accent : state.theme.navText)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    var createButton: some View {
+        Button(action: {
+            showCreateDeal = true
+        }) {
+            VStack(spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(state.theme.accent)
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(state.theme.bg)
+                }
+                Text("+")
+                    .font(.system(size: 10))
+                    .foregroundColor(state.theme.accent)
+            }
+            .frame(maxWidth: .infinity)
+            .offset(y: -8)
         }
     }
 }

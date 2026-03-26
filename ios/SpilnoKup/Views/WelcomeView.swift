@@ -12,21 +12,22 @@ struct WelcomeView: View {
             VStack(spacing: 24) {
                 Spacer()
 
+                // Logo: accent rounded rect with person.2.fill icon (64x64)
                 ZStack {
                     RoundedRectangle(cornerRadius: 16)
                         .fill(state.theme.accent)
                         .frame(width: 64, height: 64)
                     Image(systemName: "person.2.fill")
                         .font(.system(size: 28))
-                        .foregroundColor(.white)
+                        .foregroundColor(state.theme.bg)
                 }
 
                 VStack(spacing: 8) {
-                    Text("СпsльноКуп")
+                    Text("СпiльноКуп")
                         .font(.system(size: 26, weight: .heavy))
                         .foregroundColor(state.theme.text)
 
-                    Text("Платформа спsльних покупок\nвsд малого бsзнесу Украsни")
+                    Text("Платформа спiльних покупок\nвiд малого бiзнесу України")
                         .font(.system(size: 14))
                         .foregroundColor(state.theme.textSec)
                         .multilineTextAlignment(.center)
@@ -35,18 +36,20 @@ struct WelcomeView: View {
                 Spacer()
 
                 VStack(spacing: 10) {
+                    // Button 1: "Створити акаунт" (accent bg)
                     Button(action: { showRegister = true }) {
                         Text("Створити акаунт")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(state.theme.bg)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(state.theme.accent)
                             .cornerRadius(10)
                     }
 
+                    // Button 2: "Увійти" (blue #0088cc bg)
                     Button(action: { showLogin = true }) {
-                        Text("Увsйти")
+                        Text("Увiйти")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -55,8 +58,9 @@ struct WelcomeView: View {
                             .cornerRadius(10)
                     }
 
+                    // Button 3: "Переглянути як гість" (transparent, border)
                     Button(action: { state.isGuest = true }) {
-                        Text("Переглянути як гsсть")
+                        Text("Переглянути як гiсть")
                             .font(.system(size: 13))
                             .foregroundColor(state.theme.textSec)
                             .frame(maxWidth: .infinity)
@@ -157,7 +161,7 @@ struct RegisterView: View {
                         Text(buttonTitle)
                             .font(.headline)
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(state.theme.bg)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(canProceed ? state.theme.accent : state.theme.cardAlt)
@@ -187,7 +191,7 @@ struct RegisterView: View {
                     Button(action: { city = c }) {
                         Text(c)
                             .font(.caption)
-                            .foregroundColor(city == c ? .white : state.theme.textSec)
+                            .foregroundColor(city == c ? state.theme.bg : state.theme.textSec)
                             .padding(.vertical, 8)
                             .frame(maxWidth: .infinity)
                             .background(city == c ? state.theme.accent : state.theme.cardAlt)
@@ -211,7 +215,6 @@ struct RegisterView: View {
                 .foregroundColor(state.theme.textSec)
                 .multilineTextAlignment(.center)
 
-            // SF Symbol icon instead of emoji
             ZStack {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(hex: "0088cc"))
@@ -305,23 +308,17 @@ struct RegisterView: View {
 
     func openTelegram() {
         let botUsername = APIService.shared.botUsername
-
-        // Deep link with auth token
         if !telegramToken.isEmpty,
            let url = URL(string: "tg://resolve?domain=\(botUsername)&start=\(telegramToken)"),
            UIApplication.shared.canOpenURL(url) {
             UIApplication.shared.open(url)
             return
         }
-
-        // Fallback to web
         if !telegramToken.isEmpty,
            let url = URL(string: "https://t.me/\(botUsername)?start=\(telegramToken)") {
             UIApplication.shared.open(url)
             return
         }
-
-        // No token yet - just open bot
         if let url = URL(string: "https://t.me/\(botUsername)") {
             UIApplication.shared.open(url)
         }
@@ -329,19 +326,14 @@ struct RegisterView: View {
 
     func nextStep() {
         error = ""
-
         if step == 0 {
-            // Send OTP and get telegram token
             sendOTP()
             return
         }
-
         if step == 1 {
-            // Call /check to process Telegram updates and send code
             checkTelegram()
             return
         }
-
         if step == 2 {
             verifyCode()
         }
@@ -380,7 +372,7 @@ struct RegisterView: View {
             } catch {
                 await MainActor.run {
                     loading = false
-                    step = 2 // Go to code step anyway
+                    step = 2
                 }
             }
         }
@@ -407,7 +399,6 @@ struct RegisterView: View {
                         state.user = AppUser(name: name, email: "", phone: phone, city: city)
                     }
                     state.saveUser()
-                    // Trigger data loads after login
                     state.loadDeals()
                     state.loadWallet()
                     state.loadConversations()
@@ -457,53 +448,11 @@ struct LoginView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         if step == 0 {
-                            VStack(spacing: 14) {
-                                Text("Вхsд")
-                                    .font(.title2.bold())
-                                    .foregroundColor(state.theme.text)
-                                Text("Введsть номер телефону")
-                                    .font(.subheadline)
-                                    .foregroundColor(state.theme.textSec)
-                                ThemedTextField(placeholder: "+380...", text: $phone)
-                            }
+                            loginStep0
                         } else if step == 1 {
-                            VStack(spacing: 18) {
-                                Text("Отримайте код")
-                                    .font(.title2.bold())
-                                    .foregroundColor(state.theme.text)
-                                Image(systemName: "paperplane.fill")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(state.theme.accent)
-                                    .padding()
-                                Text("Вsдкрийте Telegram та натиснsть Start")
-                                    .font(.subheadline)
-                                    .foregroundColor(state.theme.textSec)
-                                    .multilineTextAlignment(.center)
-                                Button(action: openTelegram) {
-                                    Text("Вsдкрити Telegram")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
-                                        .background(Color(hex: "0088cc"))
-                                        .cornerRadius(10)
-                                }
-                            }
+                            loginStep1
                         } else {
-                            VStack(spacing: 14) {
-                                Text("Введsть код")
-                                    .font(.title2.bold())
-                                    .foregroundColor(state.theme.text)
-                                TextField("000000", text: $code)
-                                    .keyboardType(.numberPad)
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(state.theme.text)
-                                    .multilineTextAlignment(.center)
-                                    .padding(16)
-                                    .background(state.theme.cardAlt)
-                                    .cornerRadius(10)
-                                    .onChange(of: code) { v in code = String(v.prefix(6).filter { $0.isNumber }) }
-                            }
+                            loginStep2
                         }
                     }
                     .padding()
@@ -516,10 +465,10 @@ struct LoginView: View {
                 Button(action: nextStep) {
                     HStack {
                         if loading { ProgressView().tint(.white) }
-                        Text(step == 0 ? "Далi" : step == 1 ? "Я отримав код" : "Увsйти")
+                        Text(step == 0 ? "Далi" : step == 1 ? "Я отримав код" : "Увiйти")
                             .font(.headline)
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(state.theme.bg)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(state.theme.accent)
@@ -528,6 +477,60 @@ struct LoginView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 20)
             }
+        }
+    }
+
+    var loginStep0: some View {
+        VStack(spacing: 14) {
+            Text("Вхiд")
+                .font(.title2.bold())
+                .foregroundColor(state.theme.text)
+            Text("Введiть номер телефону")
+                .font(.subheadline)
+                .foregroundColor(state.theme.textSec)
+            ThemedTextField(placeholder: "+380...", text: $phone)
+        }
+    }
+
+    var loginStep1: some View {
+        VStack(spacing: 18) {
+            Text("Отримайте код")
+                .font(.title2.bold())
+                .foregroundColor(state.theme.text)
+            Image(systemName: "paperplane.fill")
+                .font(.system(size: 40))
+                .foregroundColor(state.theme.accent)
+                .padding()
+            Text("Вiдкрийте Telegram та натиснiть Start")
+                .font(.subheadline)
+                .foregroundColor(state.theme.textSec)
+                .multilineTextAlignment(.center)
+            Button(action: openTelegram) {
+                Text("Вiдкрити Telegram")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(hex: "0088cc"))
+                    .cornerRadius(10)
+            }
+        }
+    }
+
+    var loginStep2: some View {
+        VStack(spacing: 14) {
+            Text("Введiть код")
+                .font(.title2.bold())
+                .foregroundColor(state.theme.text)
+            TextField("000000", text: $code)
+                .keyboardType(.numberPad)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(state.theme.text)
+                .multilineTextAlignment(.center)
+                .padding(16)
+                .background(state.theme.cardAlt)
+                .cornerRadius(10)
+                .onChange(of: code) { v in code = String(v.prefix(6).filter { $0.isNumber }) }
         }
     }
 
@@ -541,7 +544,7 @@ struct LoginView: View {
     func nextStep() {
         error = ""
         if step == 0 {
-            guard !phone.isEmpty else { error = "Введsть телефон"; return }
+            guard !phone.isEmpty else { error = "Введiть телефон"; return }
             loading = true
             Task {
                 do {
@@ -552,7 +555,7 @@ struct LoginView: View {
         } else if step == 1 {
             step = 2
         } else {
-            guard code.count == 6 else { error = "Введsть 6-значний код"; return }
+            guard code.count == 6 else { error = "Введiть 6-значний код"; return }
             loading = true
             Task {
                 do {
@@ -564,7 +567,6 @@ struct LoginView: View {
                             state.saveAPIUser(apiUser)
                         }
                         state.saveUser()
-                        // Trigger data loads after login
                         state.loadDeals()
                         state.loadWallet()
                         state.loadConversations()

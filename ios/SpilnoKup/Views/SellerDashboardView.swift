@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SellerDashboardView: View {
     @EnvironmentObject var state: AppState
-    @State private var tab = 0
+    @State private var tab = 0 // 0 = Мої товари, 1 = Мої покупки
     @State private var selectedDeal: Deal? = nil
     @State private var hasAppeared = false
 
@@ -24,9 +24,9 @@ struct SellerDashboardView: View {
 
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Tab switcher
+                        // Two tabs: Мої товари | Мої покупки
                         HStack(spacing: 0) {
-                            tabButton("Бiзнес", index: 0)
+                            tabButton("Моi товари", index: 0)
                             tabButton("Моi покупки", index: 1)
                         }
                         .background(state.theme.card)
@@ -61,7 +61,7 @@ struct SellerDashboardView: View {
         Button(action: { tab = index }) {
             Text(title)
                 .font(.subheadline.bold())
-                .foregroundColor(tab == index ? .white : state.theme.textSec)
+                .foregroundColor(tab == index ? state.theme.bg : state.theme.textSec)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(tab == index ? state.theme.accent : Color.clear)
@@ -83,123 +83,138 @@ struct SellerDashboardView: View {
                 .padding(.vertical, 8)
             }
 
-            // Seller card with initials
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(state.theme.accent)
-                        .frame(width: 56, height: 56)
-                    Text(sellerInitials)
-                        .font(.title3.bold())
-                        .foregroundColor(.white)
+            Group {
+                // Seller card with initials
+                sellerHeader
+
+                // Stats grid (revenue, awaiting, delivered, active)
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                    statCard("Дохiд", "\(totalRev) грн", state.theme.green)
+                    statCard("Очiкує", "\(paidOrders.count)", state.theme.orange)
+                    statCard("Видано", "\(doneOrders.count)", state.theme.yellow)
+                    statCard("Активнi", "\(state.sellerDeals.count)", state.theme.accent)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(state.user?.name ?? SampleData.seller.name)
-                        .font(.headline)
-                        .foregroundColor(state.theme.text)
-                    HStack(spacing: 2) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 11))
-                            .foregroundColor(state.theme.yellow)
-                        Text(String(format: "%.1f", SampleData.seller.rating))
-                            .font(.caption)
+                .padding(.horizontal)
+            }
+
+            Group {
+                // Revenue chart
+                revenueChart
+
+                // Seller listings
+                if !state.sellerDeals.isEmpty {
+                    sectionHeader("Моi угоди")
+                    ForEach(state.sellerDeals) { deal in
+                        DealCardView(deal: deal) { selectedDeal = deal }
+                            .padding(.horizontal)
+                    }
+                }
+            }
+
+            Group {
+                // New orders with status badges
+                if !paidOrders.isEmpty {
+                    sectionHeader("Очiкують видачi")
+                    ForEach(paidOrders) { order in
+                        orderRow(order)
+                    }
+                }
+
+                // Completed orders (reduced opacity)
+                if !doneOrders.isEmpty {
+                    sectionHeader("Завершенi")
+                    ForEach(doneOrders) { order in
+                        orderRow(order)
+                            .opacity(0.6)
+                    }
+                }
+
+                // Empty state
+                if state.orders.isEmpty && !state.isLoadingSellerData {
+                    VStack(spacing: 12) {
+                        Image(systemName: "briefcase")
+                            .font(.system(size: 32))
+                            .foregroundColor(state.theme.textMuted)
+                        Text("Замовлень поки немає")
+                            .font(.subheadline)
                             .foregroundColor(state.theme.textSec)
-                        Text("- \(state.user?.city ?? SampleData.seller.city)")
-                            .font(.caption)
+                    }
+                    .padding(.top, 20)
+                }
+            }
+        }
+    }
+
+    var sellerHeader: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(state.theme.accent)
+                    .frame(width: 56, height: 56)
+                Text(sellerInitials)
+                    .font(.title3.bold())
+                    .foregroundColor(state.theme.bg)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(state.user?.name ?? SampleData.seller.name)
+                    .font(.headline)
+                    .foregroundColor(state.theme.text)
+                HStack(spacing: 2) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(state.theme.yellow)
+                    Text(String(format: "%.1f", SampleData.seller.rating))
+                        .font(.caption)
+                        .foregroundColor(state.theme.textSec)
+                    Text("- \(state.user?.city ?? SampleData.seller.city)")
+                        .font(.caption)
+                        .foregroundColor(state.theme.textMuted)
+                }
+            }
+            Spacer()
+
+            Button(action: { state.loadSellerData() }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.caption)
+                    .foregroundColor(state.theme.accent)
+            }
+        }
+        .padding(14)
+        .background(state.theme.card)
+        .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
+        .padding(.horizontal)
+    }
+
+    var revenueChart: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Дохiд за тиждень")
+                .font(.headline)
+                .foregroundColor(state.theme.text)
+
+            HStack(alignment: .bottom, spacing: 8) {
+                ForEach(0..<7, id: \.self) { i in
+                    VStack(spacing: 4) {
+                        Text("\(revenue[i])")
+                            .font(.system(size: 8))
+                            .foregroundColor(state.theme.textMuted)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(i == Calendar.current.component(.weekday, from: Date()) - 2
+                                  ? state.theme.accent : state.theme.accent.opacity(0.4))
+                            .frame(height: CGFloat(revenue[i]) / CGFloat(maxRev) * 100)
+                        Text(dayLabels[i])
+                            .font(.system(size: 10))
                             .foregroundColor(state.theme.textMuted)
                     }
                 }
-                Spacer()
-
-                // Refresh button
-                Button(action: { state.loadSellerData() }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.caption)
-                        .foregroundColor(state.theme.accent)
-                }
             }
-            .padding(14)
-            .background(state.theme.card)
-            .cornerRadius(10)
-            .padding(.horizontal)
-
-            // Stats grid
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                statCard("Дохiд", "\(totalRev) грн", state.theme.green)
-                statCard("Активнi", "\(paidOrders.count)", state.theme.accent)
-                statCard("Завершено", "\(doneOrders.count)", state.theme.yellow)
-                statCard("Всього", "\(state.orders.count)", state.theme.purple)
-            }
-            .padding(.horizontal)
-
-            // Revenue chart
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Дохiд за тиждень")
-                    .font(.headline)
-                    .foregroundColor(state.theme.text)
-
-                HStack(alignment: .bottom, spacing: 8) {
-                    ForEach(0..<7, id: \.self) { i in
-                        VStack(spacing: 4) {
-                            Text("\(revenue[i])")
-                                .font(.system(size: 8))
-                                .foregroundColor(state.theme.textMuted)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(i == Calendar.current.component(.weekday, from: Date()) - 2
-                                      ? state.theme.accent : state.theme.accent.opacity(0.4))
-                                .frame(height: CGFloat(revenue[i]) / CGFloat(maxRev) * 100)
-                            Text(dayLabels[i])
-                                .font(.system(size: 10))
-                                .foregroundColor(state.theme.textMuted)
-                        }
-                    }
-                }
-                .frame(height: 140)
-            }
-            .padding(14)
-            .background(state.theme.card)
-            .cornerRadius(10)
-            .padding(.horizontal)
-
-            // Seller's deals
-            if !state.sellerDeals.isEmpty {
-                sectionHeader("Моi угоди")
-                ForEach(state.sellerDeals) { deal in
-                    DealCardView(deal: deal) { selectedDeal = deal }
-                        .padding(.horizontal)
-                }
-            }
-
-            // Awaiting delivery
-            if !paidOrders.isEmpty {
-                sectionHeader("Очiкують видачi")
-                ForEach(paidOrders) { order in
-                    orderRow(order)
-                }
-            }
-
-            // Completed
-            if !doneOrders.isEmpty {
-                sectionHeader("Завершенi")
-                ForEach(doneOrders) { order in
-                    orderRow(order)
-                        .opacity(0.6)
-                }
-            }
-
-            // Empty state
-            if state.orders.isEmpty && !state.isLoadingSellerData {
-                VStack(spacing: 12) {
-                    Image(systemName: "briefcase")
-                        .font(.system(size: 32))
-                        .foregroundColor(state.theme.textMuted)
-                    Text("Замовлень поки немає")
-                        .font(.subheadline)
-                        .foregroundColor(state.theme.textSec)
-                }
-                .padding(.top, 20)
-            }
+            .frame(height: 140)
         }
+        .padding(14)
+        .background(state.theme.card)
+        .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
+        .padding(.horizontal)
     }
 
     var sellerInitials: String {
@@ -246,6 +261,7 @@ struct SellerDashboardView: View {
         .padding(12)
         .background(state.theme.card)
         .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
     }
 
     func sectionHeader(_ title: String) -> some View {
@@ -277,13 +293,22 @@ struct SellerDashboardView: View {
                     .foregroundColor(state.theme.textSec)
             }
             Spacer()
-            Text("\(order.amount) грн")
-                .font(.subheadline.bold())
-                .foregroundColor(state.theme.green)
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("\(order.amount) грн")
+                    .font(.subheadline.bold())
+                    .foregroundColor(state.theme.green)
+                BadgeView(
+                    text: order.status.label,
+                    bg: order.status == .paid ? state.theme.yellow.opacity(0.2) : state.theme.greenLight,
+                    fg: order.status == .paid ? state.theme.yellow : state.theme.green,
+                    fontSize: 10
+                )
+            }
         }
         .padding(12)
         .background(state.theme.card)
         .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
         .padding(.horizontal)
     }
 

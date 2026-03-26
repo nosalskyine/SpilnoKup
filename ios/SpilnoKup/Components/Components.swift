@@ -5,8 +5,8 @@ import MapKit
 
 struct BadgeView: View {
     let text: String
-    var bg: Color = Color(hex: "101c2c")
-    var fg: Color = Color(hex: "3a8fb0")
+    var bg: Color = Color(hex: "0a1a10")
+    var fg: Color = Color(hex: "4ade80")
     var fontSize: CGFloat = 11
 
     var body: some View {
@@ -24,7 +24,7 @@ struct BadgeView: View {
 
 struct DealProgressBar: View {
     let value: Int
-    var color: Color = Color(hex: "3068b8")
+    var color: Color = Color(hex: "4ade80")
     var height: CGFloat = 5
 
     var body: some View {
@@ -114,7 +114,7 @@ struct VinnytsiaMapView: View {
             Map(coordinateRegion: $region, annotationItems: showShops ? shopAnnotations : []) { shop in
                 MapAnnotation(coordinate: shop.coordinate) {
                     Circle()
-                        .fill(Color(hex: "3068b8"))
+                        .fill(Color(hex: "4ade80"))
                         .frame(width: 10, height: 10)
                         .overlay(Circle().stroke(Color.white, lineWidth: 2))
                         .shadow(radius: 2)
@@ -151,9 +151,9 @@ struct ShopAnnotation: Identifiable {
 // MARK: - Price Color
 
 func priceColor(for pct: Int) -> Color {
-    if pct >= 90 { return Color(hex: "c46a20") }
-    if pct >= 60 { return Color(hex: "b8960a") }
-    return Color(hex: "3068b8")
+    if pct >= 90 { return Color(hex: "f97316") }
+    if pct >= 60 { return Color(hex: "facc15") }
+    return Color(hex: "4ade80")
 }
 
 func discountBorderColor(for disc: Int) -> Color {
@@ -183,7 +183,7 @@ func categoryGradient(for cat: DealCategory) -> LinearGradient {
     case .home: colors = [Color(hex: "1a2020"), Color(hex: "101414")]
     case .cafe: colors = [Color(hex: "1a1510"), Color(hex: "100d08")]
     case .other: colors = [Color(hex: "1a1a1a"), Color(hex: "101010")]
-    case .all: colors = [Color(hex: "151c2c"), Color(hex: "0e1320")]
+    case .all: colors = [Color(hex: "0a0a0f"), Color(hex: "000000")]
     }
     return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
 }

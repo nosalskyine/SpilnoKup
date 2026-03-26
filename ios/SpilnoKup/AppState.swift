@@ -5,7 +5,7 @@ class AppState: ObservableObject {
     @Published var user: AppUser? = nil
     @Published var isGuest: Bool = false
     @Published var joinedDeals: Set<Int> = []
-    @Published var themeType: ThemeType = .ocean
+    @Published var themeType: ThemeType = .midnight
     @Published var balance: Int = 0
     @Published var transactions: [Transaction] = []
     @Published var orders: [Order] = []

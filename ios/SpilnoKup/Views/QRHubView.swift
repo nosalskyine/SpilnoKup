@@ -21,7 +21,7 @@ struct QRHubView: View {
                                 Text("Сканувати QR")
                                     .font(.headline)
                             }
-                            .foregroundColor(.white)
+                            .foregroundColor(state.theme.bg)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(state.theme.accent)
@@ -29,27 +29,31 @@ struct QRHubView: View {
                         }
                         .padding(.horizontal)
 
-                        // Orders
+                        // Orders list when not scanning
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Замовлення")
                                 .font(.title3.bold())
                                 .foregroundColor(state.theme.text)
                                 .padding(.horizontal)
 
-                            ForEach(state.orders) { order in
-                                orderCard(order)
-                                    .padding(.horizontal)
+                            if state.orders.isEmpty {
+                                VStack(spacing: 12) {
+                                    Image(systemName: "qrcode")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(state.theme.textMuted)
+                                    Text("Замовлень поки немає")
+                                        .font(.subheadline)
+                                        .foregroundColor(state.theme.textSec)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 30)
+                            } else {
+                                ForEach(state.orders) { order in
+                                    orderCard(order)
+                                        .padding(.horizontal)
+                                }
                             }
                         }
-
-                        // Map
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Карта точок видачi")
-                                .font(.system(size: 13, weight: .heavy))
-                                .foregroundColor(state.theme.text)
-                            VinnytsiaMapView(height: 160, label: "Вiнниця, центр")
-                        }
-                        .padding(.horizontal)
                     }
                     .padding(.top, 8)
                     .padding(.bottom, 20)
@@ -87,7 +91,6 @@ struct QRHubView: View {
 
     func orderCard(_ order: Order) -> some View {
         HStack(spacing: 12) {
-            // Avatar with initials
             ZStack {
                 Circle()
                     .fill(state.theme.accent.opacity(0.2))
@@ -139,6 +142,10 @@ struct QRHubView: View {
 }
 
 // MARK: - Fullscreen QR Scanner View
+// Camera view fills entire screen (position fixed, black bg)
+// Blue scan frame centered (250x250)
+// Back arrow white top-left
+// Text at bottom: "Наведіть камеру на QR код"
 
 struct QRScannerFullScreenView: View {
     @EnvironmentObject var state: AppState
@@ -149,36 +156,32 @@ struct QRScannerFullScreenView: View {
 
     var body: some View {
         ZStack {
+            // Black background filling entire screen
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top bar
+                // Back arrow white top-left
                 HStack {
                     Button(action: onCancel) {
-                        Image(systemName: "xmark")
+                        Image(systemName: "arrow.left")
                             .font(.title2.bold())
                             .foregroundColor(.white)
                             .frame(width: 44, height: 44)
                     }
                     Spacer()
-                    Text("Сканування QR")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Spacer()
-                    Color.clear.frame(width: 44, height: 44)
                 }
                 .padding(.horizontal)
                 .padding(.top, 8)
 
                 Spacer()
 
-                // Scanning frame
+                // Blue scan frame centered (250x250)
                 ZStack {
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.6), lineWidth: 3)
+                        .stroke(Color(hex: "3b82f6"), lineWidth: 3)
                         .frame(width: 250, height: 250)
 
-                    // Corner accents
+                    // Corner accents in blue
                     VStack {
                         HStack {
                             cornerAccent(rotation: 0)
@@ -195,9 +198,8 @@ struct QRScannerFullScreenView: View {
                     .frame(width: 250, height: 250)
 
                     if scanning {
-                        // Animated scan line
                         Rectangle()
-                            .fill(Color.white.opacity(0.3))
+                            .fill(Color(hex: "3b82f6").opacity(0.3))
                             .frame(height: 2)
                             .padding(.horizontal, 30)
                     }
@@ -209,7 +211,8 @@ struct QRScannerFullScreenView: View {
 
                 Spacer()
 
-                Text("Наведiть камеру на QR-код замовлення")
+                // Text at bottom
+                Text("Наведiть камеру на QR код")
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.7))
                     .padding(.bottom, 20)
@@ -239,7 +242,7 @@ struct QRScannerFullScreenView: View {
             path.addLine(to: CGPoint(x: 0, y: 0))
             path.addLine(to: CGPoint(x: 20, y: 0))
         }
-        .stroke(Color.white, lineWidth: 4)
+        .stroke(Color(hex: "3b82f6"), lineWidth: 4)
         .frame(width: 20, height: 20)
         .rotationEffect(.degrees(rotation))
     }

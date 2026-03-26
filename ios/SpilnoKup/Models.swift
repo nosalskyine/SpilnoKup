@@ -202,9 +202,9 @@ enum MessageSender {
 // MARK: - Sort
 
 enum DealSort: String, CaseIterable {
-    case hot = "Популярні"
-    case new = "Нові"
+    case hot = "Популярнi"
+    case new = "Новi"
     case discount = "Знижка"
-    case price = "Ціна"
+    case price = "Цiна\u{2191}"
     case rating = "Рейтинг"
 }

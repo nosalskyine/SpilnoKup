@@ -64,7 +64,7 @@ struct CreateDealView: View {
                                     Button(action: { category = cat }) {
                                         Text(cat.label)
                                             .font(.caption2)
-                                            .foregroundColor(category == cat ? .white : state.theme.textSec)
+                                            .foregroundColor(category == cat ? state.theme.bg : state.theme.textSec)
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 6)
                                             .frame(maxWidth: .infinity)
@@ -97,7 +97,7 @@ struct CreateDealView: View {
                                     Button(action: { city = c }) {
                                         Text(c)
                                             .font(.caption2)
-                                            .foregroundColor(city == c ? .white : state.theme.textMuted)
+                                            .foregroundColor(city == c ? state.theme.bg : state.theme.textMuted)
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
                                             .background(city == c ? state.theme.accent : state.theme.cardAlt)
@@ -133,12 +133,12 @@ struct CreateDealView: View {
                             HStack {
                                 if isPublishing {
                                     ProgressView()
-                                        .tint(.white)
+                                        .tint(state.theme.bg)
                                 }
                                 Text("Опублiкувати")
                                     .font(.headline)
                             }
-                            .foregroundColor(.white)
+                            .foregroundColor(state.theme.bg)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(canPublish && !isPublishing ? state.theme.accent : state.theme.cardAlt)

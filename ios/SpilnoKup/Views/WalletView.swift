@@ -22,7 +22,7 @@ struct WalletView: View {
                     VStack(spacing: 16) {
                         profileCard
 
-                        // Loading indicator for wallet
+                        // Loading indicator
                         if state.isLoadingWallet {
                             HStack(spacing: 8) {
                                 ProgressView()
@@ -75,27 +75,34 @@ struct WalletView: View {
         }
     }
 
-    // MARK: - Profile Card
+    // MARK: - Profile Card (avatar 64x64, accent bg, initials)
 
     var profileCard: some View {
         HStack(spacing: 14) {
-            // Avatar with accent color background and white initials
+            // Avatar with accent color background (64x64)
             ZStack {
                 Circle()
                     .fill(state.theme.accent)
-                    .frame(width: 56, height: 56)
+                    .frame(width: 64, height: 64)
                 Text(initials)
-                    .font(.title3.bold())
-                    .foregroundColor(.white)
+                    .font(.title2.bold())
+                    .foregroundColor(state.theme.bg)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(state.user?.name ?? "Гiсть")
                     .font(.headline)
                     .foregroundColor(state.theme.text)
-                Text(state.user?.email ?? "")
-                    .font(.caption)
-                    .foregroundColor(state.theme.textSec)
+                if let phone = state.user?.phone, !phone.isEmpty {
+                    Text(phone)
+                        .font(.caption)
+                        .foregroundColor(state.theme.textSec)
+                }
+                if let email = state.user?.email, !email.isEmpty {
+                    Text(email)
+                        .font(.caption)
+                        .foregroundColor(state.theme.textSec)
+                }
             }
 
             Spacer()
@@ -111,11 +118,12 @@ struct WalletView: View {
         .padding(14)
         .background(state.theme.card)
         .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
         .padding(.horizontal)
     }
 
     var initials: String {
-        guard let name = state.user?.name else { return "?" }
+        guard let name = state.user?.name, !name.isEmpty else { return "?" }
         let parts = name.components(separatedBy: " ")
         let first = parts.first?.prefix(1) ?? ""
         let last = parts.count > 1 ? parts[1].prefix(1) : ""
@@ -130,10 +138,11 @@ struct WalletView: View {
                 .font(.caption)
                 .foregroundColor(state.theme.textSec)
 
-            Text("\(formattedBalance) грн")
+            Text("\u{20B4}\(formattedBalance)")
                 .font(.system(size: 36, weight: .bold))
                 .foregroundColor(state.theme.green)
 
+            // Two buttons: Поповнити, Вивести
             HStack(spacing: 12) {
                 Button(action: { showTopUp = true }) {
                     HStack {
@@ -141,7 +150,7 @@ struct WalletView: View {
                         Text("Поповнити")
                     }
                     .font(.subheadline.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(state.theme.bg)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .background(state.theme.accent)
@@ -168,64 +177,73 @@ struct WalletView: View {
 
             // Quick amounts for top up
             if showTopUp {
-                VStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        ForEach([100, 500, 1000, 5000], id: \.self) { amt in
-                            Button(action: { topUpAmount = "\(amt)" }) {
-                                Text("\(amt) грн")
-                                    .font(.caption.bold())
-                                    .foregroundColor(topUpAmount == "\(amt)" ? .white : state.theme.textSec)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
-                                    .background(topUpAmount == "\(amt)" ? state.theme.accent : state.theme.cardAlt)
-                                    .cornerRadius(8)
-                            }
-                        }
-                    }
-                    HStack(spacing: 8) {
-                        TextField("Сума", text: $topUpAmount)
-                            .keyboardType(.numberPad)
-                            .foregroundColor(state.theme.text)
-                            .padding(10)
-                            .background(state.theme.cardAlt)
-                            .cornerRadius(8)
-                        Button(action: doTopUp) {
-                            Text("OK")
-                                .font(.subheadline.bold())
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(state.theme.accent)
-                                .cornerRadius(8)
-                        }
-                    }
-                }
+                topUpSection
             }
 
             if showWithdraw {
-                HStack(spacing: 8) {
-                    TextField("Сума", text: $withdrawAmount)
-                        .keyboardType(.numberPad)
-                        .foregroundColor(state.theme.text)
-                        .padding(10)
-                        .background(state.theme.cardAlt)
-                        .cornerRadius(8)
-                    Button(action: doWithdraw) {
-                        Text("Вивести")
-                            .font(.subheadline.bold())
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(state.theme.accent)
-                            .cornerRadius(8)
-                    }
-                }
+                withdrawSection
             }
         }
         .padding(14)
         .background(state.theme.card)
         .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
         .padding(.horizontal)
+    }
+
+    var topUpSection: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                ForEach([100, 500, 1000, 5000], id: \.self) { amt in
+                    Button(action: { topUpAmount = "\(amt)" }) {
+                        Text("\(amt) грн")
+                            .font(.caption.bold())
+                            .foregroundColor(topUpAmount == "\(amt)" ? state.theme.bg : state.theme.textSec)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(topUpAmount == "\(amt)" ? state.theme.accent : state.theme.cardAlt)
+                            .cornerRadius(8)
+                    }
+                }
+            }
+            HStack(spacing: 8) {
+                TextField("Сума", text: $topUpAmount)
+                    .keyboardType(.numberPad)
+                    .foregroundColor(state.theme.text)
+                    .padding(10)
+                    .background(state.theme.cardAlt)
+                    .cornerRadius(8)
+                Button(action: doTopUp) {
+                    Text("OK")
+                        .font(.subheadline.bold())
+                        .foregroundColor(state.theme.bg)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(state.theme.accent)
+                        .cornerRadius(8)
+                }
+            }
+        }
+    }
+
+    var withdrawSection: some View {
+        HStack(spacing: 8) {
+            TextField("Сума", text: $withdrawAmount)
+                .keyboardType(.numberPad)
+                .foregroundColor(state.theme.text)
+                .padding(10)
+                .background(state.theme.cardAlt)
+                .cornerRadius(8)
+            Button(action: doWithdraw) {
+                Text("Вивести")
+                    .font(.subheadline.bold())
+                    .foregroundColor(state.theme.bg)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(state.theme.accent)
+                    .cornerRadius(8)
+            }
+        }
     }
 
     var formattedBalance: String {
@@ -235,12 +253,12 @@ struct WalletView: View {
         return f.string(from: NSNumber(value: state.balance)) ?? "\(state.balance)"
     }
 
-    // MARK: - Wallet Sub-Tabs
+    // MARK: - Wallet Sub-Tabs (with underline)
 
     var walletSubTabs: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                walletTabButton(title: "Транзакцii", key: "transactions")
+                walletTabButton(title: "Транзакцiї", key: "transactions")
                 walletTabButton(title: "ФОП", key: "fop")
             }
             .background(state.theme.card)
@@ -264,7 +282,7 @@ struct WalletView: View {
         }
     }
 
-    // MARK: - Settings Sheet
+    // MARK: - Settings Sheet (theme switcher + support + logout)
 
     var settingsSheet: some View {
         ZStack {
@@ -297,7 +315,7 @@ struct WalletView: View {
                             HStack(spacing: 10) {
                                 Image(systemName: t.sfSymbol)
                                     .font(.body)
-                                    .foregroundColor(state.themeType == t ? .white : state.theme.accent)
+                                    .foregroundColor(state.themeType == t ? state.theme.bg : state.theme.accent)
                                     .frame(width: 32, height: 32)
                                     .background(state.themeType == t ? state.theme.accent : state.theme.cardAlt)
                                     .cornerRadius(8)
@@ -340,6 +358,23 @@ struct WalletView: View {
                     )
                 }
 
+                // Logout in settings
+                Button(action: {
+                    showSettings = false
+                    doLogout()
+                }) {
+                    HStack {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                        Text("Вийти з акаунту")
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundColor(Color(hex: "ef4444"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(hex: "ef4444").opacity(0.1))
+                    .cornerRadius(10)
+                }
+
                 Spacer()
             }
             .padding(.horizontal)
@@ -355,7 +390,6 @@ struct WalletView: View {
                     .font(.headline)
                     .foregroundColor(state.theme.text)
                 Spacer()
-                // Refresh button
                 Button(action: { state.loadWallet() }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.caption)
@@ -408,6 +442,7 @@ struct WalletView: View {
         .padding(14)
         .background(state.theme.card)
         .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
         .padding(.horizontal)
     }
 
@@ -427,23 +462,12 @@ struct WalletView: View {
         .padding(14)
         .background(state.theme.card)
         .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(state.theme.border, lineWidth: 1))
         .padding(.horizontal)
     }
 
     var logoutButton: some View {
-        Button(action: {
-            APIService.shared.logout()
-            state.user = nil
-            state.isGuest = false
-            state.deals = []
-            state.chats = []
-            state.chatMessages = [:]
-            state.orders = []
-            state.transactions = []
-            state.balance = 0
-            UserDefaults.standard.removeObject(forKey: "spilnokup_user")
-            UserDefaults.standard.removeObject(forKey: "spilnokup_api_user")
-        }) {
+        Button(action: doLogout) {
             HStack {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                 Text("Вийти з акаунту")
@@ -456,6 +480,20 @@ struct WalletView: View {
             .cornerRadius(10)
         }
         .padding(.horizontal)
+    }
+
+    func doLogout() {
+        APIService.shared.logout()
+        state.user = nil
+        state.isGuest = false
+        state.deals = []
+        state.chats = []
+        state.chatMessages = [:]
+        state.orders = []
+        state.transactions = []
+        state.balance = 0
+        UserDefaults.standard.removeObject(forKey: "spilnokup_user")
+        UserDefaults.standard.removeObject(forKey: "spilnokup_api_user")
     }
 
     func fopRow(_ title: String, _ value: String) -> some View {
@@ -504,7 +542,7 @@ struct WalletView: View {
                 }) {
                     Text("Зберегти")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(state.theme.bg)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(state.theme.accent)

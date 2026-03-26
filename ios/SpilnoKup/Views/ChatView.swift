@@ -38,7 +38,7 @@ struct ChatListView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            // Support chat at top
+                            // Support chat at top with custom avatar
                             Button(action: { showSupportChat = true }) {
                                 supportChatRow
                             }
@@ -47,6 +47,7 @@ struct ChatListView: View {
                                 .background(state.theme.border)
                                 .padding(.leading, 70)
 
+                            // Real conversations list below
                             ForEach(state.chats) { chat in
                                 Button(action: { selectedChat = chat }) {
                                     chatRow(chat)
@@ -95,6 +96,7 @@ struct ChatListView: View {
         }
     }
 
+    // Support chat row with custom avatar (headphones icon on accent bg)
     var supportChatRow: some View {
         HStack(spacing: 12) {
             ZStack {
@@ -103,7 +105,7 @@ struct ChatListView: View {
                     .frame(width: 50, height: 50)
                 Image(systemName: "headphones")
                     .font(.title2)
-                    .foregroundColor(.white)
+                    .foregroundColor(state.theme.bg)
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -125,7 +127,7 @@ struct ChatListView: View {
 
     func chatRow(_ chat: Chat) -> some View {
         HStack(spacing: 12) {
-            // Avatar with initials instead of emoji
+            // Avatar with initials
             ZStack(alignment: .bottomTrailing) {
                 ZStack {
                     Circle()
@@ -163,7 +165,7 @@ struct ChatListView: View {
                     if chat.unread > 0 {
                         Text("\(chat.unread)")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(state.theme.bg)
                             .frame(width: 20, height: 20)
                             .background(state.theme.accent)
                             .clipShape(Circle())
@@ -229,7 +231,7 @@ struct SupportChatView: View {
                         }
                     }
 
-                    // Input bar
+                    // Input bar at bottom
                     HStack(spacing: 10) {
                         TextField("Повiдомлення...", text: $messageText)
                             .foregroundColor(state.theme.text)
@@ -266,7 +268,7 @@ struct SupportChatView: View {
                                 .frame(width: 32, height: 32)
                             Image(systemName: "headphones")
                                 .font(.system(size: 14))
-                                .foregroundColor(.white)
+                                .foregroundColor(state.theme.bg)
                         }
                         VStack(alignment: .leading, spacing: 0) {
                             Text("Пiдтримка")
@@ -282,6 +284,7 @@ struct SupportChatView: View {
         }
     }
 
+    // Word-wrap for long messages
     func supportBubble(_ msg: SupportMessage) -> some View {
         HStack {
             if msg.fromMe { Spacer(minLength: 50) }
@@ -327,7 +330,6 @@ struct SupportChatView: View {
         messageText = ""
         saveMessages()
 
-        // Send to API with user info
         Task {
             do {
                 try await APIService.shared.sendSupportMessage(
@@ -336,7 +338,7 @@ struct SupportChatView: View {
                     userPhone: state.user?.phone
                 )
             } catch {
-                // Best effort -- message saved locally
+                // Best effort
             }
         }
     }
@@ -364,14 +366,11 @@ struct SupportChatView: View {
         }
     }
 
-    // MARK: - Poll for support replies from API
-
     func startPollingReplies() {
         guard let phone = state.user?.phone, !phone.isEmpty else { return }
         pollTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
             fetchSupportReplies(phone: phone)
         }
-        // Also fetch immediately
         fetchSupportReplies(phone: phone)
     }
 
@@ -389,7 +388,6 @@ struct SupportChatView: View {
                     for reply in replies {
                         let replyText = reply.text ?? reply.message ?? ""
                         if replyText.isEmpty { continue }
-                        // Avoid duplicates by checking if text already exists in recent messages
                         let alreadyExists = messages.suffix(20).contains(where: {
                             !$0.fromMe && $0.text == replyText
                         })
@@ -416,7 +414,7 @@ struct SupportChatView: View {
     }
 }
 
-// MARK: - Chat Detail (regular chats)
+// MARK: - Chat Detail (regular chats) with message bubbles, auto-scroll, word-wrap
 
 struct ChatDetailView: View {
     let chat: Chat
@@ -463,7 +461,7 @@ struct ChatDetailView: View {
                         }
                     }
 
-                    // Input bar
+                    // Input bar at bottom
                     HStack(spacing: 10) {
                         TextField("Повiдомлення...", text: $messageText)
                             .foregroundColor(state.theme.text)
@@ -524,6 +522,7 @@ struct ChatDetailView: View {
         return "\(first)\(last)".uppercased()
     }
 
+    // Word-wrap for long messages
     func messageBubble(_ msg: ChatMessage) -> some View {
         HStack {
             if msg.from == .me { Spacer(minLength: 50) }
