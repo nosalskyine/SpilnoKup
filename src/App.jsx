@@ -1400,9 +1400,11 @@ function ChatPage() {
 
   const fmtTime=(d)=>{const dt=new Date(d);return `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
 
-  // Support chat: auto-scroll to bottom
+  // Auto-scroll refs for all chats
   const supportEndRef=useRef(null);
+  const chatEndRef=useRef(null);
   useEffect(()=>{if(supportActive&&supportEndRef.current) supportEndRef.current.scrollIntoView({behavior:"smooth"});},[supportMessages,supportActive]);
+  useEffect(()=>{if(activeChat&&chatEndRef.current) chatEndRef.current.scrollIntoView({behavior:"smooth"});},[messages,activeChat]);
 
   // Support chat view
   if(supportActive){
@@ -1416,7 +1418,7 @@ function ChatPage() {
       <div style={{flex:1,overflowY:"auto",padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
         {supportMessages.map((m,i)=>{const mine=m.from!=="support";return <div key={m.id||i} style={{alignSelf:mine?"flex-end":"flex-start",maxWidth:"78%"}}>
           <div style={{background:mine?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:mine?4:12,borderBottomLeftRadius:mine?12:4}}>
-            <div style={{fontSize:12,color:T.text,lineHeight:1.4}}>{m.text}</div>
+            <div style={{fontSize:12,color:T.text,lineHeight:1.4,wordBreak:"break-word",overflowWrap:"break-word",whiteSpace:"pre-wrap"}}>{m.text}</div>
           </div>
           <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:mine?"right":"left"}}>{m.time?new Date(m.time).toLocaleTimeString("uk",{hour:"2-digit",minute:"2-digit"}):""}</div>
         </div>;})}
@@ -1461,10 +1463,11 @@ function ChatPage() {
           onContextMenu={e=>{if(mine&&m.id){e.preventDefault();if(confirm("Видалити повідомлення?")){deleteMessage(m.id).then(()=>setMessages(prev=>prev.filter(x=>x.id!==m.id))).catch(()=>{});}}}}
         >
           <div style={{background:mine?T.accent+"22":T.cardAlt,borderRadius:12,padding:"8px 12px",borderBottomRightRadius:mine?4:12,borderBottomLeftRadius:mine?12:4}}>
-            <div style={{fontSize:12,color:T.text,lineHeight:1.4}}>{m.text}</div>
+            <div style={{fontSize:12,color:T.text,lineHeight:1.4,wordBreak:"break-word",overflowWrap:"break-word",whiteSpace:"pre-wrap"}}>{m.text}</div>
           </div>
           <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:mine?"right":"left"}}>{fmtTime(m.createdAt)}</div>
         </div>;})}
+        <div ref={chatEndRef}/>
       </div>
       <div style={{...S.flex,gap:8,padding:"10px 16px",borderTop:`1px solid ${T.border}22`}}>
         <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()} placeholder="Повідомлення..."
