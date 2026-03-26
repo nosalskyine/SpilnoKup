@@ -1158,6 +1158,10 @@ function ChatPage() {
 
   const fmtTime=(d)=>{const dt=new Date(d);return `${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
 
+  // Support chat: auto-scroll to bottom
+  const supportEndRef=useRef(null);
+  useEffect(()=>{if(supportActive&&supportEndRef.current) supportEndRef.current.scrollIntoView({behavior:"smooth"});},[supportMessages,supportActive]);
+
   // Support chat view
   if(supportActive){
     const user=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
@@ -1174,6 +1178,7 @@ function ChatPage() {
           </div>
           <div style={{fontSize:8,color:T.textMuted,marginTop:2,textAlign:mine?"right":"left"}}>{m.time?new Date(m.time).toLocaleTimeString("uk",{hour:"2-digit",minute:"2-digit"}):""}</div>
         </div>;})}
+        <div ref={supportEndRef}/>
       </div>
       <div style={{...S.flex,gap:8,padding:"10px 16px",borderTop:`1px solid ${T.border}22`}}>
         <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&msg.trim()){
