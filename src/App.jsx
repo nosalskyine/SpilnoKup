@@ -4,11 +4,21 @@ import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, 
 import jsQR from "jsqr";
 import QRCodeLib from "qrcode";
 
-// Haptic feedback
-const vibrate=(ms=10)=>{try{navigator.vibrate&&navigator.vibrate(ms);}catch{}};
+// Haptic feedback (Android vibrate + iOS workaround)
+const vibrate=(ms=10)=>{
+  try{
+    if(navigator.vibrate) navigator.vibrate(ms);
+    // iOS doesn't support vibrate API, use AudioContext trick
+    if(/iPhone|iPad/.test(navigator.userAgent)){
+      const ctx=new (window.AudioContext||window.webkitAudioContext)();
+      const osc=ctx.createOscillator();osc.frequency.value=1;osc.connect(ctx.destination);
+      osc.start();osc.stop(ctx.currentTime+ms/1000);
+    }
+  }catch{}
+};
 const vibrateLight=()=>vibrate(8);
-const vibrateMedium=()=>vibrate(20);
-const vibrateSuccess=()=>{try{navigator.vibrate&&navigator.vibrate([15,50,15]);}catch{}};
+const vibrateMedium=()=>vibrate(25);
+const vibrateSuccess=()=>{try{navigator.vibrate&&navigator.vibrate([20,60,20]);}catch{}};
 
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
@@ -670,18 +680,23 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   if(cityF!=="all") list=list.filter(d=>d.city.includes(cityF));
   if(priceF<5000) list=list.filter(d=>d.group<=priceF);
   if(discF>0) list=list.filter(d=>disc(d)>=discF);
-  if(ratingF==="top") list=list.filter(d=>d.rating>=4.8);
+  if(ratingF==="top") list=list.filter(d=>d.rating>=4.9);
+  else if(ratingF==="great") list=list.filter(d=>d.rating>=4.8);
   else if(ratingF==="good") list=list.filter(d=>d.rating>=4.5);
+  else if(ratingF==="ok") list=list.filter(d=>d.rating>=4.0);
   if(daysF==="today") list=list.filter(d=>d.days<=1);
+  else if(daysF==="2d") list=list.filter(d=>d.days<=2);
   else if(daysF==="week") list=list.filter(d=>d.days<=3);
-  else if(daysF==="later") list=list.filter(d=>d.days>3);
+  else if(daysF==="5d") list=list.filter(d=>d.days<=5);
+  else if(daysF==="long") list=list.filter(d=>d.days<=7);
+  else if(daysF==="later") list=list.filter(d=>d.days>7);
   list=[...list].sort(sort==="new"?(a,b)=>b.id-a.id:sort==="disc"?(a,b)=>disc(b)-disc(a):sort==="price"?(a,b)=>a.group-b.group:sort==="rating"?(a,b)=>b.rating-a.rating:(a,b)=>pct(b)-pct(a));
 
   const [showMarketSupport,setShowMarketSupport]=useState(false);
 
   return <div style={{ position:"relative" }}>
     {/* Top bar: profile + scanner | search | support + chat */}
-    <div style={{ ...S.flex,gap:6,padding:"16px 16px 10px" }}>
+    <div style={{ ...S.flex,gap:6,padding:"16px 12px 10px" }}>
       {isLoggedIn()&&<button onClick={()=>{vibrateLight();onSettings&&onSettings();}} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
         <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>}
@@ -729,22 +744,22 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
       </div>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Місто</div>
       <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:10}}>
-        {cities.map(c=><button key={c} onClick={()=>{vibrateLight();setCityF(c);}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:cityF===c?T.accent:T.cardAlt,color:cityF===c?"#fff":T.textSec}}>{c==="all"?"Всі міста":c}</button>)}
+        {[...cities,...["Київ","Харків","Одеса","Дніпро","Львів","Запоріжжя","Вінниця","Полтава","Чернігів","Черкаси","Суми","Житомир","Хмельницький","Рівне","Тернопіль","Івано-Франківськ","Луцьк","Ужгород","Кропивницький","Миколаїв","Херсон","Чернівці","Бориспіль","Бровари"].filter(c=>!cities.includes(c))].map(c=><button key={c} onClick={()=>{vibrateLight();setCityF(c);}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:cityF===c?T.accent:T.cardAlt,color:cityF===c?"#fff":T.textSec}}>{c==="all"?"Всі":c}</button>)}
       </div>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Ціна — до ₴{priceF>=5000?"∞":priceF}</div>
-      <input type="range" min="50" max="5000" step="50" value={priceF} onChange={e=>{vibrateLight();setPriceF(Number(e.target.value));}} style={{width:"100%",marginBottom:10,accentColor:T.accent}}/>
+      <input type="range" min="50" max="5000" step="50" value={priceF} onInput={e=>{vibrateLight();setPriceF(Number(e.target.value));}} style={{width:"100%",marginBottom:10,accentColor:T.accent,height:6}}/>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Знижка — від {discF}%</div>
-      <input type="range" min="0" max="60" step="5" value={discF} onChange={e=>{vibrateLight();setDiscF(Number(e.target.value));}} style={{width:"100%",marginBottom:10,accentColor:T.accent}}/>
+      <input type="range" min="0" max="60" step="5" value={discF} onInput={e=>{vibrateLight();setDiscF(Number(e.target.value));}} style={{width:"100%",marginBottom:10,accentColor:T.accent,height:6}}/>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Рейтинг</div>
-      <div style={{display:"flex",gap:3,marginBottom:10}}>
-        {[["all","Всі"],["top","4.8+"],["good","4.5+"]].map(([v,l])=>
-          <button key={v} onClick={()=>setRatingF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:ratingF===v?T.accent:T.cardAlt,color:ratingF===v?"#fff":T.textSec}}>{l}</button>
+      <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:10}}>
+        {[["all","Всі"],["top","4.9+"],["great","4.8+"],["good","4.5+"],["ok","4.0+"]].map(([v,l])=>
+          <button key={v} onClick={()=>{vibrateLight();setRatingF(v);}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:ratingF===v?T.accent:T.cardAlt,color:ratingF===v?"#fff":T.textSec}}>{l}</button>
         )}
       </div>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Термін</div>
-      <div style={{display:"flex",gap:3}}>
-        {[["all","Всі"],["today","Сьогодні"],["week","До 3 днів"],["later","Пізніше"]].map(([v,l])=>
-          <button key={v} onClick={()=>setDaysF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:daysF===v?T.accent:T.cardAlt,color:daysF===v?"#fff":T.textSec}}>{l}</button>
+      <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>
+        {[["all","Всі"],["today","Сьогодні"],["2d","До 2 днів"],["week","До 3 днів"],["5d","До 5 днів"],["long","Тиждень+"],["later","Пізніше"]].map(([v,l])=>
+          <button key={v} onClick={()=>{vibrateLight();setDaysF(v);}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:daysF===v?T.accent:T.cardAlt,color:daysF===v?"#fff":T.textSec}}>{l}</button>
         )}
       </div>
     </div>}
