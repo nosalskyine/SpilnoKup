@@ -507,10 +507,6 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
     </div>
 
     <div style={{ padding:"0 16px 12px" }}>
-      <div style={{ marginBottom:10 }}>
-        <div style={{ fontSize:22,fontWeight:900,color:T.text }}>Spil</div>
-        <div style={{ fontSize:11,color:T.green }}>{user?`${user.name}, вітаємо!`:"Купуй разом — плати менше"}</div>
-      </div>
       <HowItWorks/>
     </div>
 
