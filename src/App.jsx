@@ -226,7 +226,7 @@ function Input({ value, onChange, placeholder, icon, type="text", area }) {
 }
 
 // ── Навігація (напівпрозора + анімація) ─────────────────────────────────────
-const NAV = [["market",I.home,"Головна"],["create",I.plus,"Оголошення"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
+const NAV = [["market",I.home,"Головна"],["create",I.plus,"Оголошення"],["qr",I.qr,"QR"],["seller",I.chart,"Бізнес"],["wallet",I.wallet,"Гаманець"]];
 
 function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
   const [subPage,setSubPage]=useState(null);
@@ -2080,6 +2080,7 @@ function AppInner() {
     switch(tab){
       case"market":return <MarketPage deals={deals} joined={joined} onJoin={onJoin} onOpen={onOpen} user={user} onCreateDeal={()=>setPage("createDeal")} theme={theme} onTheme={changeTheme} onRefresh={loadDeals} onSettings={()=>setPage("settings")} onScan={()=>setPage("scanner")} onChat={()=>setTab("chat")} unreadCount={unreadCount}/>;
       case"create":return <CreateDealPage onBack={()=>setTab("market")} onSave={()=>{loadDeals();setTab("market");}}/>;
+      case"qr":return <QRHub/>;
       case"chat":return <ChatPage/>;
       case"seller":return <SellerDashboard deals={deals} joined={joined} onOpen={onOpen} onBuy={onBuy}/>;
       case"wallet":return <WalletPage user={user} setUser={setUser} theme={theme} onTheme={changeTheme}/>;
