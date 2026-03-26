@@ -360,7 +360,7 @@ function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
 function Nav({ tab, setTab, unread }) {
   const logged=isLoggedIn();
   const guestTabs=["market","wallet"];
-  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:60,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,display:"flex",alignItems:"center",zIndex:100,padding:"0 4px" }}>
+  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:60,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,display:"flex",alignItems:"center",zIndex:100,padding:"0 0 0 0",margin:0 }}>
     {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>{
       const isCreate=t==="create";
       const active=tab===t;
