@@ -707,7 +707,7 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
 
     <HotSlider deals={deals} onOpen={onOpen}/>
 
-    <div style={{ display:"flex",gap:6,padding:"0 16px 10px",overflowX:"auto",scrollbarWidth:"none" }}>
+    <div style={{ display:"flex",gap:6,padding:"0 16px 10px",overflowX:"auto",overflowY:"hidden",scrollbarWidth:"none",WebkitOverflowScrolling:"touch" }}>
       {CATEGORIES.map(c=><button key={c.id} onClick={()=>setCat(c.id)} style={{ ...S.btn,whiteSpace:"nowrap",padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:cat===c.id?600:400,background:cat===c.id?T.accent:"transparent",color:cat===c.id?"#fff":T.text,border:`1px solid ${cat===c.id?T.accent:T.border}`,letterSpacing:"0.01em" }}>{c.label}</button>)}
     </div>
 
@@ -2097,10 +2097,10 @@ function AppInner() {
     }
   }
 
-  return <div style={{ minHeight:"100vh",background:T.bg,display:"flex",justifyContent:"center",alignItems:isMobile?"stretch":"flex-start",padding:isMobile?0:"20px 0",fontFamily:"'Inter',system-ui,sans-serif",transition:"background .3s" }}>
-    <div style={{ width:isMobile?"100%":390,height:isMobile?"100vh":820,background:T.card,borderRadius:isMobile?0:44,overflow:"hidden",boxShadow:isMobile?"none":"0 20px 60px rgba(0,0,0,0.08)",position:"relative",transition:"background .3s" }}>
+  return <div style={{ minHeight:"100vh",background:T.bg,display:"flex",justifyContent:"center",alignItems:isMobile?"stretch":"flex-start",padding:isMobile?0:"20px 0",fontFamily:"'Inter',system-ui,sans-serif",overflowX:"hidden" }}>
+    <div style={{ width:isMobile?"100%":390,height:isMobile?"100vh":820,background:T.card,borderRadius:isMobile?0:44,overflow:"hidden",boxShadow:isMobile?"none":"0 20px 60px rgba(0,0,0,0.08)",position:"relative" }}>
       <BgDecor/>
-      <div style={{ position:"relative",zIndex:1,height:showNav?"calc(100% - 60px)":"100%",overflowY:"auto" }}>{render()}</div>
+      <div style={{ position:"relative",zIndex:1,height:showNav?"calc(100% - 60px)":"100%",overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch" }}>{render()}</div>
       {showNav&&<Nav tab={tab} setTab={setTab} unread={unreadCount}/>}
     </div>
   </div>;
