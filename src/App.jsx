@@ -4,6 +4,12 @@ import { connectSocket, disconnectSocket, reconnectWithAuth, onEvent, joinDeal, 
 import jsQR from "jsqr";
 import QRCodeLib from "qrcode";
 
+// Haptic feedback
+const vibrate=(ms=10)=>{try{navigator.vibrate&&navigator.vibrate(ms);}catch{}};
+const vibrateLight=()=>vibrate(8);
+const vibrateMedium=()=>vibrate(20);
+const vibrateSuccess=()=>{try{navigator.vibrate&&navigator.vibrate([15,50,15]);}catch{}};
+
 // ── Теми ────────────────────────────────────────────────────────────────────
 const THEMES = {
   light: {
@@ -341,7 +347,7 @@ function Nav({ tab, setTab, unread }) {
     {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>{
       const isCreate=t==="create";
       const active=tab===t;
-      return <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,background:"transparent",color:active?T.accent:T.navText,height:60,WebkitTapHighlightColor:"transparent" }}>
+      return <button key={t} onClick={()=>{vibrateLight();setTab(t);}} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,background:"transparent",color:active?T.accent:T.navText,height:60,WebkitTapHighlightColor:"transparent" }}>
         {isCreate?<div style={{width:36,height:36,borderRadius:10,background:T.accent,display:"flex",alignItems:"center",justifyContent:"center"}}>
           <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </div>:<div style={{ opacity:active?1:0.45 }}>{icon}</div>}
@@ -656,18 +662,14 @@ function HotSlider({ deals, onOpen }) {
 }
 
 function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, onTheme, onRefresh, onSettings, onScan, onChat, unreadCount }) {
-  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState("all"),[discF,setDiscF]=useState("all"),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
+  const [cat,setCat]=useState("all"),[search,setSearch]=useState(""),[sort,setSort]=useState("hot"),[showF,setShowF]=useState(false),[cityF,setCityF]=useState("all"),[priceF,setPriceF]=useState(5000),[discF,setDiscF]=useState(0),[ratingF,setRatingF]=useState("all"),[daysF,setDaysF]=useState("all");
   const cities=["all",...new Set(deals.map(d=>d.city.split(",")[0].trim()))];
-  const activeFilters=[cityF!=="all",priceF!=="all",discF!=="all",ratingF!=="all",daysF!=="all"].filter(Boolean).length;
+  const activeFilters=[cityF!=="all",priceF<5000,discF>0,ratingF!=="all",daysF!=="all"].filter(Boolean).length;
   let list=cat==="all"?deals:deals.filter(d=>d.cat===cat);
   if(search) list=list.filter(d=>(d.title+d.seller).toLowerCase().includes(search.toLowerCase()));
   if(cityF!=="all") list=list.filter(d=>d.city.includes(cityF));
-  if(priceF==="low") list=list.filter(d=>d.group<200);
-  else if(priceF==="mid") list=list.filter(d=>d.group>=200&&d.group<500);
-  else if(priceF==="high") list=list.filter(d=>d.group>=500);
-  if(discF==="big") list=list.filter(d=>disc(d)>=30);
-  else if(discF==="med") list=list.filter(d=>disc(d)>=20&&disc(d)<30);
-  else if(discF==="small") list=list.filter(d=>disc(d)<20);
+  if(priceF<5000) list=list.filter(d=>d.group<=priceF);
+  if(discF>0) list=list.filter(d=>disc(d)>=discF);
   if(ratingF==="top") list=list.filter(d=>d.rating>=4.8);
   else if(ratingF==="good") list=list.filter(d=>d.rating>=4.5);
   if(daysF==="today") list=list.filter(d=>d.days<=1);
@@ -680,10 +682,10 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
   return <div style={{ position:"relative" }}>
     {/* Top bar: profile + scanner | search | support + chat */}
     <div style={{ ...S.flex,gap:6,padding:"16px 16px 10px" }}>
-      {isLoggedIn()&&<button onClick={()=>onSettings&&onSettings()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+      {isLoggedIn()&&<button onClick={()=>{vibrateLight();onSettings&&onSettings();}} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
         <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>}
-      {isLoggedIn()&&<button onClick={()=>onScan&&onScan()} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
+      {isLoggedIn()&&<button onClick={()=>{vibrateLight();onScan&&onScan();}} style={{ ...S.btn,width:36,height:36,borderRadius:10,background:T.card,border:`1px solid ${T.border}`,...S.flex,justifyContent:"center",flexShrink:0 }}>
         <svg width="18" height="18" fill="none" stroke={T.textSec} strokeWidth="2" viewBox="0 0 24 24"><path d="M2 7V2h5M17 2h5v5M22 17v5h-5M7 22H2v-5"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
       </button>}
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Пошук..." style={{ flex:1,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"10px 14px",color:T.text,fontSize:13,boxSizing:"border-box",outline:"none",fontFamily:"inherit" }}/>
@@ -723,24 +725,16 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
     {showF&&<div style={{ ...S.card,margin:"0 16px 12px",padding:12 }}>
       <div style={{...S.flex,justifyContent:"space-between",marginBottom:10}}>
         <span style={{fontSize:12,fontWeight:800,color:T.text}}>Фільтри</span>
-        {activeFilters>0&&<button onClick={()=>{setCityF("all");setPriceF("all");setDiscF("all");setRatingF("all");setDaysF("all");}} style={{...S.btn,fontSize:9,color:T.accent,background:"transparent",padding:0}}>Скинути все</button>}
+        {activeFilters>0&&<button onClick={()=>{setCityF("all");setPriceF(5000);setDiscF(0);setRatingF("all");setDaysF("all");}} style={{...S.btn,fontSize:9,color:T.accent,background:"transparent",padding:0}}>Скинути все</button>}
       </div>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Місто</div>
       <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:10}}>
-        {cities.map(c=><button key={c} onClick={()=>setCityF(c)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:cityF===c?T.accent:T.cardAlt,color:cityF===c?"#fff":T.textSec}}>{c==="all"?"Всі міста":c}</button>)}
+        {cities.map(c=><button key={c} onClick={()=>{vibrateLight();setCityF(c);}} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:cityF===c?T.accent:T.cardAlt,color:cityF===c?"#fff":T.textSec}}>{c==="all"?"Всі міста":c}</button>)}
       </div>
-      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Ціна</div>
-      <div style={{display:"flex",gap:3,marginBottom:10}}>
-        {[["all","Будь-яка"],["low","до ₴200"],["mid","₴200–500"],["high","₴500+"]].map(([v,l])=>
-          <button key={v} onClick={()=>setPriceF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:priceF===v?T.accent:T.cardAlt,color:priceF===v?"#fff":T.textSec}}>{l}</button>
-        )}
-      </div>
-      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Знижка</div>
-      <div style={{display:"flex",gap:3,marginBottom:10}}>
-        {[["all","Будь-яка"],["big","30%+"],["med","20–30%"],["small","до 20%"]].map(([v,l])=>
-          <button key={v} onClick={()=>setDiscF(v)} style={{...S.btn,padding:"4px 8px",borderRadius:6,fontSize:9,background:discF===v?T.accent:T.cardAlt,color:discF===v?"#fff":T.textSec}}>{l}</button>
-        )}
-      </div>
+      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Ціна — до ₴{priceF>=5000?"∞":priceF}</div>
+      <input type="range" min="50" max="5000" step="50" value={priceF} onChange={e=>{vibrateLight();setPriceF(Number(e.target.value));}} style={{width:"100%",marginBottom:10,accentColor:T.accent}}/>
+      <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Знижка — від {discF}%</div>
+      <input type="range" min="0" max="60" step="5" value={discF} onChange={e=>{vibrateLight();setDiscF(Number(e.target.value));}} style={{width:"100%",marginBottom:10,accentColor:T.accent}}/>
       <div style={{fontSize:10,fontWeight:700,color:T.textSec,marginBottom:4}}>Рейтинг</div>
       <div style={{display:"flex",gap:3,marginBottom:10}}>
         {[["all","Всі"],["top","4.8+"],["good","4.5+"]].map(([v,l])=>
@@ -1179,7 +1173,7 @@ function QRHub({ autoScan, onBack }) {
     setVerifying(true);setVerifyError("");
     try{
       const res=await verifyQR(token);
-      setScanned(res.order);setConfirmed(true);setScanning(false);
+      vibrateSuccess();setScanned(res.order);setConfirmed(true);setScanning(false);
       fetchSellerOrders().then(setSellerOrders).catch(()=>{});
     }catch(e){setVerifyError(e.message);}
     finally{setVerifying(false);}
@@ -1203,6 +1197,7 @@ function QRHub({ autoScan, onBack }) {
         const imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
         const code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:"dontInvert"});
         if(code&&code.data){
+          vibrateMedium();
           stopCamera();
           doVerify(code.data);
         }
