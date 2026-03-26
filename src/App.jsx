@@ -1078,9 +1078,14 @@ function ChatPage() {
   useEffect(()=>{
     const user=(() => { try { return JSON.parse(localStorage.getItem("spilnokup_user")); } catch { return null; } })();
     if(!user?.phone) return;
+    // Normalize phone to +380 format
+    let ph=user.phone.replace(/[\s\-\(\)]/g,'');
+    if(ph.startsWith('0')&&ph.length===10) ph='+380'+ph.slice(1);
+    if(ph.startsWith('380')) ph='+'+ph;
+    if(!ph.startsWith('+')) ph='+'+ph;
     const poll=setInterval(async()=>{
       try{
-        const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(user.phone)}`);
+        const res=await fetch(`${API}/telegram/support/replies?phone=${encodeURIComponent(ph)}`);
         const data=await res.json();
         if(data.replies&&data.replies.length>0){
           setSupportMessages(prev=>{
