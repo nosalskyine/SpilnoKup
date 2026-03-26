@@ -211,7 +211,7 @@ struct DealDetailView: View {
                         }
 
                         // Share
-                        Button(action: shareDeal) {
+                        Button(action: { shareDeal() }) {
                             HStack {
                                 Image(systemName: "square.and.arrow.up")
                                 Text("Подiлитись")
