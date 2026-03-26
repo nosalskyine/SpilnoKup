@@ -337,13 +337,13 @@ function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
 function Nav({ tab, setTab, unread }) {
   const logged=isLoggedIn();
   const guestTabs=["market","wallet"];
-  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:60,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 4px" }}>
+  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:60,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,display:"flex",alignItems:"center",zIndex:100,padding:"0 4px" }}>
     {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>{
       const isCreate=t==="create";
       const active=tab===t;
-      return <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,background:"transparent",color:active?T.accent:T.navText }}>
-        {isCreate?<div style={{width:40,height:40,borderRadius:12,background:active?T.accent:T.accent+"cc",marginTop:-14,...S.flex,justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}}>
-          <svg width="22" height="22" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      return <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,background:"transparent",color:active?T.accent:T.navText,height:60,WebkitTapHighlightColor:"transparent" }}>
+        {isCreate?<div style={{width:36,height:36,borderRadius:10,background:T.accent,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </div>:<div style={{ opacity:active?1:0.45 }}>{icon}</div>}
         <span style={{ fontSize:9,fontWeight:active?700:400,opacity:active?1:0.45 }}>{label}</span>
       </button>;
