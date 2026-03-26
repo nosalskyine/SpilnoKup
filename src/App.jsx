@@ -337,16 +337,15 @@ function SettingsMenu({ user, theme, onTheme, onBack, onLogout }) {
 function Nav({ tab, setTab, unread }) {
   const logged=isLoggedIn();
   const guestTabs=["market","wallet"];
-  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:64,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 8px" }}>
+  return <div style={{ position:"absolute",bottom:0,left:0,right:0,height:60,background:T.navBg,backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",borderTop:`1px solid ${T.border}22`,...S.flex,zIndex:100,padding:"0 4px" }}>
     {NAV.filter(([t])=>logged||guestTabs.includes(t)).map(([t,icon,label])=>{
       const isCreate=t==="create";
       const active=tab===t;
-      return <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,background:"transparent",color:active?T.accent:T.navText,position:"relative" }}>
-        {isCreate?<div style={{width:44,height:44,borderRadius:14,background:T.accent,marginTop:-18,...S.flex,justifyContent:"center",boxShadow:"0 4px 12px rgba(0,0,0,0.2)"}}>
-          <svg width="24" height="24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </div>:<div style={{ opacity:active?1:0.5 }}>{icon}</div>}
-        <span style={{ fontSize:9,fontWeight:active?700:500,opacity:active?1:0.5 }}>{label}</span>
-        {active&&!isCreate&&<div style={{ width:16,height:2,background:T.accent,borderRadius:1,marginTop:-1 }}/>}
+      return <button key={t} onClick={()=>setTab(t)} style={{ ...S.btn,flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,background:"transparent",color:active?T.accent:T.navText }}>
+        {isCreate?<div style={{width:40,height:40,borderRadius:12,background:active?T.accent:T.accent+"cc",marginTop:-14,...S.flex,justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}}>
+          <svg width="22" height="22" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>:<div style={{ opacity:active?1:0.45 }}>{icon}</div>}
+        <span style={{ fontSize:9,fontWeight:active?700:400,opacity:active?1:0.45 }}>{label}</span>
       </button>;
     })}
   </div>;
@@ -761,8 +760,6 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
       {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin} onRefresh={onRefresh}/>)}
       {list.length===0&&<div style={{ textAlign:"center",padding:60,color:T.textMuted }}>Нічого не знайдено</div>}
     </div>
-
-    <button onClick={onCreateDeal} style={{ ...S.btn,position:"fixed",bottom:84,right:20,width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${T.accent},${T.green})`,color:"#fff",boxShadow:"0 4px 20px rgba(34,197,94,0.3)",zIndex:90,...S.flex,justifyContent:"center" }}>{I.plus}</button>
 
     {/* Support modal */}
     {showMarketSupport&&<div style={{ position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",zIndex:200,...S.flex,justifyContent:"center",alignItems:"center" }} onClick={()=>setShowMarketSupport(false)}>
@@ -2094,7 +2091,7 @@ function AppInner() {
   return <div style={{ minHeight:"100vh",background:T.bg,display:"flex",justifyContent:"center",alignItems:isMobile?"stretch":"flex-start",padding:isMobile?0:"20px 0",fontFamily:"'Inter',system-ui,sans-serif",transition:"background .3s" }}>
     <div style={{ width:isMobile?"100%":390,height:isMobile?"100vh":820,background:T.card,borderRadius:isMobile?0:44,overflow:"hidden",boxShadow:isMobile?"none":"0 20px 60px rgba(0,0,0,0.08)",position:"relative",transition:"background .3s" }}>
       <BgDecor/>
-      <div style={{ position:"relative",zIndex:1,height:showNav?"calc(100% - 72px)":"100%",overflowY:"auto" }}>{render()}</div>
+      <div style={{ position:"relative",zIndex:1,height:showNav?"calc(100% - 60px)":"100%",overflowY:"auto" }}>{render()}</div>
       {showNav&&<Nav tab={tab} setTab={setTab} unread={unreadCount}/>}
     </div>
   </div>;
