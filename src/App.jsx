@@ -768,7 +768,12 @@ function MarketPage({ deals, joined, onJoin, onOpen, user, onCreateDeal, theme, 
       </div>
     </div>}
 
-    <div style={{padding:"0 16px 4px",fontSize:10,color:T.textMuted}}>{list.length} оголошень</div>
+    <div style={{...S.flex,gap:8,padding:"0 16px 8px"}}>
+      <button onClick={()=>{vibrateLight();setRealOnly(false);}} style={{...S.btn,padding:"5px 14px",borderRadius:8,fontSize:11,fontWeight:realOnly?500:700,background:!realOnly?T.accent+"18":"transparent",color:!realOnly?T.accent:T.textMuted,border:`1px solid ${!realOnly?T.accent+"44":T.border+"22"}`}}>Всі ({deals.length})</button>
+      <button onClick={()=>{vibrateLight();setRealOnly(true);}} style={{...S.btn,padding:"5px 14px",borderRadius:8,fontSize:11,fontWeight:realOnly?700:500,background:realOnly?T.accent+"18":"transparent",color:realOnly?T.accent:T.textMuted,border:`1px solid ${realOnly?T.accent+"44":T.border+"22"}`}}>Реальні ({deals.filter(d=>d.photo).length})</button>
+      <div style={{flex:1}}/>
+      <span style={{fontSize:10,color:T.textMuted}}>{list.length}</span>
+    </div>
     <div style={{ padding:"0 16px 90px",display:"flex",flexDirection:"column",gap:10 }}>
       {list.map(d=><DealCard key={d.id} deal={d} onOpen={onOpen} joined={joined} onJoin={onJoin} onRefresh={onRefresh}/>)}
       {list.length===0&&<div style={{ textAlign:"center",padding:60,color:T.textMuted }}>Нічого не знайдено</div>}
